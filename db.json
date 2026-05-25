@@ -1,0 +1,337 @@
+{
+  "users": [
+    {
+      "id": "u-1",
+      "name": "Alisha Vance",
+      "role": "Writer",
+      "email": "alisha.v@radar.com"
+    },
+    {
+      "id": "u-2",
+      "name": "Marcus Sterling",
+      "role": "Editor",
+      "email": "marcus.s@radar.com"
+    },
+    {
+      "id": "u-3",
+      "name": "Sienna Ross",
+      "role": "Senior Editor",
+      "email": "sienna.r@radar.com"
+    },
+    {
+      "id": "u-4",
+      "name": "David Admin",
+      "role": "Admin",
+      "email": "david.a@radar.com"
+    },
+    {
+      "id": "u-5",
+      "name": "Liam Brooks",
+      "role": "Writer",
+      "email": "liam.b@radar.com"
+    },
+    {
+      "id": "u-6",
+      "name": "Clara Jenkins",
+      "role": "Editor",
+      "email": "clara.j@radar.com"
+    },
+    {
+      "id": "u-7",
+      "name": "Quentin Carter",
+      "role": "Quality Checker",
+      "email": "quentin.c@radar.com"
+    },
+    {
+      "id": "u-8",
+      "name": "Penelope Vance",
+      "role": "Publisher",
+      "email": "penelope.v@radar.com"
+    }
+  ],
+  "topics": [
+    {
+      "id": "t-1",
+      "title": "Hidden Waterways of Venice: A Secret Kayak Route Guide",
+      "description": "A comprehensive travel guide outlining sustainable kayaking trips through Venices lesser-known quiet canals, complete with safety rules and permits.",
+      "category": "Travel Guide",
+      "status": "Active",
+      "submitterId": "u-5",
+      "submitterName": "Liam Brooks",
+      "claimedById": null,
+      "claimedByName": null,
+      "claimedAt": null,
+      "durationMinutes": 10,
+      "releasedCount": 1,
+      "moderationHistory": [
+        {
+          "action": "Proposed",
+          "actorName": "Liam Brooks",
+          "actorRole": "Writer",
+          "timestamp": "2026-05-25T03:28:15.196Z"
+        },
+        {
+          "action": "Approved",
+          "actorName": "Marcus Sterling",
+          "actorRole": "Editor",
+          "timestamp": "2026-05-25T03:38:15.196Z",
+          "comments": "Highly engaging local travel concept."
+        },
+        {
+          "action": "Released",
+          "actorName": "Auto Release System",
+          "actorRole": "Admin",
+          "timestamp": "2026-05-25T05:34:15.236Z",
+          "comments": "Claim of user Alisha Vance expired. Automatically released back to the general pool for other writers."
+        }
+      ]
+    },
+    {
+      "id": "t-2",
+      "title": "Top 5 Eco-Lodges in Costa Rica for 2026",
+      "description": "Evaluating Carbon-neutral lodges across Costa Rica, rating their conservation efforts, renewable energy, and community inclusion.",
+      "category": "Eco Tourism",
+      "status": "Active",
+      "submitterId": "u-1",
+      "submitterName": "Alisha Vance",
+      "claimedById": null,
+      "claimedByName": null,
+      "claimedAt": null,
+      "durationMinutes": 15,
+      "releasedCount": 1,
+      "moderationHistory": [
+        {
+          "action": "Proposed",
+          "actorName": "Alisha Vance",
+          "actorRole": "Writer",
+          "timestamp": "2026-05-24T21:28:15.196Z"
+        },
+        {
+          "action": "Approved",
+          "actorName": "Sienna Ross",
+          "actorRole": "Senior Editor",
+          "timestamp": "2026-05-24T22:28:15.196Z",
+          "comments": "Fits perfectly in our Summer Eco Series."
+        },
+        {
+          "action": "Expired",
+          "actorName": "Auto Release System",
+          "actorRole": "Admin",
+          "timestamp": "2026-05-25T04:28:15.196Z",
+          "comments": "Topic expired and was released back to the pool."
+        }
+      ]
+    },
+    {
+      "id": "t-3",
+      "title": "The Ultimate Street Food Crawl in Osaka",
+      "description": "An itinerary targeting Dotonbori’s secret alleyways for authentic Takoyaki, Kushikatsu, and Okonomiyaki.",
+      "category": "Food & Drink",
+      "status": "Proposed",
+      "submitterId": "u-1",
+      "submitterName": "Alisha Vance",
+      "claimedById": null,
+      "claimedByName": null,
+      "claimedAt": null,
+      "durationMinutes": 10,
+      "releasedCount": 0,
+      "moderationHistory": [
+        {
+          "action": "Proposed",
+          "actorName": "Alisha Vance",
+          "actorRole": "Writer",
+          "timestamp": "2026-05-25T05:27:15.196Z"
+        }
+      ]
+    }
+  ],
+  "articles": [
+    {
+      "id": "a-1",
+      "title": "Sustainable Backpacking Across the Scottish Highlands",
+      "content": "## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe. However, with the resurgence of wilderness tourism, environmental degradation has accelerated. Crucially, travelers must adhere to the \"Leave No Trace\" principles.\n\n### Essential Guidelines\n- Camp on durable surfaces like gravel or dry grass.\n- Dispose of waste carefully; pack out all garbage.\n- Respect wildlife and observe nesting birds from a distance.\n\n### References\n- Scottish Outdoor Access Code (https://www.outdooraccess-scotland.scot/)\n- NatureScot Conservation Data (https://www.nature.scot/)",
+      "status": "Submitted",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "editorId": "u-2",
+      "editorName": "Marcus Sterling",
+      "topicId": null,
+      "score": 82,
+      "reviewCycles": 0,
+      "createdAt": "2026-05-24T05:28:15.196Z",
+      "submittedAt": "2026-05-24T19:28:15.196Z",
+      "updatedAt": "2026-05-24T19:28:15.196Z",
+      "revisions": [
+        {
+          "version": 1,
+          "title": "Sustainable Backpacking Across the Scottish Highlands",
+          "content": "## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe...",
+          "updatedAt": "2026-05-24T05:28:15.196Z",
+          "score": 82
+        }
+      ],
+      "aiValidation": {
+        "score": 82,
+        "grammar": "Excellent readability with only 2 minor punctuation errors noted.",
+        "readability": "Grade 8 level, highly accessible guidelines.",
+        "sourcesFound": true,
+        "sourcesList": [
+          "https://www.outdooraccess-scotland.scot/",
+          "https://www.nature.scot/"
+        ],
+        "factualInconsistencies": [],
+        "styleGuideViolations": [
+          "Avoid capitalized Peaks in section headers unless styled as a title."
+        ],
+        "headlineSuggestions": [
+          "How to Back Pack Across the Scottish Highlands Sustainably",
+          "LLeave No Trace: A Conservationist Guide to the Scottish Highlands"
+        ],
+        "isDuplicate": false,
+        "duplicateScore": 12,
+        "semanticSimilarityToPrevious": 0
+      },
+      "comments": [
+        {
+          "id": "c-1",
+          "authorName": "Marcus Sterling",
+          "authorRole": "Editor",
+          "text": "Excellent guide. Please double check if we need permits to wild camp near Loch Lomond.",
+          "createdAt": "2026-05-24T20:28:15.196Z"
+        }
+      ],
+      "history": [
+        {
+          "id": "l-1",
+          "action": "Draft Created",
+          "actorName": "Alisha Vance",
+          "actorRole": "Writer",
+          "timestamp": "2026-05-24T05:28:15.196Z",
+          "details": "Created initial draft."
+        },
+        {
+          "id": "l-2",
+          "action": "Pre-Validation Passed",
+          "actorName": "Automated AI Gatekeeper",
+          "actorRole": "Admin",
+          "timestamp": "2026-05-24T19:28:15.196Z",
+          "details": "AI Quality Score 82. Threshold is 70."
+        },
+        {
+          "id": "l-3",
+          "action": "Submitted",
+          "actorName": "Alisha Vance",
+          "actorRole": "Writer",
+          "timestamp": "2026-05-24T19:28:15.196Z",
+          "details": "Article submitted to Duty Editor."
+        }
+      ]
+    }
+  ],
+  "config": {
+    "aiScoreThreshold": 70,
+    "maxReviewCycles": 2,
+    "claimDurationMinutes": 10,
+    "categories": [
+      "Travel Guide",
+      "Eco Tourism",
+      "Food & Drink",
+      "Hotel Review",
+      "Aviation Insights"
+    ],
+    "rejectionReasons": [
+      "Grammar issues",
+      "Poor structure",
+      "Unverified sources",
+      "Misleading claims",
+      "Style guide violation"
+    ]
+  },
+  "analytics": {
+    "pageViews": 162,
+    "submissionsCount": 12,
+    "approvalsCount": 5,
+    "escalationsCount": 1,
+    "avgTimeSeconds": 1480,
+    "activeUsers": 4
+  },
+  "moderationHistoryLogs": [
+    {
+      "topicId": "t-1",
+      "topicTitle": "Hidden Waterways of Venice: A Secret Kayak Route Guide",
+      "action": "Released",
+      "submitter": "Liam Brooks",
+      "reviewer": "Auto Release System",
+      "reviewerRole": "Admin",
+      "timestamp": "2026-05-25T05:34:15.236Z",
+      "reasons": [],
+      "comments": "Claim of user Alisha Vance expired. Automatically released back to the general pool for other writers."
+    },
+    {
+      "topicId": "t-3",
+      "topicTitle": "The Ultimate Street Food Crawl in Osaka",
+      "action": "Proposed",
+      "submitter": "Alisha Vance",
+      "reviewer": "Alisha Vance",
+      "reviewerRole": "Writer",
+      "timestamp": "2026-05-25T05:27:15.196Z",
+      "reasons": [],
+      "comments": ""
+    },
+    {
+      "topicId": "t-2",
+      "topicTitle": "Top 5 Eco-Lodges in Costa Rica for 2026",
+      "action": "Expired",
+      "submitter": "Alisha Vance",
+      "reviewer": "Auto Release System",
+      "reviewerRole": "Admin",
+      "timestamp": "2026-05-25T04:28:15.196Z",
+      "reasons": [],
+      "comments": "Topic expired and was released back to the pool."
+    },
+    {
+      "topicId": "t-1",
+      "topicTitle": "Hidden Waterways of Venice: A Secret Kayak Route Guide",
+      "action": "Approved",
+      "submitter": "Liam Brooks",
+      "reviewer": "Marcus Sterling",
+      "reviewerRole": "Editor",
+      "timestamp": "2026-05-25T03:38:15.196Z",
+      "reasons": [],
+      "comments": "Highly engaging local travel concept."
+    },
+    {
+      "topicId": "t-1",
+      "topicTitle": "Hidden Waterways of Venice: A Secret Kayak Route Guide",
+      "action": "Proposed",
+      "submitter": "Liam Brooks",
+      "reviewer": "Liam Brooks",
+      "reviewerRole": "Writer",
+      "timestamp": "2026-05-25T03:28:15.196Z",
+      "reasons": [],
+      "comments": ""
+    },
+    {
+      "topicId": "t-2",
+      "topicTitle": "Top 5 Eco-Lodges in Costa Rica for 2026",
+      "action": "Approved",
+      "submitter": "Alisha Vance",
+      "reviewer": "Sienna Ross",
+      "reviewerRole": "Senior Editor",
+      "timestamp": "2026-05-24T22:28:15.196Z",
+      "reasons": [],
+      "comments": "Fits perfectly in our Summer Eco Series."
+    },
+    {
+      "topicId": "t-2",
+      "topicTitle": "Top 5 Eco-Lodges in Costa Rica for 2026",
+      "action": "Proposed",
+      "submitter": "Alisha Vance",
+      "reviewer": "Alisha Vance",
+      "reviewerRole": "Writer",
+      "timestamp": "2026-05-24T21:28:15.196Z",
+      "reasons": [],
+      "comments": ""
+    }
+  ]
+}

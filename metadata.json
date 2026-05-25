@@ -1,0 +1,6 @@
+{
+  "name": "RadarDesk",
+  "description": "An automated and optimized editorial workflow system featuring AI pre-validation, role-based controls, topic pools, and full analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
