@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, WorkflowConfig, UserRole, EmailSettings, AuthSettings, RolePrivilege } from '../types';
+import { User, WorkflowConfig, UserRole, EmailSettings, AuthSettings, RolePrivilege, Article } from '../types';
 import { 
   Settings, 
   Users, 
@@ -32,6 +32,7 @@ interface AdminPanelProps {
   users: User[];
   config: WorkflowConfig;
   topicHistoryLogs: any[];
+  articles: Article[];
   onUpdateRole: (userId: string, targetRole: UserRole) => Promise<void>;
   onUpdateConfig: (newConfig: Partial<WorkflowConfig>) => Promise<void>;
   onAddToast: (msg: string, type: 'success' | 'warning' | 'info' | 'error') => void;
@@ -58,6 +59,7 @@ export default function AdminPanel({
   users,
   config,
   topicHistoryLogs,
+  articles,
   onUpdateRole,
   onUpdateConfig,
   onAddToast,
@@ -66,9 +68,11 @@ export default function AdminPanel({
   onResetDatabase,
   onRefresh
 }: AdminPanelProps) {
-  // Tabs: users | privileges | settings | rules | topicsHistory | danger
-  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'danger'>('users');
+  // Tabs: users | privileges | settings | rules | topicsHistory | publishedHistory | danger
+  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'publishedHistory' | 'danger'>('users');
   const [elevatingUserId, setElevatingUserId] = useState<string | null>(null);
+  
+  const publishedArticles = articles ? articles.filter(art => art.status === 'Published') : [];
   
   // Rule edit form states
   const [gateLimit, setGateLimit] = useState(config.aiScoreThreshold);
@@ -409,6 +413,17 @@ export default function AdminPanel({
         >
           <History className="w-4 h-4 text-purple-500" />
           <span>Action Audit Trails</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('publishedHistory')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
+            activeSubTab === 'publishedHistory' ? 'bg-white text-[#363636] shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+          id="subtab-published-history"
+        >
+          <BookOpen className="w-4 h-4 text-emerald-600" />
+          <span>Published History</span>
         </button>
 
         <button
@@ -1188,6 +1203,84 @@ export default function AdminPanel({
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* Tab content 7: PUBLISHED HISTORY */}
+      {activeSubTab === 'publishedHistory' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-published-history-section">
+          <div className="border-b border-slate-100 pb-4">
+            <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-emerald-600" />
+              <span>Published Articles Archive & Logs</span>
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">Chronological record of officially published articles, tracking original author delivery and senior editor credentials.</p>
+          </div>
+
+          <div className="border border-slate-100 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="bg-slate-50/75 border-b border-slate-100 text-slate-500 font-mono text-[10px] uppercase tracking-wider">
+                    <th className="p-4 font-bold">Article Title</th>
+                    <th className="p-4 font-bold">Author</th>
+                    <th className="p-4 font-bold">Published Date</th>
+                    <th className="p-4 font-bold">Senior Editor Approval Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {publishedArticles.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-slate-400 text-xs italic">
+                        No articles have been officially published on RadarDesk yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    publishedArticles.map(art => {
+                      // Find publication timestamp
+                      const pubEvent = art.history?.find(h => h.action === 'Published');
+                      const pubDateStr = pubEvent ? new Date(pubEvent.timestamp).toLocaleDateString() + ' ' + new Date(pubEvent.timestamp).toLocaleTimeString() : new Date(art.updatedAt).toLocaleDateString();
+                      
+                      // Find senior editor approval event
+                      const seApprovalEvent = art.history?.find(h => h.action === 'Approved' && h.actorRole === 'Senior Editor');
+                      const seApprovalTimeStr = seApprovalEvent 
+                        ? `${new Date(seApprovalEvent.timestamp).toLocaleDateString()} ${new Date(seApprovalEvent.timestamp).toLocaleTimeString()} (by ${seApprovalEvent.actorName})`
+                        : (art.history?.find(h => h.action === 'Approved') 
+                            ? `${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleDateString()} ${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleTimeString()} (approved by standard ${art.history.find(h => h.action === 'Approved')!.actorRole})`
+                            : 'Pending / Autopromoted');
+
+                      return (
+                        <tr key={art.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-medium text-slate-800">
+                            <span className="text-[10px] font-mono text-slate-400 block">ID: {art.id}</span>
+                            <span>{art.title}</span>
+                          </td>
+                          <td className="p-4 text-slate-600 font-medium">
+                            {art.writerName}
+                          </td>
+                          <td className="p-4 text-slate-500 font-mono">
+                            {pubDateStr}
+                          </td>
+                          <td className="p-4 font-mono text-slate-500">
+                            {seApprovalEvent ? (
+                              <span className="text-emerald-600 font-medium flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {seApprovalTimeStr}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic">
+                                {seApprovalTimeStr}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 

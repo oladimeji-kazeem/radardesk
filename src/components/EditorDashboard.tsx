@@ -205,10 +205,18 @@ export default function EditorDashboard({
                       setComments('');
                       setSelectedReasons([]);
                     }}
-                    className={`w-full text-left p-4 rounded-xl border transition-all relative flex flex-col gap-2.5 cursor-pointer ${
+                    className={`w-full text-left p-4 rounded-xl border border-l-4 transition-all relative flex flex-col gap-2.5 cursor-pointer ${
                       art.id === activeArticleId 
                         ? 'bg-indigo-50/50 border-indigo-400 shadow-md ring-1 ring-indigo-200' 
                         : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+                    } ${
+                      art.status === 'Minor Revision' 
+                        ? 'border-l-amber-500' 
+                        : art.status === 'Submitted'
+                        ? 'border-l-sky-500' 
+                        : art.status === 'Escalated'
+                        ? 'border-l-purple-500' 
+                        : 'border-l-indigo-400'
                     }`}
                     id={`art-queue-item-${art.id}`}
                   >

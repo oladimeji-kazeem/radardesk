@@ -11,7 +11,8 @@ import {
   LineChart, 
   Zap,
   Globe,
-  PieChart
+  PieChart,
+  Download
 } from 'lucide-react';
 
 interface AnalyticsDashboardProps {
@@ -50,6 +51,51 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
   const mostCommonRejections = Object.entries(analyticsData.rejectionReasons)
     .sort((a, b) => b[1] - a[1]);
 
+  const handleExportCSV = () => {
+    const csvRows: string[] = [];
+    
+    // 1. General Metrics
+    csvRows.push('--- GENERAL PERFORMANCE METRICS ---');
+    csvRows.push('Metric Name,Value,Description');
+    csvRows.push(`Page Views,${analyticsData.webAnalytics?.pageViews || 0},Simulated Unique Page Loads`);
+    csvRows.push(`Turnaround SLA,${analyticsData.avgApprovalTimeSeconds > 0 ? (analyticsData.avgApprovalTimeSeconds / 60).toFixed(1) + ' mins' : '1.2 mins'},Average approval turnaround time`);
+    csvRows.push(`Active Creators,${analyticsData.webAnalytics?.activeUsers || 0},Simulated active writers and editors online`);
+    csvRows.push(`AI Score Pass Rate,${analyticsData.webAnalytics?.submissionsCount > 0 ? ((analyticsData.webAnalytics.approvalsCount / analyticsData.webAnalytics.submissionsCount) * 105).toFixed(0) + '%' : '88%'},Percentage of submissions that pass key gates`);
+    csvRows.push('');
+
+    // 2. Topic Lifecycles
+    csvRows.push('--- TOPIC LIFECYCLE DISTRIBUTION ---');
+    csvRows.push('Topic Lifecycle State,Count');
+    Object.entries(analyticsData.topicLifecycle).forEach(([key, val]) => {
+      csvRows.push(`${key},${val}`);
+    });
+    csvRows.push('');
+
+    // 3. Rejection Reasons
+    csvRows.push('--- COMMON REJECTION REASONS ---');
+    csvRows.push('Rejection Reason,Occurrences Count');
+    Object.entries(analyticsData.rejectionReasons).forEach(([reason, count]) => {
+      csvRows.push(`"${reason.replace(/"/g, '""')}",${count}`);
+    });
+    csvRows.push('');
+
+    // 4. Writer Throughputs
+    csvRows.push('--- WRITER THROUGHPUT MATRIX ---');
+    csvRows.push('Writer Name,Total Submitted,Claimed By Editor,Published To RadarDesk Feed');
+    Object.entries(analyticsData.writerThroughput).forEach(([writer, stats]) => {
+      csvRows.push(`"${writer.replace(/"/g, '""')}",${stats.totalSubmitted},${stats.claimed},${stats.published}`);
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `RadarDesk_Performance_Metrics_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6" id="analytics-dashboard-module">
       
@@ -59,13 +105,23 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
           <h3 className="font-bold text-slate-800 text-sm">Operations Analytics Sandbox</h3>
           <p className="text-[11px] text-slate-400">Real-time live-updating metrics correlating prevalidations vs manual approvals.</p>
         </div>
-        <button
-          onClick={onRefresh}
-          className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-        >
-          <Activity className={`w-3.5 h-3.5 text-blue-500 ${pulse ? 'animate-spin' : ''}`} />
-          <span>Sync Live Matrix</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-100 text-[#20a6eb] rounded-lg text-xs font-bold cursor-pointer transition-all active:scale-95"
+            id="btn-export-analytics"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Metrics CSV</span>
+          </button>
+          <button
+            onClick={onRefresh}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+          >
+            <Activity className={`w-3.5 h-3.5 text-blue-500 ${pulse ? 'animate-spin' : ''}`} />
+            <span>Sync Live Matrix</span>
+          </button>
+        </div>
       </div>
 
       {/* Primary KPI Grid */}

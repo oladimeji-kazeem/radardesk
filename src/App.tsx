@@ -1220,6 +1220,7 @@ export default function App() {
                 users={users}
                 config={config}
                 topicHistoryLogs={topicHistoryLogs}
+                articles={articles}
                 onUpdateRole={handleUpdateRole}
                 onUpdateConfig={handleUpdateConfig}
                 onAddToast={addToast}

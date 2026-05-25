@@ -422,6 +422,37 @@ ON CONFLICT (id) DO NOTHING;`;
 
               </div>
 
+              {/* Newly Integrated Workflow Operations */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm text-emerald-600 uppercase font-display">
+                  <CheckSquare className="w-4 h-4 text-emerald-600" />
+                  <span>Newly Integrated Workflow Operations</span>
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                  The workspace platform includes the following audited operational capabilities:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-sans">
+                  <div className="p-3.5 bg-amber-50/40 rounded-xl border border-amber-100">
+                    <span className="font-bold text-amber-850 uppercase block font-mono text-[10px] mb-1">Queue State Indicators</span>
+                    <p className="text-slate-600 text-[11px] leading-normal">
+                      Cards in the Editorial Queue showcase status-specific visual indicators on their left margins. These help reviewers easily distinguish <span className="text-amber-600 font-bold">Minor Revision</span> (Amber highlight), <span className="text-sky-600 font-bold">Submitted</span> (Sky Blue highlight), and <span className="text-purple-650 font-bold">Escalated</span> (Purple highlight) states.
+                    </p>
+                  </div>
+                  <div className="p-3.5 bg-emerald-50/40 rounded-xl border border-emerald-100">
+                    <span className="font-bold text-emerald-850 uppercase block font-mono text-[10px] mb-1">Published History Log</span>
+                    <p className="text-slate-600 text-[11px] leading-normal">
+                      A dedicated audit archive is integrated into the Admin Module. It logs every published story, detailing the unique identifier, writer attribution, the formal publication date and time, and the Senior Editor approval timestamps.
+                    </p>
+                  </div>
+                  <div className="p-3.5 bg-sky-50/40 rounded-xl border border-sky-100">
+                    <span className="font-bold text-[#20a6eb] uppercase block font-mono text-[10px] mb-1">Analytics CSV Export</span>
+                    <p className="text-slate-600 text-[11px] leading-normal">
+                      The Operations Analytics Sandbox now features an on-demand download handler. Administrators can securely export vital KPIs, lifecycles, and relative writer throughput matrices as a styled local CSV file.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           )}
 
