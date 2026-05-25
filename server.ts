@@ -39,14 +39,14 @@ const DB_FILE = path.join(process.cwd(), 'db.json');
 
 // Initialize empty or mock database on startups
 const initialUsers: User[] = [
-  { id: 'u-1', name: 'Alisha Vance', role: 'Writer', email: 'alisha.v@radar.com' },
-  { id: 'u-2', name: 'Marcus Sterling', role: 'Editor', email: 'marcus.s@radar.com' },
-  { id: 'u-3', name: 'Sienna Ross', role: 'Senior Editor', email: 'sienna.r@radar.com' },
-  { id: 'u-4', name: 'David Admin', role: 'Admin', email: 'david.a@radar.com' },
-  { id: 'u-5', name: 'Liam Brooks', role: 'Writer', email: 'liam.b@radar.com' },
-  { id: 'u-6', name: 'Clara Jenkins', role: 'Editor', email: 'clara.j@radar.com' },
-  { id: 'u-7', name: 'Quentin Carter', role: 'Quality Checker', email: 'quentin.c@radar.com' },
-  { id: 'u-8', name: 'Penelope Vance', role: 'Publisher', email: 'penelope.v@radar.com' }
+  { id: 'u-1', name: 'Alisha Vance', role: 'Writer', email: 'alisha.v@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-2', name: 'Marcus Sterling', role: 'Editor', email: 'marcus.s@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-3', name: 'Sienna Ross', role: 'Senior Editor', email: 'sienna.r@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-4', name: 'David Admin', role: 'Admin', email: 'david.a@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-5', name: 'Liam Brooks', role: 'Writer', email: 'liam.b@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-6', name: 'Clara Jenkins', role: 'Editor', email: 'clara.j@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-7', name: 'Quentin Carter', role: 'Quality Checker', email: 'quentin.c@travelradar.com', password: 'password123', approved: true },
+  { id: 'u-8', name: 'Penelope Vance', role: 'Publisher', email: 'penelope.v@travelradar.com', password: 'password123', approved: true }
 ];
 
 const initialTopics: Topic[] = [
@@ -169,6 +169,39 @@ const defaultConfig: WorkflowConfig = {
     'Unverified sources',
     'Misleading claims',
     'Style guide violation'
+  ],
+  stakeholderTargets: [
+    { userId: 'u-1', articlesTarget: 5, scoreTarget: 80 },
+    { userId: 'u-2', articlesTarget: 4, scoreTarget: 75 },
+    { userId: 'u-3', articlesTarget: 6, scoreTarget: 80 },
+    { userId: 'u-4', articlesTarget: 6, scoreTarget: 75 },
+    { userId: 'u-5', articlesTarget: 3, scoreTarget: 85 }
+  ],
+  emailSettings: {
+    smtpHost: 'smtp.radardesk.com',
+    smtpPort: 587,
+    smtpUser: 'operations@radardesk.com',
+    smtpSecure: true,
+    senderName: 'RadarDesk Ops Office',
+    senderEmail: 'operations@radardesk.com',
+    digestEnabled: true,
+    digestFrequency: 'daily'
+  },
+  authSettings: {
+    authType: 'password',
+    clientId: 'rd-oauth-client-id-123',
+    clientSecret: 'rd-oauth-client-secret-sec',
+    enforceMfa: false,
+    sessionTimeoutMinutes: 60,
+    allowedDomains: ['travelradar.com', 'radardesk.com']
+  },
+  rolePrivileges: [
+    { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
+    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article'] },
+    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article', 'publish_live'] },
+    { role: 'Quality Checker', allowedActions: ['quality_audit'] },
+    { role: 'Publisher', allowedActions: ['publish_live'] },
+    { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
   ]
 };
 
@@ -228,6 +261,12 @@ function loadDB() {
     if (fs.existsSync(DB_FILE)) {
       const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
       db = { ...db, ...parsed };
+      if (db.users) {
+        db.users.forEach(u => {
+          if (u.approved === undefined) u.approved = true;
+          if (!u.password) u.password = 'password123';
+        });
+      }
       syncLogs();
     } else {
       saveDB();
@@ -722,7 +761,7 @@ async function startServer() {
         actorName,
         actorRole,
         timestamp: new Date().toISOString(),
-        details: `Article officially published and deployed onto Travel Radar feed. Comment: "${comments || 'None'}"`
+        details: `Article officially published and deployed onto RadarDesk feed. Comment: "${comments || 'None'}"`
       });
 
       // Free claimed topics to topic completion state
@@ -952,6 +991,7 @@ function generateProceduralBackup(article: Article): AIPreValidation {
   let baseScore = 60;
   const reasons: string[] = [];
   const styleViolations: string[] = [];
+  const suggestions: string[] = [];
   
   // Rule 1: Structure - headings detection
   const hasMarkdownHeadings = article.content.includes('#') || article.content.includes('##');
@@ -959,6 +999,7 @@ function generateProceduralBackup(article: Article): AIPreValidation {
     baseScore += 15;
   } else {
     reasons.push('Lacks proper formatting structure. Add Markdown headings to improve readability.');
+    suggestions.push('Structure your content with clear header sections (using Markdown "#" or "##") like "Transport Guide" or "Must-Visit spots" to organize topics.');
   }
 
   // Rule 2: Source backing validation
@@ -968,6 +1009,7 @@ function generateProceduralBackup(article: Article): AIPreValidation {
     baseScore += 15;
   } else {
     reasons.push('Factual verifiability indicator missing. Include at least two verifiable reference URLs or sources.');
+    suggestions.push('Add reliable external reference links (URLs) or named local authorities to substantiate claims.');
   }
 
   // Rule 3: Word count checks
@@ -976,6 +1018,7 @@ function generateProceduralBackup(article: Article): AIPreValidation {
   } else {
     baseScore -= 15;
     styleViolations.push('Word count is below 150 words limit.');
+    suggestions.push('Expand the narrative depth to at least 150-250 words to provide helpful destination guidance.');
   }
 
   // Rule 4: Typos checks
@@ -983,7 +1026,12 @@ function generateProceduralBackup(article: Article): AIPreValidation {
   if (potentialTypos > 0) {
     baseScore -= 5;
     styleViolations.push(`Contains common grammar/spelling lapses like: ${potentialTypos} misspelled tokens.`);
+    suggestions.push('Proofread spelling (check standard terms like "separate", "accommodation", and "government").');
   }
+
+  // Always append some useful general recommendations for fine-tuning
+  suggestions.push('Incorporate precise local tips, such as approximate transit costs or opening hours for attractions.');
+  suggestions.push('Refine readability by introducing bullet points or tabular layouts for transportation details.');
 
   // Deduplicate similarity comparison logic (detecting resubmissions without revision changes)
   let semanticSim = 0;
@@ -994,6 +1042,7 @@ function generateProceduralBackup(article: Article): AIPreValidation {
       semanticSim = 1.0;
       baseScore = Math.max(10, baseScore - 50); // Heavily penalized
       isCopy = true;
+      suggestions.push('CRITICAL: Duplicate content detected! Rewrite the core narrative to pass checks.');
     } else {
       // basic overlap math
       semanticSim = 0.45;
@@ -1013,13 +1062,14 @@ function generateProceduralBackup(article: Article): AIPreValidation {
     factualInconsistencies: roundedScore < 60 ? ['Contains generalized travel advice lacking specific locations'] : [],
     styleGuideViolations: styleViolations,
     headlineSuggestions: [
-      `Insider Radar: ${article.title}`,
+      `RadarDesk Exclusive: ${article.title}`,
       `Why You Need to Visit: ${article.title}`,
       `The Ultimate Traveler's Secrets for ${article.title}`
     ],
     isDuplicate: isCopy,
     duplicateScore: isCopy ? 98 : 14,
-    semanticSimilarityToPrevious: semanticSim
+    semanticSimilarityToPrevious: semanticSim,
+    improvementSuggestions: suggestions
   };
 }
 
@@ -1166,6 +1216,167 @@ app.post('/api/analytics/track', (req, res) => {
 
 app.get('/api/users', (req, res) => {
   res.json(db.users);
+});
+
+app.post('/api/users', (req, res) => {
+  const { name, email, role } = req.body;
+  if (!name || !email || !role) {
+    return res.status(400).json({ error: 'Please submit name, email, and role' });
+  }
+
+  // Enforce authorized organizational email domain check (@travelradar.com)
+  const trimmedEmail = email.trim().toLowerCase();
+  if (!trimmedEmail.endsWith('@travelradar.com')) {
+    return res.status(400).json({ 
+      error: 'Access Denied: Only official organization email accounts (@travelradar.com) are permitted within RadarDesk Operations.' 
+    });
+  }
+
+  const existing = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
+  if (existing) {
+    return res.status(400).json({ error: `An operator with email ${email} is already registered.` });
+  }
+  const newUser: User = {
+    id: `u-${Date.now()}`,
+    name,
+    email: trimmedEmail,
+    role: role as UserRole,
+    password: 'password123',
+    approved: true
+  };
+  db.users.push(newUser);
+  saveDB();
+  res.status(201).json({ success: true, user: newUser });
+});
+
+// Authentication and registration endpoints
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Missing email or password credentials.' });
+  }
+
+  // Enforce authorized organizational email domain check (@travelradar.com)
+  const trimmedEmail = email.trim().toLowerCase();
+  if (!trimmedEmail.endsWith('@travelradar.com')) {
+    return res.status(401).json({ 
+      error: 'Access Denied: Authentication is restricted to official organization email accounts (@travelradar.com) only.' 
+    });
+  }
+
+  const user = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
+  if (!user) {
+    return res.status(400).json({ error: 'Access Denied: No account associated with this email exists.' });
+  }
+  if (user.password !== password) {
+    return res.status(400).json({ error: 'Access Denied: Incorrect password match.' });
+  }
+  if (user.approved === false) {
+    return res.status(401).json({ error: 'Review Pending: Your registration request has not been approved by an Administrator yet.' });
+  }
+  res.json({ success: true, user });
+});
+
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password, role } = req.body;
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ error: 'Missing registration details. All fields are required.' });
+  }
+
+  // Enforce authorized organizational email domain check (@travelradar.com)
+  const trimmedEmail = email.trim().toLowerCase();
+  if (!trimmedEmail.endsWith('@travelradar.com')) {
+    return res.status(400).json({ 
+      error: 'Registration Blocked: Only official organization email accounts (@travelradar.com) are permitted to request access to RadarDesk Operations.' 
+    });
+  }
+
+  const existing = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
+  if (existing) {
+    return res.status(400).json({ error: `An operator with email ${email} is already registered in our directories.` });
+  }
+  const newUser: User = {
+    id: `u-${Date.now()}`,
+    name,
+    email: trimmedEmail,
+    role: role as UserRole,
+    password,
+    approved: false // Registrations are PENDING approval by default!
+  };
+  db.users.push(newUser);
+  saveDB();
+  res.status(201).json({ 
+    success: true, 
+    message: 'Your registration was recorded successfully. An Administrator must review and approve your account before access is granted.', 
+    user: newUser 
+  });
+});
+
+app.post('/api/auth/reset-forgot', (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Please enter your email address.' });
+  }
+  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) {
+    return res.status(400).json({ error: 'No account matches this email address.' });
+  }
+  // Generate random 6-digit pin
+  const pin = Math.floor(100000 + Math.random() * 900000).toString();
+  // Temporarily store pin in DB/user record for verification
+  (user as any).passwordResetToken = pin;
+  saveDB();
+  res.json({ 
+    success: true, 
+    message: `Security validation complete. A simulated 6-digit reset code has been sent.`,
+    pin // Return pin so our app can mock-send it or display it live!
+  });
+});
+
+app.post('/api/auth/reset-confirm', (req, res) => {
+  const { email, pin, newPassword } = req.body;
+  if (!email || !pin || !newPassword) {
+    return res.status(400).json({ error: 'Please submit your email, recovery pin, and new password.' });
+  }
+  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) {
+    return res.status(400).json({ error: 'No account associated with this email found.' });
+  }
+  if ((user as any).passwordResetToken !== pin) {
+    return res.status(400).json({ error: 'Invalid reset pin code.' });
+  }
+  user.password = newPassword;
+  delete (user as any).passwordResetToken;
+  saveDB();
+  res.json({ success: true, message: 'Password reset successfully!' });
+});
+
+app.post('/api/users/:id/approve', (req, res) => {
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) {
+    return res.status(404).json({ error: 'User registration request not found' });
+  }
+  user.approved = true;
+  saveDB();
+  res.json({ success: true, message: `Access granted: Approved user account for ${user.name} (${user.role})!`, user });
+});
+
+app.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  const userIndex = db.users.findIndex(u => u.id === id);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'Operator profile not found.' });
+  }
+  const user = db.users[userIndex];
+  
+  const adminsCount = db.users.filter(u => u.role === 'Admin').length;
+  if (user.role === 'Admin' && adminsCount <= 1) {
+    return res.status(400).json({ error: 'Security breach blocked: The portal must retain at least one system Administrator.' });
+  }
+
+  db.users.splice(userIndex, 1);
+  saveDB();
+  res.json({ success: true, message: `Successfully removed participant ${user.name} from active directories.` });
 });
 
 app.put('/api/users/:id/role', (req, res) => {
@@ -1414,7 +1625,7 @@ app.post('/api/articles/:id/submit', async (req, res) => {
   if (ai) {
     try {
       console.log('Invoking Gemini API model for pre-validation scoring...');
-      const promptSystem = `You are an AI editor for Travel Radar content operations. Review the following travel article. Evaluate grammar, readability, word count, style guidelines, and source existence. Also check for absolute duplication.
+      const promptSystem = `You are an AI editor for RadarDesk content operations. Review the following travel article. Evaluate grammar, readability, word count, style guidelines, and source existence. Also check for absolute duplication.
       Return strictly a solid JSON payload matching this key schema properties:
       {
         "score": number (0-100 indicating quality & standards),
@@ -1427,7 +1638,8 @@ app.post('/api/articles/:id/submit', async (req, res) => {
         "headlineSuggestions": ["3 suggested headlines that pop in travel radar"],
         "isDuplicate": boolean,
         "duplicateScore": number (similarity likelihood),
-        "semanticSimilarityToPrevious": number (between 0.0 - 1.0 indicating if they resubmitted without modifications. Previous history: ${JSON.stringify(article.revisions.slice(-1))})
+        "semanticSimilarityToPrevious": number (between 0.0 - 1.0 indicating if they resubmitted without modifications. Previous history: ${JSON.stringify(article.revisions.slice(-1))}),
+        "improvementSuggestions": ["array of 3-4 specific, actionable bullet point suggestions detailing exactly how the writer can improve grammar, structure, factual backing, vocabulary or depth of local details"]
       }`;
 
       const response = await ai.models.generateContent({
@@ -1494,6 +1706,35 @@ app.post('/api/articles/:id/submit', async (req, res) => {
   res.json({ success: true, message: 'Clean pass. Submitted to editors directory!', article });
 });
 
+app.post('/api/articles/:id/rate-ai', (req, res) => {
+  const { score, comments, ratedByName } = req.body;
+  const article = db.articles.find(a => a.id === req.params.id);
+  if (!article) return res.status(404).json({ error: 'Article not found' });
+
+  if (!article.aiValidation) {
+    return res.status(400).json({ error: 'No AI validation result exists to rate on this article.' });
+  }
+
+  article.aiValidation.editorRating = {
+    score: Number(score),
+    comments: comments || '',
+    ratedByName: ratedByName || 'System Editor',
+    ratedAt: new Date().toISOString()
+  };
+
+  article.history.push({
+    id: `h-rate-${Date.now()}`,
+    action: 'AI Check Rated',
+    actorName: ratedByName || 'System Editor',
+    actorRole: 'Editor',
+    timestamp: new Date().toISOString(),
+    details: `Rated AI automated check accuracy: ${score}/5 stars. Comment: "${comments || 'No comment'}"`
+  });
+
+  saveDB();
+  res.json({ success: true, message: 'AI validation check rated successfully!', article });
+});
+
 app.post('/api/articles/:id/comment', (req, res) => {
   const { text, authorName, authorRole } = req.body;
   const article = db.articles.find(a => a.id === req.params.id);
@@ -1546,7 +1787,7 @@ app.post('/api/articles/:id/decision', (req, res) => {
       actorName,
       actorRole,
       timestamp: new Date().toISOString(),
-      details: `Article officially published and deployed onto Travel Radar feed. Comment: "${comments || 'None'}"`
+      details: `Article officially published and deployed onto RadarDesk feed. Comment: "${comments || 'None'}"`
     });
 
     if (article.topicId) {
@@ -1639,6 +1880,17 @@ app.get('/api/config', (req, res) => {
   res.json(db.config);
 });
 
+app.post('/api/admin/reset', (req, res) => {
+  db.users = JSON.parse(JSON.stringify(initialUsers));
+  db.topics = JSON.parse(JSON.stringify(initialTopics));
+  db.articles = JSON.parse(JSON.stringify(initialArticles));
+  db.config = JSON.parse(JSON.stringify(defaultConfig));
+  db.analytics = JSON.parse(JSON.stringify(initialAnalytics));
+  syncLogs();
+  saveDB();
+  res.json({ success: true, message: "System database states successfully flashed to default templates.", db });
+});
+
 app.post('/api/config', (req, res) => {
   db.config = { ...db.config, ...req.body };
   saveDB();
@@ -1716,6 +1968,11 @@ app.get('/api/analytics', (req, res) => {
     scoreCorrelation,
     avgApprovalTimeSeconds: avgTurnaroundSecs
   });
+});
+
+// Catch-all for unmatched api routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `API route ${req.method} ${req.originalUrl} not found` });
 });
 
 async function main() {

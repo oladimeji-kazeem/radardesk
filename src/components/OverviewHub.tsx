@@ -1,4 +1,5 @@
 import React from 'react';
+import { Logo } from './Logo';
 import { Sparkles, Users, FileText, CheckCircle, TrendingUp, Compass, ArrowRight, Award } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Topic, Article, WorkflowConfig } from '../types';
@@ -36,12 +37,9 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
       {/* Primary Landing Page Header */}
       <header className="w-full max-w-7xl px-6 md:px-12 h-20 flex items-center justify-between z-10 sticky top-0 bg-white/40 backdrop-blur-md border-b border-slate-200/50">
         <div className="flex items-center space-x-3 cursor-pointer group" onClick={onGetStarted}>
-          {/* Logo block: gradient icon */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#20a6eb] to-[#e86420] flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-orange-500/10 group-hover:scale-105 transition-all">
-            RD
-          </div>
+          <Logo className="w-9 h-9 group-hover:scale-105 transition-all" />
           <span className="text-xl font-extrabold tracking-tight font-display text-[#363636]">
-            RadarDesk<span className="text-[#20a6eb] font-black">.OS</span>
+            RadarDesk
           </span>
         </div>
 

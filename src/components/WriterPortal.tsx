@@ -858,6 +858,56 @@ export default function WriterPortal({
                   </div>
                 </div>
 
+                {/* Improvement Suggestions Block */}
+                <div className="space-y-2 border-t border-slate-800 pt-3">
+                  <p className="text-amber-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1">
+                    <CheckSquare className="w-4 h-4 text-amber-400" />
+                    <span>Actionable Improvement Suggestions ({currentArticle.aiValidation.improvementSuggestions?.length || 0})</span>
+                  </p>
+                  {currentArticle.aiValidation.improvementSuggestions && currentArticle.aiValidation.improvementSuggestions.length > 0 ? (
+                    <div className="space-y-1.5 pl-1">
+                      {currentArticle.aiValidation.improvementSuggestions.map((suggestion, index) => (
+                        <div key={index} className="flex items-start gap-2 bg-slate-800/40 p-2.5 rounded-lg border border-slate-750">
+                          <div className="w-4 h-4 bg-amber-500/10 text-amber-400 text-[10px] font-bold rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                            {index + 1}
+                          </div>
+                          <p className="text-slate-200 text-xs font-mono leading-relaxed">{suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-xs italic pl-1">No pending suggestions. Your article matches premium quality guidelines perfectly!</p>
+                  )}
+                </div>
+
+                {/* Editor Verification feedback */}
+                {currentArticle.aiValidation.editorRating && (
+                  <div className="border-t border-slate-800 pt-3 space-y-2 bg-emerald-950/20 p-3 rounded-lg border border-emerald-950">
+                    <p className="text-emerald-400 font-extrabold uppercase tracking-wider text-[10px] flex items-center gap-1">
+                      <Award className="w-4 h-4 text-emerald-400" />
+                      <span>Editor Quality Check Audit & Rating</span>
+                    </p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-amber-400">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} className="text-sm">
+                              {i < (currentArticle.aiValidation?.editorRating?.score || 0) ? '★' : '☆'}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-slate-300 font-bold text-xs">{currentArticle.aiValidation.editorRating.score}/5 Stars</span>
+                        <span className="text-slate-400 text-[10px] ml-auto">Verified by: {currentArticle.aiValidation.editorRating.ratedByName}</span>
+                      </div>
+                      {currentArticle.aiValidation.editorRating.comments && (
+                        <p className="text-slate-300 text-xs italic bg-black/20 p-2 rounded border border-slate-850 font-mono">
+                          "{currentArticle.aiValidation.editorRating.comments}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
 

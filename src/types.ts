@@ -5,6 +5,8 @@ export interface User {
   name: string;
   role: UserRole;
   email: string;
+  password?: string;
+  approved?: boolean;
 }
 
 export interface ReviewReason {
@@ -42,6 +44,13 @@ export interface AIPreValidation {
   isDuplicate: boolean;
   duplicateScore: number;
   semanticSimilarityToPrevious: number; // For detecting resubmission without changes
+  improvementSuggestions?: string[];     // Automated suggestions on how the writer can improve the post
+  editorRating?: {                       // Feedback rating from editors on the AI precheck quality
+    score: number;                       // 1-5 star rating
+    comments?: string;                   // Qualitative comment/rating details
+    ratedByName?: string;                // Name of reviewer who checked the AI validation
+    ratedAt?: string;                    // ISO timestamp of rating
+  };
 }
 
 export interface Article {
@@ -109,12 +118,47 @@ export interface Topic {
   releasedCount: number;
 }
 
+export interface StakeholderTarget {
+  userId: string;
+  articlesTarget: number;
+  scoreTarget: number;
+}
+
+export interface EmailSettings {
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpSecure: boolean;
+  senderName: string;
+  senderEmail: string;
+  digestEnabled: boolean;
+  digestFrequency: 'instantly' | 'daily' | 'weekly';
+}
+
+export interface AuthSettings {
+  authType: 'password' | 'oauth2' | 'sso';
+  clientId: string;
+  clientSecret: string;
+  enforceMfa: boolean;
+  sessionTimeoutMinutes: number;
+  allowedDomains: string[];
+}
+
+export interface RolePrivilege {
+  role: UserRole;
+  allowedActions: string[]; // e.g., 'propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'
+}
+
 export interface WorkflowConfig {
   aiScoreThreshold: number;
   maxReviewCycles: number;
   claimDurationMinutes: number;
   categories: string[];
   rejectionReasons: string[];
+  stakeholderTargets?: StakeholderTarget[];
+  emailSettings?: EmailSettings;
+  authSettings?: AuthSettings;
+  rolePrivileges?: RolePrivilege[];
 }
 
 export interface WebAnalytics {

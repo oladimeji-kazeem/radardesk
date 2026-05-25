@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Topic, Article, WorkflowConfig, UserRole } from './types';
+import { Logo } from './components/Logo';
 import RoleSwitcher from './components/RoleSwitcher';
 import TopicPool from './components/TopicPool';
 import WriterPortal from './components/WriterPortal';
@@ -12,7 +13,9 @@ import CustomNotification from './components/CustomNotification';
 import OverviewHub from './components/OverviewHub';
 import DocsAndManual from './components/DocsAndManual';
 import PersonalDashboard from './components/PersonalDashboard';
-import { User as UserIcon, BookOpen } from 'lucide-react';
+import PerformanceManagement from './components/PerformanceManagement';
+import AuthScreen from './components/AuthScreen';
+import { User as UserIcon, BookOpen, LogOut } from 'lucide-react';
 import { 
   Compass, 
   FileEdit, 
@@ -29,7 +32,11 @@ import {
   Moon,
   Home,
   ShieldCheck,
-  Globe
+  Globe,
+  Award,
+  Search,
+  X,
+  FileQuestion
 } from 'lucide-react';
 
 interface Toast {
@@ -48,10 +55,32 @@ export default function App() {
   const [topicHistoryLogs, setTopicHistoryLogs] = useState<any[]>([]);
 
   // Navigation and active workflow tabs
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'writer' | 'editor' | 'quality-check' | 'publisher' | 'analytics' | 'admin' | 'docs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'writer' | 'editor' | 'quality-check' | 'publisher' | 'analytics' | 'performance' | 'admin' | 'docs'>('dashboard');
   const [viewMode, setViewMode] = useState<'landing' | 'app'>('landing');
   const [activeTopicFromPool, setActiveTopicFromPool] = useState<Topic | null>(null);
   const [activeArticleForEditing, setActiveArticleForEditing] = useState<Article | null>(null);
+
+  // Global search and details preview states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+  const [previewTopic, setPreviewTopic] = useState<Topic | null>(null);
+
+  // Keyboard shortcut listener to focus on '/' keypress
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Search articles"]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          setSearchFocused(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Notifications state
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -75,30 +104,81 @@ export default function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
+  const hasPermission = (action: string) => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'Admin') return true; // Administrator overrides all checks
+    if (!config) return false;
+    
+    // Check in dynamic rolePrivileges configuration
+    const privs = config.rolePrivileges || [
+      { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
+      { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article'] },
+      { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article', 'publish_live'] },
+      { role: 'Quality Checker', allowedActions: ['quality_audit'] },
+      { role: 'Publisher', allowedActions: ['publish_live'] },
+      { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
+    ];
+    
+    const roleEntry = privs.find(p => p.role === currentUser.role);
+    return roleEntry ? roleEntry.allowedActions.includes(action) : false;
+  };
+
   // Main data sync engine
   const syncData = async (silent = false) => {
+    const fetchJson = async (url: string, fallback: any) => {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) {
+          console.warn(`Fetch to ${url} returned status ${r.status}`);
+          return fallback;
+        }
+        const contentType = r.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.warn(`Fetch to ${url} returned non-JSON content-type: ${contentType}`);
+          return fallback;
+        }
+        return await r.json();
+      } catch (err) {
+        console.warn(`Fetch to ${url} failed to execute:`, err);
+        return fallback;
+      }
+    };
+
     try {
       const [resUsers, resTopics, resArticles, resConfig, resAnalytics, resTopicLogs] = await Promise.all([
-        fetch('/api/users').then(r => r.json()),
-        fetch('/api/topics').then(r => r.json()),
-        fetch('/api/articles').then(r => r.json()),
-        fetch('/api/config').then(r => r.json()),
-        fetch('/api/analytics').then(r => r.json()),
-        fetch('/api/topics/moderation-history').then(r => r.json()),
+        fetchJson('/api/users', users || []),
+        fetchJson('/api/topics', topics || []),
+        fetchJson('/api/articles', articles || []),
+        fetchJson('/api/config', config),
+        fetchJson('/api/analytics', analytics),
+        fetchJson('/api/topics/moderation-history', topicHistoryLogs || []),
       ]);
 
-      setUsers(resUsers);
-      setTopics(resTopics);
-      setArticles(resArticles);
-      setConfig(resConfig);
-      setAnalytics(resAnalytics);
-      setTopicHistoryLogs(resTopicLogs);
+      if (resUsers) setUsers(resUsers);
+      if (resTopics) setTopics(resTopics);
+      if (resArticles) setArticles(resArticles);
+      if (resConfig) setConfig(resConfig);
+      if (resAnalytics) setAnalytics(resAnalytics);
+      if (resTopicLogs) setTopicHistoryLogs(resTopicLogs);
 
-      // Default first user if empty
-      if (!currentUser && resUsers.length > 0) {
-        // Alisha Vance is the standard default writer
-        const defaultUser = resUsers.find((u: User) => u.name.includes('Alisha')) || resUsers[0];
-        setCurrentUser(defaultUser);
+      // Load user session from localStorage
+      const savedUserStr = localStorage.getItem('radar_logged_user');
+      if (savedUserStr && resUsers) {
+        try {
+          const savedUser = JSON.parse(savedUserStr);
+          const freshUser = resUsers.find((u: User) => u.id === savedUser.id);
+          if (freshUser && freshUser.approved !== false) {
+            setCurrentUser(freshUser);
+          } else {
+            localStorage.removeItem('radar_logged_user');
+            setCurrentUser(null);
+          }
+        } catch {
+          localStorage.removeItem('radar_logged_user');
+          setCurrentUser(null);
+        }
+      } else if (!savedUserStr) {
+        setCurrentUser(null);
       }
     } catch (err) {
       console.error('Error synchronizing dashboard datasets:', err);
@@ -128,6 +208,17 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [currentUser]);
+
+  const handleLoginSuccess = (user: User) => {
+    localStorage.setItem('radar_logged_user', JSON.stringify(user));
+    setCurrentUser(user);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('radar_logged_user');
+    setCurrentUser(null);
+    addToast('Logged out of RadarDesk Operations successfully.', 'info');
+  };
 
   // Handle switched participant view
   const handleSwitchUser = (user: User) => {
@@ -163,6 +254,66 @@ export default function App() {
       }
     } catch {
       addToast('Error setting participant operational role.', 'error');
+    }
+  };
+
+  // Create user profile
+  const handleAddUser = async (name: string, email: string, role: UserRole) => {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        addToast(`Profile "${name}" successfully registered as a system ${role}!`, 'success');
+        await syncData(true);
+      } else {
+        addToast(data.error || 'User creation refused.', 'error');
+      }
+    } catch {
+      addToast('Error registering new user profile.', 'error');
+    }
+  };
+
+  // Remove user profile
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        addToast(data.message || 'Workflow profile removed from registers.', 'info');
+        await syncData(true);
+      } else {
+        addToast(data.error || 'Failed to remove user.', 'error');
+      }
+    } catch {
+      addToast('Error dropping participant from system.', 'error');
+    }
+  };
+
+  // Reset database state to mock templates
+  const handleResetDatabase = async () => {
+    try {
+      const res = await fetch('/api/admin/reset', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        addToast('System database states cleared and flashed to defaults!', 'success');
+        await syncData(true);
+        if (data.db && data.db.users && data.db.users.length > 0) {
+          const firstAdmin = data.db.users.find((u: User) => u.role === 'Admin') || data.db.users[0];
+          setCurrentUser(firstAdmin);
+        }
+      } else {
+        addToast(data.error || 'DB Flash failed', 'error');
+      }
+    } catch {
+      addToast('Error triggering system database purge.', 'error');
     }
   };
 
@@ -396,13 +547,24 @@ export default function App() {
     addToast(`Initialized article draft based on claimed concept: "${topic.title}"`, 'success');
   };
 
-  if (isLoading || !currentUser || !config) {
+  if (isLoading || !config) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center gap-4">
         <div className="w-12 h-12 rounded-full border-4 border border-indigo-200 border-t-indigo-600 animate-spin" />
         <h3 className="text-sm font-bold text-slate-700 tracking-tight">Launching RadarDesk Operations Workspace...</h3>
         <p className="text-xs text-slate-400">Loading RBAC identities and operational parameters.</p>
       </div>
+    );
+  }
+
+  // Gated Authentication view center
+  if (!currentUser) {
+    return (
+      <AuthScreen
+        onLoginSuccess={handleLoginSuccess}
+        onAddToast={addToast}
+        users={users}
+      />
     );
   }
 
@@ -424,6 +586,25 @@ export default function App() {
   // Active unclaimed topics count alerts count check for writers
   const activeUnclaimedCount = topics.filter(t => t.status === 'Active' && !t.claimedById).length;
 
+  // Filter list helper for search bar
+  const query = searchQuery.trim().toLowerCase();
+  const matchedArticles = query ? articles.filter(art => {
+    return (
+      art.title.toLowerCase().includes(query) ||
+      art.status.toLowerCase().includes(query) ||
+      art.writerName.toLowerCase().includes(query)
+    );
+  }) : [];
+
+  const matchedTopics = query ? topics.filter(top => {
+    return (
+      top.title.toLowerCase().includes(query) ||
+      top.status.toLowerCase().includes(query) ||
+      top.submitterName.toLowerCase().includes(query) ||
+      (top.claimedByName && top.claimedByName.toLowerCase().includes(query))
+    );
+  }) : [];
+
   return (
     <div className="min-h-screen bg-[#f4f7f9] flex flex-col lg:flex-row font-sans text-[#363636] overflow-hidden" id="editorial-workspace-frame">
       
@@ -437,8 +618,8 @@ export default function App() {
           className="p-6 flex items-center space-x-3 text-white border-b border-white/5 cursor-pointer hover:bg-white/5 transition-all group"
           title="Return to Welcome Hub"
         >
-          <div className="w-8 h-8 rounded bg-[#e86420] flex items-center justify-center font-bold text-[#fafafa] font-display text-xs shadow-inner group-hover:scale-105 transition-transform">RD</div>
-          <span className="text-lg font-bold tracking-tight font-display transition-colors group-hover:text-[#20a6eb]">RadarDesk<span className="text-[#20a6eb] font-black">.OS</span></span>
+          <Logo className="w-8 h-8 group-hover:scale-105 transition-transform" />
+          <span className="text-lg font-bold tracking-tight font-display transition-colors group-hover:text-[#20a6eb]">RadarDesk</span>
         </div>
 
         <nav className="flex-1 px-4 space-y-1.5 mt-6">
@@ -464,60 +645,80 @@ export default function App() {
             <span className="flex-1 text-left">Marketing Landing</span>
           </button>
 
+          {(hasPermission('propose_topic') || hasPermission('claim_topic')) && (
+            <button
+              onClick={() => setActiveTab('topics')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
+                activeTab === 'topics' 
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
+                  : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Compass className="w-4 h-4 opacity-80" />
+              <span className="flex-1 text-left">Concepts Pool</span>
+              {activeUnclaimedCount > 0 && (
+                <span className="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded text-[9px] animate-bounce">
+                  {activeUnclaimedCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {(hasPermission('submit_article') || currentUser.role === 'Admin') && (
+            <button
+              onClick={() => setActiveTab('writer')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
+                activeTab === 'writer' 
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
+                  : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <FileEdit className="w-4 h-4 opacity-80" />
+              <span className="flex-1 text-left">Drafting Desk</span>
+            </button>
+          )}
+
+          {hasPermission('review_article') && (
+            <button
+              onClick={() => setActiveTab('editor')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
+                activeTab === 'editor' 
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
+                  : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Inbox className="w-4 h-4 opacity-80" />
+              <span className="flex-1 text-left">Queue Reviews</span>
+            </button>
+          )}
+
+          {(hasPermission('review_article') || hasPermission('quality_audit') || hasPermission('publish_live') || hasPermission('manage_system')) && (
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
+                activeTab === 'analytics' 
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
+                  : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Activity className="w-4 h-4 opacity-80" />
+              <span className="flex-1 text-left">Analytics Dashboard</span>
+            </button>
+          )}
+
           <button
-            onClick={() => setActiveTab('topics')}
+            onClick={() => setActiveTab('performance')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'topics' 
+              activeTab === 'performance' 
                 ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
                 : 'text-white/70 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <Compass className="w-4 h-4 opacity-80" />
-            <span className="flex-1 text-left">Concepts Pool</span>
-            {activeUnclaimedCount > 0 && (
-              <span className="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded text-[9px] animate-bounce">
-                {activeUnclaimedCount}
-              </span>
-            )}
+            <Award className="w-4 h-4 opacity-85 text-amber-400" />
+            <span className="flex-1 text-left">Performance Desk</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('writer')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'writer' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
-          >
-            <FileEdit className="w-4 h-4 opacity-80" />
-            <span className="flex-1 text-left">Drafting Desk</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('editor')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'editor' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
-          >
-            <Inbox className="w-4 h-4 opacity-80" />
-            <span className="flex-1 text-left">Queue Reviews</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'analytics' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
-          >
-            <Activity className="w-4 h-4 opacity-80" />
-            <span className="flex-1 text-left">Analytics Dashboard</span>
-          </button>
-
-          {['Quality Checker', 'Editor', 'Senior Editor', 'Admin'].includes(currentUser.role) && (
+          {hasPermission('quality_audit') && (
             <button
               onClick={() => setActiveTab('quality-check')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
@@ -536,7 +737,7 @@ export default function App() {
             </button>
           )}
 
-          {['Publisher', 'Senior Editor', 'Admin'].includes(currentUser.role) && (
+          {hasPermission('publish_live') && (
             <button
               onClick={() => setActiveTab('publisher')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
@@ -550,7 +751,7 @@ export default function App() {
             </button>
           )}
 
-          {['Admin'].includes(currentUser.role) && (
+          {hasPermission('manage_system') && (
             <button
               onClick={() => setActiveTab('admin')}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
@@ -580,15 +781,24 @@ export default function App() {
         {/* Sidebar bottom portion with active user details + Switch User */}
         <div className="p-6 border-t border-white/10 bg-black/10">
           <div className="flex flex-col space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold uppercase font-display text-xs shadow-inner">
-                {currentUser?.name?.substring(0, 2).toUpperCase() || 'TR'}
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold uppercase font-display text-xs shadow-inner">
+                  {currentUser?.name?.substring(0, 2).toUpperCase() || 'TR'}
+                </div>
+                <div className="text-xs text-white">
+                  <p className="font-bold uppercase tracking-tight text-[10px] text-sky-300">Active Profile</p>
+                  <p className="font-semibold text-slate-100 truncate max-w-[110px] text-left">{currentUser?.name}</p>
+                  <span className="text-[9px] text-slate-300 bg-white/10 px-1.5 py-0.5 rounded mt-0.5 inline-block uppercase font-mono">{currentUser?.role}</span>
+                </div>
               </div>
-              <div className="text-xs text-white">
-                <p className="font-bold uppercase tracking-tight text-[10px] text-sky-300">Active Profile</p>
-                <p className="font-semibold text-slate-100 truncate max-w-[130px]">{currentUser?.name}</p>
-                <span className="text-[9px] text-slate-300 bg-white/10 px-1 py-0.2 rounded mt-0.5 inline-block uppercase font-mono">{currentUser?.role}</span>
-              </div>
+              <button
+                onClick={handleSignOut}
+                className="p-1 text-rose-405 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg cursor-pointer transition-colors"
+                title="Log out of RadarDesk Hub"
+              >
+                <LogOut className="w-4 h-4 text-rose-400" />
+              </button>
             </div>
 
             <div className="pt-2 border-t border-white/5">
@@ -613,8 +823,8 @@ export default function App() {
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 shadow-sm sticky top-0 z-30">
           <div className="flex items-center space-x-3">
             {/* Minimal Logo shown for Mobile only */}
-            <div className="lg:hidden p-2 rounded bg-[#363636] text-white flex items-center justify-center">
-              <span className="font-bold text-xs text-[#20a6eb] font-display">RD</span>
+            <div className="lg:hidden flex items-center justify-center">
+              <Logo className="w-7 h-7" />
             </div>
             
             <h1 className="text-sm font-bold text-[#363636] font-display uppercase tracking-wide hidden lg:block">
@@ -630,6 +840,162 @@ export default function App() {
             <span className="status-chip bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">
               AI ENGINE: ONLINE
             </span>
+          </div>
+
+          {/* Universal Search Bar */}
+          <div className="hidden md:block flex-1 max-w-sm mx-4 relative" id="header-search-container">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="w-4 h-4 text-slate-400" />
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onFocus={() => setSearchFocused(true)}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search articles, topics by title, status, or author..."
+                className="w-full bg-slate-50 border border-slate-200 focus:border-[#20a6eb] focus:bg-white text-xs rounded-xl pl-9 pr-8 py-2 outline-none focus:ring-2 focus:ring-[#20a6eb]/10 transition-all font-medium text-[#363636]"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 cursor-pointer text-slate-405 hover:text-slate-700 bg-transparent border-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <span className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
+                  <span className="text-[9px] font-bold font-mono text-slate-400 bg-slate-200/55 border border-slate-300 rounded px-1 flex items-center">/</span>
+                </span>
+              )}
+            </div>
+
+            {/* Dropdown Overlay Results */}
+            {searchFocused && searchQuery.trim() && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40 cursor-default" 
+                  onClick={() => setSearchFocused(false)} 
+                />
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden max-h-[380px] flex flex-col animate-slideIn">
+                  <div className="bg-slate-50 border-b border-slate-100 px-3 py-2 text-[10px] uppercase font-bold text-slate-400 tracking-wider font-mono flex justify-between items-center shrink-0">
+                    <span>Active Search Results</span>
+                    <span className="text-slate-400 font-normal">
+                      {(matchedArticles.length + matchedTopics.length)} records mapped
+                    </span>
+                  </div>
+                  
+                  <div className="overflow-y-auto p-2 space-y-3 divide-y divide-slate-100">
+                    
+                    {/* Articles Section */}
+                    {matchedArticles.length > 0 && (
+                      <div className="pt-1.5 first:pt-0 text-left">
+                        <span className="text-[9.5px] uppercase tracking-wider text-slate-400 font-extrabold px-2 font-mono block mb-1">Articles</span>
+                        <div className="space-y-1">
+                          {matchedArticles.map(art => {
+                            let badgeStyle = "bg-slate-100 text-slate-700";
+                            if (art.status === 'Submitted') badgeStyle = "bg-sky-50 text-[#20a6eb] border-sky-100/50";
+                            else if (art.status === 'Under Review') badgeStyle = "bg-indigo-50 text-indigo-600 border-indigo-100";
+                            else if (art.status === 'Minor Revision') badgeStyle = "bg-amber-50 text-amber-700 border-amber-100";
+                            else if (art.status === 'Rejected') badgeStyle = "bg-rose-50 text-rose-500 border-rose-100";
+                            else if (art.status === 'Escalated') badgeStyle = "bg-purple-50 text-purple-700 border-purple-100";
+                            else if (art.status === 'Approved') badgeStyle = "bg-[#20a6eb]/10 text-[#20a6eb] border-[#20a6eb]/20";
+                            else if (art.status === 'Published') badgeStyle = "bg-emerald-50 text-emerald-700 border-emerald-100";
+
+                            return (
+                              <button
+                                key={art.id}
+                                type="button"
+                                onClick={() => {
+                                  setPreviewArticle(art);
+                                  setSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 hover:bg-slate-50 rounded-lg transition-all flex items-start gap-2.5 group cursor-pointer border-0 bg-transparent"
+                              >
+                                <div className="p-1 rounded bg-sky-50 text-slate-400 group-hover:bg-sky-100 group-hover:text-[#20a6eb] transition-all">
+                                  <FileText className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-xs font-bold text-slate-800 truncate leading-snug group-hover:text-[#20a6eb] transition-all">{art.title}</h5>
+                                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-450 font-medium">
+                                    <span>Author:</span>
+                                    <span className="text-slate-600 truncate font-semibold">{art.writerName}</span>
+                                    <span className="text-slate-300">•</span>
+                                    <span className={`px-1.5 py-0.2 rounded text-[8.5px] font-semibold border ${badgeStyle}`}>{art.status}</span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Topics Section */}
+                    {matchedTopics.length > 0 && (
+                      <div className="pt-2 first:pt-0 text-left">
+                        <span className="text-[9.5px] uppercase tracking-wider text-slate-400 font-extrabold px-2 font-mono block mb-1">Ideation Topics</span>
+                        <div className="space-y-1">
+                          {matchedTopics.map(top => {
+                            let badgeStyle = "bg-slate-100 text-slate-600 border-slate-200";
+                            if (top.status === 'Active') badgeStyle = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                            else if (top.status === 'Completed') badgeStyle = "bg-indigo-50 text-indigo-750 border-indigo-100";
+                            else if (top.status === 'Approved') badgeStyle = "bg-sky-50 text-[#20a6eb] border-sky-100";
+                            else if (top.status === 'Released') badgeStyle = "bg-emerald-50 text-emerald-705 border-emerald-150";
+
+                            return (
+                              <button
+                                key={top.id}
+                                type="button"
+                                onClick={() => {
+                                  setPreviewTopic(top);
+                                  setSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 hover:bg-slate-50 rounded-lg transition-all flex items-start gap-2.5 group cursor-pointer border-0 bg-transparent"
+                              >
+                                <div className="p-1 rounded bg-orange-50 text-slate-400 group-hover:bg-orange-100 group-hover:text-[#e86420] transition-all">
+                                  <Compass className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-xs font-bold text-slate-800 truncate leading-snug group-hover:text-[#e86420] transition-all">{top.title}</h5>
+                                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-450 font-medium font-sans">
+                                    <span>Proposed:</span>
+                                    <span className="text-slate-600 truncate font-semibold">{top.submitterName}</span>
+                                    {top.claimedByName && (
+                                      <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="text-slate-450 italic">Claim: {top.claimedByName}</span>
+                                      </>
+                                    )}
+                                    <span className="text-slate-300">•</span>
+                                    <span className={`px-1.5 py-0.2 rounded text-[8.5px] font-semibold border ${badgeStyle}`}>{top.status}</span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No matches */}
+                    {matchedArticles.length === 0 && matchedTopics.length === 0 && (
+                      <div className="p-6 text-center space-y-2">
+                        <div className="flex justify-center animate-bounce duration-1000">
+                          <FileQuestion className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <h6 className="text-xs font-bold text-slate-700">No Matching Records Located</h6>
+                        <p className="text-[10px] text-slate-400 leading-relaxed max-w-[200px] mx-auto">
+                          Check spelling parameters or search with tags (e.g., "Draft", "Approved", "Venice")
+                        </p>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-4">
@@ -690,15 +1056,15 @@ export default function App() {
           >
             Editor Queue
           </button>
-          {['Quality Checker', 'Editor', 'Senior Editor', 'Admin'].includes(currentUser.role) && (
+          {(hasPermission('quality_audit') || ['Quality Checker', 'Editor', 'Senior Editor', 'Admin'].includes(currentUser.role)) && (
             <button
-              onClick={() => setActiveTab('quality-check')}
+               onClick={() => setActiveTab('quality-check')}
               className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'quality-check' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
             >
               Quality Check
             </button>
           )}
-          {['Publisher', 'Senior Editor', 'Admin'].includes(currentUser.role) && (
+          {(hasPermission('publish_live') || ['Publisher', 'Senior Editor', 'Admin'].includes(currentUser.role)) && (
             <button
               onClick={() => setActiveTab('publisher')}
               className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'publisher' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
@@ -712,7 +1078,13 @@ export default function App() {
           >
             Analytics
           </button>
-          {currentUser.role === 'Admin' && (
+          <button
+            onClick={() => setActiveTab('performance')}
+            className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'performance' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
+          >
+            Performance
+          </button>
+          {(hasPermission('manage_system') || ['Admin', 'Senior Editor'].includes(currentUser.role)) && (
             <button
               onClick={() => setActiveTab('admin')}
               className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'admin' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
@@ -793,6 +1165,7 @@ export default function App() {
                 onPostComment={handlePostComment}
                 onSubmitDecision={handleSubmitDecision}
                 onAddToast={addToast}
+                onRefresh={() => syncData(true)}
               />
             )}
 
@@ -829,7 +1202,19 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'admin' && currentUser.role === 'Admin' && (
+            {activeTab === 'performance' && config && (
+              <PerformanceManagement
+                currentUser={currentUser}
+                users={users}
+                articles={articles}
+                topics={topics}
+                config={config}
+                onUpdateConfig={handleUpdateConfig}
+                onAddToast={addToast}
+              />
+            )}
+
+            {activeTab === 'admin' && (hasPermission('manage_system') || ['Admin', 'Senior Editor'].includes(currentUser.role)) && (
               <AdminPanel
                 currentUser={currentUser}
                 users={users}
@@ -838,6 +1223,10 @@ export default function App() {
                 onUpdateRole={handleUpdateRole}
                 onUpdateConfig={handleUpdateConfig}
                 onAddToast={addToast}
+                onAddUser={handleAddUser}
+                onDeleteUser={handleDeleteUser}
+                onResetDatabase={handleResetDatabase}
+                onRefresh={() => syncData(true)}
               />
             )}
 
@@ -868,6 +1257,220 @@ export default function App() {
         </footer>
 
       </div>
+
+      {/* ARTICLE UNIVERSAL PREVIEW MODAL */}
+      {previewArticle && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" id="search-article-preview-modal">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
+              <div className="space-y-1.5 flex-1 pr-6 text-left">
+                <span className="text-[9px] font-mono font-black uppercase text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Universal Records • Article Specs</span>
+                <h3 className="text-sm font-bold text-slate-800 tracking-tight font-display pr-3 leading-snug">{previewArticle.title}</h3>
+                <div className="flex flex-wrap gap-2 text-[10.5px] text-slate-500 font-sans">
+                  <span>Author: <strong className="text-slate-700 font-black">{previewArticle.writerName}</strong></span>
+                  <span>•</span>
+                  <span>Created: <strong className="text-slate-600">{new Date(previewArticle.createdAt).toLocaleDateString()}</strong></span>
+                  <span>•</span>
+                  <span>Rating: <strong className="text-sky-600">{previewArticle.score}/100</strong></span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewArticle(null)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer active:scale-95 transition-all bg-transparent border-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 overflow-y-auto space-y-6 font-sans">
+              
+              {/* Status Indicator Card */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-left">
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Status Badge</span>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded font-black border bg-[#20a6eb]/10 text-[#20a6eb] border-[#20a6eb]/10 uppercase text-[10px]">
+                    {previewArticle.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Review Rounds</span>
+                  <span className="font-bold text-slate-700 block mt-1">{previewArticle.reviewCycles} Cycle(s)</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Assigned Editor</span>
+                  <span className="font-bold text-slate-700 block mt-1 truncate">{previewArticle.editorName || 'Not Assigned'}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Topic ID Mapped</span>
+                  <span className="font-mono text-slate-600 block mt-1 font-bold">{previewArticle.topicId || 'Free Flow'}</span>
+                </div>
+              </div>
+
+              {/* Text Area Content Formatted */}
+              <div className="space-y-2 text-left">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Article Payload Preview</span>
+                <div className="bg-slate-900 text-slate-200 p-5 rounded-2xl max-h-[220px] overflow-y-auto border border-slate-800 text-[11.5px] leading-relaxed font-mono whitespace-pre-wrap select-all shadow-inner">
+                  {previewArticle.content || 'No text written in this draft block.'}
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="space-y-3 text-left">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Feedback / Editorial Notes ({previewArticle.comments?.length || 0})</span>
+                {previewArticle.comments?.length > 0 ? (
+                  <div className="space-y-2.5 max-h-[160px] overflow-y-auto">
+                    {previewArticle.comments.map((comm, idx) => (
+                      <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-150 text-xs">
+                        <div className="flex justify-between text-[10px] pb-1 font-mono text-slate-400 font-bold">
+                          <span>{comm.authorName} ({comm.authorRole})</span>
+                          <span>{new Date(comm.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                        <p className="text-[#363636] leading-relaxed">{comm.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-450 italic">No feedback posts submitted.</p>
+                )}
+              </div>
+
+            </div>
+
+            {/* Footer containing quick link to portal desk */}
+            <div className="bg-slate-50 px-6 py-4.5 border-t border-slate-200 flex justify-between items-center shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 uppercase font-black">Ready to inspect?</span>
+              <button
+                type="button"
+                onClick={() => {
+                  let tabTarget: any = 'writer';
+                  if (['Submitted', 'Under Review', 'Minor Revision', 'Rejected', 'Escalated'].includes(previewArticle.status)) {
+                    tabTarget = 'editor';
+                  } else if (previewArticle.status === 'Approved') {
+                    tabTarget = 'quality-check';
+                  } else if (previewArticle.status === 'Published') {
+                    tabTarget = 'publisher';
+                  }
+                  setActiveTab(tabTarget);
+                  setPreviewArticle(null);
+                  addToast(`Switched active desk, locating requested article...`, 'info');
+                }}
+                className="px-4 py-2 bg-[#363636] hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer border-0"
+              >
+                <span>Navigate to Panel</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* TOPIC UNIVERSAL PREVIEW MODAL */}
+      {previewTopic && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" id="search-topic-preview-modal">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
+              <div className="space-y-1.5 flex-1 pr-6 text-left">
+                <span className="text-[9px] font-mono font-black uppercase text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Universal Records • Concept Brief specs</span>
+                <h3 className="text-sm font-bold text-slate-800 tracking-tight font-display pr-3 leading-snug">{previewTopic.title}</h3>
+                <div className="flex flex-wrap gap-2 text-[10.5px] text-slate-500 font-sans">
+                  <span>Proposed By: <strong className="text-slate-700 font-black">{previewTopic.submitterName}</strong></span>
+                  <span>•</span>
+                  <span>Category: <strong className="text-slate-650 bg-slate-100 px-1.5 py-0.2 rounded font-semibold text-[10px] border border-slate-200">{previewTopic.category}</strong></span>
+                  <span>•</span>
+                  <span>Min Claim: <strong className="text-[#e86420]">{previewTopic.durationMinutes} mins</strong></span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewTopic(null)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer active:scale-95 transition-all bg-transparent border-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 overflow-y-auto space-y-6 font-sans">
+              
+              {/* Status Card */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-left">
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Concept Status</span>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 rounded font-black border bg-emerald-50 text-emerald-700 border-emerald-100 uppercase text-[10px]">
+                    {previewTopic.status}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Claimed Identity</span>
+                  <span className="font-bold text-slate-700 block mt-1 truncate">{previewTopic.claimedByName || 'Open Assignment'}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Released Counter</span>
+                  <span className="font-bold text-slate-700 block mt-1">{previewTopic.releasedCount} release(s)</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wider">Concept Identifier</span>
+                  <span className="font-mono text-slate-600 block mt-1 font-bold">{previewTopic.id}</span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1 text-left">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Concept Description Brief</span>
+                <p className="text-xs text-slate-750 bg-slate-50 p-4 rounded-xl border border-slate-150 leading-relaxed font-sans">{previewTopic.description || 'No descriptive brief documented.'}</p>
+              </div>
+
+              {/* Moderation logs */}
+              <div className="space-y-3 text-left">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Moderation History Log</span>
+                {previewTopic.moderationHistory?.length > 0 ? (
+                  <div className="space-y-2.5 max-h-[160px] overflow-y-auto font-mono text-[10px]">
+                    {previewTopic.moderationHistory.map((item, index) => (
+                      <div key={index} className="bg-slate-50 p-3 rounded-xl border border-slate-150 font-sans text-xs">
+                        <div className="flex justify-between text-[10px] pb-1 font-mono text-slate-400 font-bold">
+                          <span>Action: {item.action} by {item.actorName} ({item.actorRole})</span>
+                          <span>{new Date(item.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        {item.comments && (
+                          <p className="text-slate-650 italic mt-0.5 bg-white p-1.5 rounded border border-slate-100">"{item.comments}"</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-450 italic">No historical moderation events recorded.</p>
+                )}
+              </div>
+
+            </div>
+
+            {/* Footer with action to navigate to Concepts Pool */}
+            <div className="bg-slate-50 px-6 py-4.5 border-t border-slate-200 flex justify-between items-center shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 uppercase font-black">Interested in drafting this concept?</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('topics');
+                  setPreviewTopic(null);
+                  addToast(`Switched to Concept Pool to request or claim assignment...`, 'info');
+                }}
+                className="px-4 py-2 bg-[#363636] hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer border-0"
+              >
+                <span>Navigate to Concepts Pool</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Real-time Toast notification rendering */}
       <div className="fixed top-6 right-6 z-50 pointer-events-none space-y-2">

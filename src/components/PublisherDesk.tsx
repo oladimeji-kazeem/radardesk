@@ -50,7 +50,7 @@ export default function PublisherDesk({
       await onSubmitDecision({
         articleId: selectedArticle.id,
         action: 'Publish',
-        comments: publishedComments.trim() || 'Ready for Travel Radar live release.'
+        comments: publishedComments.trim() || 'Ready for RadarDesk live release.'
       });
       onAddToast(`Success! "${selectedArticle.title}" has been deployed live to the Radar desks!`, 'success');
       setActiveArticleId(null);
@@ -197,7 +197,7 @@ export default function PublisherDesk({
                     }`}
                   >
                     <Tv className="w-3.5 h-3.5" />
-                    <span>Travel Radar Web</span>
+                    <span>RadarDesk Web</span>
                   </button>
                   <button
                     onClick={() => setPreviewDevice('mobile')}
@@ -314,7 +314,7 @@ export default function PublisherDesk({
                     className="w-full md:w-auto px-6 py-3 bg-[#e86420] hover:bg-[#d05315] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Publish live to Travel Radar feed</span>
+                    <span>Publish live to RadarDesk feed</span>
                   </button>
                 </div>
               </div>

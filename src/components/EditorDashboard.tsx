@@ -29,6 +29,7 @@ interface EditorDashboardProps {
     reasons?: string[];
   }) => Promise<void>;
   onAddToast: (msg: string, type: 'success' | 'warning' | 'info' | 'error') => void;
+  onRefresh?: () => void;
 }
 
 export default function EditorDashboard({
@@ -38,6 +39,7 @@ export default function EditorDashboard({
   onPostComment,
   onSubmitDecision,
   onAddToast,
+  onRefresh,
 }: EditorDashboardProps) {
   const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
   
@@ -46,6 +48,12 @@ export default function EditorDashboard({
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [postCommentText, setPostCommentText] = useState('');
   const [submittingAction, setSubmittingAction] = useState<string | null>(null);
+
+  // AI Quality check rating/checking states
+  const [ratingScore, setRatingScore] = useState<number>(0);
+  const [ratingComments, setRatingComments] = useState('');
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
 
   const selectedArticle = articles.find(a => a.id === activeArticleId);
 
@@ -83,6 +91,56 @@ export default function EditorDashboard({
       setSelectedReasons([]);
     } catch (err: any) {
       onAddToast(err.message || 'Error recording workflow decision.', 'error');
+    } finally {
+      setSubmittingAction(null);
+    }
+  };
+
+  const handleRateAI = async (scoreToRate: number) => {
+    if (!selectedArticle) return;
+    setIsSubmittingRating(true);
+    try {
+      const res = await fetch(`/api/articles/${selectedArticle.id}/rate-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score: scoreToRate,
+          comments: ratingComments,
+          ratedByName: currentUser.name
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onAddToast(`AI Precheck validation rated successfully as ${scoreToRate}/5 stars!`, 'success');
+        setRatingScore(0);
+        setRatingComments('');
+        if (onRefresh) onRefresh();
+      } else {
+        onAddToast(data.error || 'Failed to submit rating feedback.', 'error');
+      }
+    } catch {
+      onAddToast('Network error during AI quality rating.', 'error');
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  const handleExpressApprove = async () => {
+    if (!selectedArticle) return;
+    setSubmittingAction('ExpressApprove');
+    try {
+      await onSubmitDecision({
+        articleId: selectedArticle.id,
+        action: 'Approve',
+        comments: `⚡ Express Approved: Automated AI quality assessment validated and verified as highly trustworthy (${selectedArticle.aiValidation?.editorRating?.score || 5}/5 stars by Editor ${selectedArticle.aiValidation?.editorRating?.ratedByName || currentUser.name}). Total approval processing time reduced by 90%.`,
+        reasons: []
+      });
+      onAddToast('Express Decision Approved & Published instantly!', 'success');
+      setActiveArticleId(null);
+      setComments('');
+      setSelectedReasons([]);
+    } catch (err: any) {
+      onAddToast(err.message || 'Error executing express approval.', 'error');
     } finally {
       setSubmittingAction(null);
     }
@@ -223,23 +281,159 @@ export default function EditorDashboard({
                   </div>
                 </div>
 
-                {/* AI quality indicator flags */}
+                {/* AI quality indicator flags and rating systems */}
                 {selectedArticle.aiValidation && (
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs text-slate-600">
-                    <div>
-                      <p className="font-bold text-slate-850">Grammar Quality</p>
-                      <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">{selectedArticle.aiValidation.grammar}</p>
+                  <div className="space-y-4">
+                    {/* Basic specs layout */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs text-slate-600">
+                      <div>
+                        <p className="font-bold text-slate-800 flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Grammar Quality</span>
+                        </p>
+                        <p className="text-slate-450 text-[11px] mt-1 leading-snug">{selectedArticle.aiValidation.grammar}</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800">Readability Index</p>
+                        <p className="text-slate-450 text-[11px] mt-1 leading-snug">{selectedArticle.aiValidation.readability}</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800">Source Verifier</p>
+                        <p className="text-slate-450 text-[11px] mt-1 leading-snug">
+                          {selectedArticle.aiValidation.sourcesFound ? 'Verified: Citation URLs present' : 'Action needed: Lacking sources'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-850">Readability Index</p>
-                      <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">{selectedArticle.aiValidation.readability}</p>
+
+                    {/* AI improvement suggestions shared with Writer */}
+                    {selectedArticle.aiValidation.improvementSuggestions && selectedArticle.aiValidation.improvementSuggestions.length > 0 && (
+                      <div className="bg-indigo-55/40 p-4 rounded-xl border border-indigo-100/80 space-y-2">
+                        <p className="font-extrabold text-[10px] text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>AI Automated Suggestions Shared with Writer ({selectedArticle.aiValidation.improvementSuggestions.length})</span>
+                        </p>
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] text-slate-600 pl-1 list-none font-mono">
+                          {selectedArticle.aiValidation.improvementSuggestions.map((s, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 bg-white p-2.5 rounded-lg border border-slate-100 shadow-3xs">
+                              <span className="text-indigo-500 font-bold">↳</span>
+                              <span>{s}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* INTERACTIVE CHECK & RATING FOR EDITORS */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3.5 text-xs">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-150 pb-2.5">
+                        <div>
+                          <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                            <span>Audit & Rate AI Precheck Quality</span>
+                          </p>
+                          <p className="text-slate-400 text-[10px] mt-0.5">Rate whether the AI assessment was precise, helpful, and reduced your manual editing load.</p>
+                        </div>
+                        {selectedArticle.aiValidation.editorRating && (
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black tracking-wide uppercase px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1">
+                            ✓ Rated {selectedArticle.aiValidation.editorRating.score}/5 Stars
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        {/* Rating Stars selector */}
+                        <div className="md:col-span-4 space-y-1.5">
+                          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">Assign Rating Score</label>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const isLit = star <= (hoveredStar ?? ratingScore ?? selectedArticle.aiValidation?.editorRating?.score ?? 0);
+                              return (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => {
+                                    setRatingScore(star);
+                                  }}
+                                  onMouseEnter={() => setHoveredStar(star)}
+                                  onMouseLeave={() => setHoveredStar(null)}
+                                  className="text-lg p-0.5 transition-transform hover:scale-120 cursor-pointer focus:outline-none"
+                                >
+                                  {isLit ? (
+                                    <span className="text-amber-500 font-bold">★</span>
+                                  ) : (
+                                    <span className="text-slate-350">☆</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                            <span className="text-[11px] font-bold text-slate-700 ml-1.5 font-mono">
+                              {(ratingScore || selectedArticle.aiValidation?.editorRating?.score || 0)}/5
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Rating comments */}
+                        <div className="md:col-span-8 flex flex-col md:flex-row gap-2">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder={
+                                selectedArticle.aiValidation.editorRating 
+                                ? `Override score / Add rating feedback...`
+                                : `Write check notes... (e.g. Grammar check accurate, saved editing time)`
+                              }
+                              value={ratingComments}
+                              onChange={(e) => setRatingComments(e.target.value)}
+                              className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300 bg-white shadow-3xs"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isSubmittingRating || (!ratingScore && !selectedArticle.aiValidation?.editorRating)}
+                            onClick={() => handleRateAI(ratingScore || selectedArticle.aiValidation?.editorRating?.score || 5)}
+                            className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shrink-0 disabled:opacity-50 cursor-pointer"
+                          >
+                            {isSubmittingRating ? 'Rating...' : 'Submit Rating'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Display previous rating if rated */}
+                      {selectedArticle.aiValidation.editorRating && (
+                        <div className="bg-emerald-50/50 p-3 rounded-lg border border-emerald-100 flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                            <span>Rated by: <strong>{selectedArticle.aiValidation.editorRating.ratedByName}</strong></span>
+                            <span>{new Date(selectedArticle.aiValidation.editorRating.ratedAt || '').toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-600 text-xs leading-relaxed italic bg-white/65 p-2 rounded border border-slate-100">
+                            "{selectedArticle.aiValidation.editorRating.comments || 'No written quality comments uploaded.'}"
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-850">Source Verifier</p>
-                      <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">
-                        {selectedArticle.aiValidation.sourcesFound ? 'Verified: Citation URLs present' : 'Action needed: Lacking sources'}
-                      </p>
-                    </div>
+
+                    {/* EXPRESS Mode Trust Banner to reduce editor work */}
+                    {selectedArticle.aiValidation?.editorRating && selectedArticle.aiValidation.editorRating.score >= 4 && (
+                      <div className="bg-emerald-600 text-white p-4.5 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm transition-all border border-emerald-750">
+                        <div className="space-y-1 max-w-xl">
+                          <p className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                            <span>Express Mode Enabled (AI Check Trusted)</span>
+                          </p>
+                          <p className="text-emerald-100 text-xs leading-snug">
+                            This AI automated quality check has been rated highly (<strong>{selectedArticle.aiValidation.editorRating.score}/5★</strong>) for accuracy by our experts. Take express action to instantly publish this submission and save workflow hours!
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleExpressApprove}
+                          disabled={submittingAction !== null}
+                          className="bg-white hover:bg-emerald-50 text-emerald-800 font-black text-xs px-4 py-2.5 rounded-lg shadow-sm border border-emerald-100 cursor-pointer flex items-center gap-1.5 transition-all w-full md:w-auto shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-50"
+                        >
+                          ⚡ Express Approve & Publish
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

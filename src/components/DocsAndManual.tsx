@@ -37,7 +37,7 @@ export default function DocsAndManual({
   onAddToast,
   syncMainData
 }: DocsAndManualProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'user-manual' | 'tech-db-spec' | 'supabase-console'>('user-manual');
+  const [activeSubTab, setActiveSubTab] = useState<'user-manual' | 'tech-db-spec' | 'supabase-console' | 'deployment-info'>('user-manual');
   
   // Supabase states
   const [supabaseStatus, setSupabaseStatus] = useState<'untested' | 'connected' | 'error'>('untested');
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS public.radardesk_topics (
 );
 
 -- 3. CREATE ARTICLES WORKFLOW TABLE
-CREATE TABLE table_name IF NOT EXISTS public.radardesk_articles (
+CREATE TABLE IF NOT EXISTS public.radardesk_articles (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT,
@@ -163,7 +163,7 @@ CREATE TABLE table_name IF NOT EXISTS public.radardesk_articles (
 
 -- Insert Demo Admin Profile to boot
 INSERT INTO public.radardesk_users (id, name, role, email) 
-VALUES ('u-4', 'David Admin', 'Admin', 'david.a@radar.com')
+VALUES ('u-4', 'David Admin', 'Admin', 'david.a@travelradar.com')
 ON CONFLICT (id) DO NOTHING;`;
 
   return (
@@ -206,7 +206,7 @@ ON CONFLICT (id) DO NOTHING;`;
       </div>
 
       {/* Primary tab switcher */}
-      <div className="flex bg-slate-200 p-1 rounded-xl max-w-md text-xs font-semibold">
+      <div className="flex bg-slate-200 p-1 rounded-xl max-w-2xl text-xs font-semibold">
         <button
           onClick={() => setActiveSubTab('user-manual')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
@@ -233,6 +233,15 @@ ON CONFLICT (id) DO NOTHING;`;
         >
           <Terminal className="w-3.5 h-3.5" />
           <span>Supabase Sync</span>
+        </button>
+        <button
+          onClick={() => setActiveSubTab('deployment-info')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
+            activeSubTab === 'deployment-info' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5 text-[#20a6eb]" />
+          <span>Deploy & Tech</span>
         </button>
       </div>
 
@@ -330,6 +339,21 @@ ON CONFLICT (id) DO NOTHING;`;
                     </div>
                   </div>
 
+                </div>
+              </div>
+
+              {/* Enforced Organizational Domain Restrictions Docs */}
+              <div className="bg-amber-50/50 border border-amber-200 p-5 rounded-2xl space-y-2 text-left">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <ShieldCheck className="w-5 h-5 text-amber-600" />
+                  <span className="font-extrabold text-xs uppercase tracking-wider font-display">Organizational Security & Domain Restraints (§71-A)</span>
+                </div>
+                <div className="text-xs text-slate-600 leading-relaxed font-sans space-y-1.5">
+                  <p>In accordance with RadarDesk data sovereignty and RBAC safety directives, enrollment onto any level of the workspace is strictly restricted to active corporate personnel:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-[11px] text-slate-500">
+                    <li><strong>Validated Domains Alone:</strong> Registration is restricted to users holding registered organizational email addresses matching <strong><code>@travelradar.com</code></strong>. All other registrations are rejected immediately at the API gate level.</li>
+                    <li><strong>Dual-key Authentication:</strong> Self-registered operators are placed in a <em>"Pending Approval"</em> pool. Complete workspace features are locked until an authorized System Admin elects to grant licenses on the System Control directory.</li>
+                  </ul>
                 </div>
               </div>
 
@@ -590,6 +614,161 @@ ON CONFLICT (id) DO NOTHING;`;
                   </div>
                 )}
 
+              </div>
+
+            </div>
+          )}
+
+          {activeSubTab === 'deployment-info' && (
+            <div className="space-y-6">
+              
+              {/* Architecture Blueprint Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-sky-50 text-[#20a6eb] border border-sky-100">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider font-mono">System Architecture & Core Frameworks</h3>
+                    <p className="text-[11px] text-slate-400">High-level software design topology for RadarDesk</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-sans">
+                  
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1.5">
+                    <span className="font-extrabold text-[10px] text-[#20a6eb] uppercase font-mono block">Express Backend</span>
+                    <p className="text-[11px] text-slate-500 leading-normal">
+                      High-performance REST API routing. Integrates static asset bundling middleware for unified container delivery.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1.5">
+                    <span className="font-extrabold text-[10px] text-[#e86420] uppercase font-mono block">React & Vite SPA</span>
+                    <p className="text-[11px] text-slate-500 leading-normal">
+                      Stateful front-end scaffold modularized across reactive panels. Utilizing Tailwind CSS micro-parameters with Inter and Space Grotesk typography.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1.5">
+                    <span className="font-extrabold text-[10px] text-indigo-500 uppercase font-mono block">Atomicity & local DB</span>
+                    <p className="text-[11px] text-slate-500 leading-normal">
+                      ACID transactions via a JSON filesystem database engine with RAM buffer caches. Overcomes concurrency limitations securely.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1.5">
+                    <span className="font-extrabold text-[10px] text-emerald-500 uppercase font-mono block">External Gateways</span>
+                    <p className="text-[11px] text-slate-500 leading-normal">
+                      Bidirectional real-time integration relays supporting Supabase PostgreSQL and Google Gemini AI content score evaluation.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Local Install & Setup Manual */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans text-xs">
+                
+                {/* Section A: Installation & Setup */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-500 border border-indigo-100">
+                      <Terminal className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-slate-800 text-sm">Local Development & Environment Setup</span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">1. Install Dependencies</span>
+                      <p className="text-[11px] text-slate-500 leading-normal mb-1">Populate the local node modules pool and download CLI plugins:</p>
+                      <pre className="bg-slate-950 text-slate-300 p-2.5 rounded-lg text-[10px] font-mono border border-slate-800">
+                        npm install
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">2. Configure Environment Secrets</span>
+                      <p className="text-[11px] text-slate-500 leading-normal mb-1">Create a local `.env` configuration file in the workspace root directory:</p>
+                      <pre className="bg-slate-950 text-emerald-400 p-2.5 rounded-lg text-[10px] font-mono border border-slate-800 block select-all">
+                        {"# System secrets configuration\nPORT=3000\nNODE_ENV=development\n\n# Secure AI Content pre-validation API Key\nGEMINI_API_KEY=your_gemini_api_key_here"}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">3. Execute Local Server & Hot Reload</span>
+                      <p className="text-[11px] text-slate-500 leading-normal mb-1">Launch backend typescript server proxying assets and API interfaces:</p>
+                      <pre className="bg-slate-950 text-slate-300 p-2.5 rounded-lg text-[10px] font-mono border border-slate-800">
+                        npm run dev
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section B: Production Compilation & Run */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-orange-50 text-[#e86420] border border-orange-100">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-slate-800 text-sm">Production Compilation & Deployment</span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">1. Perform Production Build</span>
+                      <p className="text-[11px] text-slate-500 leading-normal mb-1">Trigger bundle compilation. React client files are optimized. Express server is packed into a standalone CommonJS bundle (`dist/server.cjs`) using esbuild:</p>
+                      <pre className="bg-slate-950 text-slate-300 p-2.5 rounded-lg text-[10px] font-mono border border-slate-800">
+                        npm run build
+                      </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">2. Start Standalone Stack</span>
+                      <p className="text-[11px] text-slate-500 leading-normal mb-1">Initiate production server serving optimized static payloads and active API routes:</p>
+                      <pre className="bg-slate-950 text-slate-300 p-2.5 rounded-lg text-[10px] font-mono border border-slate-800">
+                        npm start
+                      </pre>
+                    </div>
+
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/60 font-mono text-[9.5px]">
+                      <span className="font-bold text-amber-800 uppercase block mb-0.5">⚠️ Ingress Inbound Routing Restriction</span>
+                      <p className="text-slate-600 leading-relaxed">
+                        The proxy infrastructure routes external web queries exclusively to **Port 3000**. Do not attempt to override the environment PORT parameter. The backend binds unconditionally to host `0.0.0.0` at port `3000`.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Security Gating Details */}
+              <div className="bg-slate-900 text-slate-200 rounded-2xl p-6 shadow-xl space-y-4 font-sans text-xs">
+                <div className="flex items-center gap-2 text-white font-display border-b border-slate-850 pb-2.5">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="font-bold uppercase tracking-wider text-sm">Organizational Safety Gating Policies</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] text-emerald-300 font-extrabold block">Domain Restrictions</span>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Account authentications and registrations undergo domain checks at both the database schema layer and routing middleware gates. Only accounts ending in <strong>@travelradar.com</strong> can establish tokens.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] text-emerald-300 font-extrabold block">RBAC Access Control</span>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Security tokens map to rigorous role scopes: Writer, Editor, Senior Editor, Quality Checker, Publisher, and Admin. Modifying resources outside of authorized roles yields HTTP 403 Forbidden checks.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] text-emerald-300 font-extrabold block">Direct Pin Verification</span>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Forgot password sequences generate one-time validation codes mapped to emails in the system. The local database holds secure codes, enabling bypass of real SMTP keys for sandbox testing.
+                    </p>
+                  </div>
+                </div>
               </div>
 
             </div>
