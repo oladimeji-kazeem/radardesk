@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { Logo } from './Logo';
-import { 
-  Sparkles, 
-  Key, 
-  Mail, 
-  CheckCircle, 
-  HelpCircle, 
-  ArrowLeft, 
-  RefreshCw, 
-  UserPlus, 
+import {
+  Sparkles,
+  Key,
+  Mail,
+  CheckCircle,
+  HelpCircle,
+  ArrowLeft,
+  RefreshCw,
+  UserPlus,
   FileText
 } from 'lucide-react';
+import { supabase, isStandalone, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
 
 interface AuthScreenProps {
   onLoginSuccess: (user: User) => void;
   onAddToast: (msg: string, type: 'success' | 'warning' | 'info' | 'error') => void;
   users: User[];
+  onBack?: () => void;
 }
 
-export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthScreenProps) {
+export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }: AuthScreenProps) {
   const [activeTab, setActiveTab] = useState<'signin' | 'register' | 'forgot'>('signin');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,39 +44,59 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
 
   // Email validation helper to enforce organization domain check
   const validateEmailDomain = (email: string): boolean => {
-    return email.trim().toLowerCase().endsWith('@travelradar.com');
+    return email.trim().toLowerCase().endsWith('@travelradar.aero');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailLower = loginEmail.trim().toLowerCase();
-    
+
     if (!emailLower || !loginPassword.trim()) {
       onAddToast('Please fill out all credentials fields.', 'warning');
       return;
     }
 
     if (!validateEmailDomain(emailLower)) {
-      onAddToast('Access Blocked: Only official @travelradar.com enterprise email accounts are permitted on this gateway.', 'error');
+      onAddToast('Access Blocked: Only official @travelradar.aero enterprise email accounts are permitted on this gateway.', 'error');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailLower, password: loginPassword })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        onAddToast(`Access Granted: Welcome back, ${data.user.name}!`, 'success');
-        onLoginSuccess(data.user);
+      if (isStandalone()) {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: emailLower,
+          password: loginPassword
+        });
+        if (authError) throw authError;
+
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', emailLower)
+          .single();
+        if (profileError) throw new Error('Operator profile not found in directory.');
+        if (userProfile.approved === false) throw new Error('Review Pending: Your organization access has not been approved.');
+
+        onAddToast(`Access Granted: Welcome back, ${userProfile.name}!`, 'success');
+        onLoginSuccess(userProfile as any);
       } else {
-        onAddToast(data.error || 'Authentication failed.', 'error');
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailLower, password: loginPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          onAddToast(`Access Granted: Welcome back, ${data.user.name}!`, 'success');
+          onLoginSuccess(data.user);
+        } else {
+          onAddToast(data.error || 'Authentication failed.', 'error');
+        }
       }
-    } catch {
-      onAddToast('Network error while executing login.', 'error');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      onAddToast(`${err.message || 'Network error'} ${err.code ? `(Code: ${err.code})` : ''}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -90,37 +112,60 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
     }
 
     if (!validateEmailDomain(emailLower)) {
-      onAddToast('Enrollment Blocked: Registration is strictly restricted to @travelradar.com organization email accounts.', 'error');
+      onAddToast('Enrollment Blocked: Registration is strictly restricted to @travelradar.aero organization email accounts.', 'error');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: regName.trim(),
+      if (isStandalone()) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: emailLower,
           password: regPassword,
-          role: regRole
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        onAddToast('Self-service registration submitted successfully!', 'success');
+          options: { data: { full_name: regName.trim(), role: regRole } }
+        });
+        if (authError) throw authError;
+
+        const { data, error: profileError } = await supabase.from('users').insert({
+          id: authData.user?.id,
+          name: regName.trim(),
+          email: emailLower,
+          role: regRole,
+          password: regPassword,
+          approved: true
+        }).select().single();
+        if (profileError) throw profileError;
+
+        onAddToast('Account verified: Registration successful! You can now sign in immediately.', 'success');
         setActiveTab('signin');
-        // Pre-fill email for ease of login once approved
         setLoginEmail(emailLower);
-        setRegName('');
-        setRegEmail('');
-        setRegPassword('');
-        setRegRole('Writer');
       } else {
-        onAddToast(data.error || 'Could not complete registration request.', 'error');
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: regName.trim(),
+            email: emailLower,
+            password: regPassword,
+            role: regRole
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          onAddToast('Account verified: Registration successful! You can now sign in immediately.', 'success');
+          setActiveTab('signin');
+          setLoginEmail(emailLower);
+          setRegName('');
+          setRegEmail('');
+          setRegPassword('');
+          setRegRole('Writer');
+        } else {
+          onAddToast(data.error || 'Could not complete registration request.', 'error');
+        }
       }
-    } catch {
-      onAddToast('Network error while completing registration.', 'error');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      onAddToast(`${err.message || 'Network error'} ${err.code ? `(Code: ${err.code})` : ''}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +181,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
     }
 
     if (!validateEmailDomain(emailLower)) {
-      onAddToast('Recovery Blocked: Password resets are restricted to official @travelradar.com organization accounts.', 'error');
+      onAddToast('Registration Error: System access is strictly restricted to employees with an official @travelradar.aero email address.', 'warning');
       return;
     }
 
@@ -208,7 +253,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans select-none text-left" id="auth-canvas-container">
-      
+
       {/* Top micro-premium neon gradient stripe from the home page */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] via-[#e86420] to-[#363636]" />
 
@@ -217,7 +262,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
       <div className="absolute bottom-[20%] left-[5%] w-80 h-80 rounded-full bg-[#20a6eb]/10 blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-lg bg-white border border-slate-200 shadow-2xl rounded-3xl overflow-hidden p-6 md:p-8 space-y-6 relative z-10" id="auth-core-terminal">
-        
+
         {/* Top Header Logo resembling the Landing Page RD Logo */}
         <div className="text-center space-y-2 pt-1">
           <div className="flex justify-center items-center gap-2.5">
@@ -227,6 +272,15 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
             </span>
           </div>
           <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider">Secure Personnel Authentication Desk</p>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mt-2 text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase flex items-center gap-1 mx-auto transition-colors"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Back to home</span>
+            </button>
+          )}
         </div>
 
         {/* Tab Switcher - Visual Harmony layout */}
@@ -259,14 +313,14 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
                 <input
                   type="email"
                   required
-                  placeholder="e.g. alisha.v@travelradar.com"
+                  placeholder="e.g. alisha.v@travelradar.aero"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full bg-white border border-slate-250 rounded-xl p-3 pr-24 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs"
                   id="login-email-input"
                 />
                 <span className="absolute right-3 top-2.5 bg-slate-100 text-slate-500 border border-slate-200 text-[8.5px] font-mono font-extrabold px-2 py-1 rounded-md uppercase">
-                  @travelradar.com
+                  @travelradar.aero
                 </span>
               </div>
             </div>
@@ -336,7 +390,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
                 <input
                   type="email"
                   required
-                  placeholder="e.g. name@travelradar.com"
+                  placeholder="e.g. name@travelradar.aero"
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
                   className="w-full bg-white border border-slate-250 rounded-xl p-3 pr-24 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs animate-fadeIn"
@@ -346,7 +400,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
                   REQUIRED
                 </span>
               </div>
-              <p className="text-[9px] text-slate-450 leading-normal pl-0.5 pt-0.5">Note: Registrations with non-@travelradar.com email domains will fail gate verification checks.</p>
+              <p className="text-[9px] text-slate-450 leading-normal pl-0.5 pt-0.5">Note: Registrations with non-@travelradar.aero email domains will fail gate verification checks.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-left">
@@ -384,8 +438,8 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
               </div>
             </div>
 
-            <p className="text-[9px] text-[#e86420] leading-snug bg-orange-50 border border-orange-200/60 p-2.5 rounded-xl text-left">
-              ⚡ <strong>Enforced Gating Policy:</strong> Real authorization control is active. Staged accounts enter a <strong>"Pending Approval"</strong> directory block and must be un-gated manually by a Senior Editor or Administrator.
+            <p className="text-[9px] text-[#20a6eb] leading-snug bg-sky-50 border border-sky-200/60 p-2.5 rounded-xl text-left">
+              ⚡ <strong>Instant Access Enabled:</strong> Your account will be activated immediately upon registration for all @travelradar.aero enterprise accounts.
             </p>
 
             <button
@@ -419,7 +473,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
                   <input
                     type="email"
                     required
-                    placeholder="alisha.v@travelradar.com"
+                    placeholder="alisha.v@travelradar.aero"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
                     className="w-full bg-white border border-slate-250 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] transition-all"
@@ -492,6 +546,15 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users }: AuthSc
 
 
 
+        {/* Diagnostics Module (Only visible if standalone or in specific debug mode) */}
+        {isStandalone() && (
+          <div className="mt-8 pt-4 border-t border-slate-100 text-[9px] text-slate-400 font-mono space-y-1">
+            <p className="uppercase font-bold text-slate-500">Standalone Diagnostics</p>
+            <p>Host: {window.location.hostname}</p>
+            <p>Supabase URL: {supabaseUrl}</p>
+            <p>Anon Key Status: {supabaseAnonKey.length > 50 ? '✅ LOADED' : '❌ INVALID/MISSING'}</p>
+          </div>
+        )}
       </div>
     </div>
   );

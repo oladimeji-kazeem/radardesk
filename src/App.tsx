@@ -10,21 +10,23 @@ import PublisherDesk from './components/PublisherDesk';
 import AdminPanel from './components/AdminPanel';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import CustomNotification from './components/CustomNotification';
-import OverviewHub from './components/OverviewHub';
+import PortalLanding from './components/PortalLanding';
 import DocsAndManual from './components/DocsAndManual';
 import PersonalDashboard from './components/PersonalDashboard';
 import PerformanceManagement from './components/PerformanceManagement';
 import AuthScreen from './components/AuthScreen';
+import UATForm from './components/UATForm';
 import { User as UserIcon, BookOpen, LogOut } from 'lucide-react';
-import { 
-  Compass, 
-  FileEdit, 
-  Inbox, 
-  Activity, 
-  Wrench, 
-  Compass as LogoIcon, 
-  Bell, 
-  FileText, 
+import { supabase, isStandalone } from './lib/supabase';
+import {
+  Compass,
+  FileEdit,
+  Inbox,
+  Activity,
+  Wrench,
+  Compass as LogoIcon,
+  Bell,
+  FileText,
   HelpCircle,
   Clock,
   Sparkles,
@@ -36,7 +38,8 @@ import {
   Award,
   Search,
   X,
-  FileQuestion
+  FileQuestion,
+  MessageSquare
 } from 'lucide-react';
 
 interface Toast {
@@ -45,20 +48,40 @@ interface Toast {
   type: 'success' | 'warning' | 'info' | 'error';
 }
 
+const DEFAULT_CONFIG: WorkflowConfig = {
+  aiScoreThreshold: 75,
+  maxReviewCycles: 2,
+  claimDurationMinutes: 10,
+  categories: ['News', 'Feature', 'Opinion', 'Internal', 'Research'],
+  rejectionReasons: ['Factual Inaccuracy', 'Grammar/Style', 'Off-topic', 'Sexist/Biased Content', 'Plagiarism'],
+  rolePrivileges: [
+    { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
+    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article'] },
+    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'manage_system'] },
+    { role: 'Quality Checker', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'quality_audit'] },
+    { role: 'Publisher', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'publish_live'] },
+    { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
+  ]
+};
+
 export default function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [config, setConfig] = useState<WorkflowConfig | null>(null);
+  const [config, setConfig] = useState<WorkflowConfig>(DEFAULT_CONFIG);
+  const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<any>(null);
   const [topicHistoryLogs, setTopicHistoryLogs] = useState<any[]>([]);
+  const [uatFeedback, setUatFeedback] = useState<any[]>([]);
 
   // Navigation and active workflow tabs
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'writer' | 'editor' | 'quality-check' | 'publisher' | 'analytics' | 'performance' | 'admin' | 'docs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'writer' | 'editor' | 'quality-check' | 'publisher' | 'analytics' | 'performance' | 'admin' | 'docs' | 'uat'>('dashboard');
   const [viewMode, setViewMode] = useState<'landing' | 'app'>('landing');
+  const [showAuthScreen, setShowAuthScreen] = useState(false);
   const [activeTopicFromPool, setActiveTopicFromPool] = useState<Topic | null>(null);
   const [activeArticleForEditing, setActiveArticleForEditing] = useState<Article | null>(null);
+  const [showUATForm, setShowUATForm] = useState(false);
 
   // Global search and details preview states
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,13 +108,12 @@ export default function App() {
   // Notifications state
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Loading states
-  const [isLoading, setIsLoading] = useState(true);
+
 
   const addToast = (message: string, type: 'success' | 'warning' | 'info' | 'error') => {
     const id = `${Date.now()}-${Math.random()}`;
     setToasts(prev => [...prev, { id, message, type }]);
-    
+
     // Auto remove after 5.5 secs unless warning
     if (type !== 'warning') {
       setTimeout(() => {
@@ -108,17 +130,11 @@ export default function App() {
     if (!currentUser) return false;
     if (currentUser.role === 'Admin') return true; // Administrator overrides all checks
     if (!config) return false;
-    
+
     // Check in dynamic rolePrivileges configuration
-    const privs = config.rolePrivileges || [
-      { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
-      { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article'] },
-      { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article', 'publish_live'] },
-      { role: 'Quality Checker', allowedActions: ['quality_audit'] },
-      { role: 'Publisher', allowedActions: ['publish_live'] },
-      { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
-    ];
-    
+    const privs = config.rolePrivileges;
+    if (!privs) return false;
+
     const roleEntry = privs.find(p => p.role === currentUser.role);
     return roleEntry ? roleEntry.allowedActions.includes(action) : false;
   };
@@ -134,25 +150,64 @@ export default function App() {
         }
         const contentType = r.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          console.warn(`Fetch to ${url} returned non-JSON content-type: ${contentType}`);
           return fallback;
         }
         return await r.json();
       } catch (err) {
-        console.warn(`Fetch to ${url} failed to execute:`, err);
         return fallback;
       }
     };
 
     try {
-      const [resUsers, resTopics, resArticles, resConfig, resAnalytics, resTopicLogs] = await Promise.all([
-        fetchJson('/api/users', users || []),
-        fetchJson('/api/topics', topics || []),
-        fetchJson('/api/articles', articles || []),
-        fetchJson('/api/config', config),
-        fetchJson('/api/analytics', analytics),
-        fetchJson('/api/topics/moderation-history', topicHistoryLogs || []),
-      ]);
+      let resUsers: any[], resTopics: any[], resArticles: any[], resConfig: any, resAnalytics: any, resTopicLogs: any[], resUat: any[];
+
+      if (isStandalone()) {
+        const [
+          { data: usersData },
+          { data: topicsData },
+          { data: articlesData },
+          { data: configData },
+          { data: analyticsData },
+          { data: uatData }
+        ] = await Promise.all([
+          supabase.from('users').select('*'),
+          supabase.from('topics').select('*'),
+          supabase.from('articles').select('*'),
+          supabase.from('workflow_config').select('config').eq('id', 1).single(),
+          supabase.from('web_analytics').select('*').eq('id', 1).single(),
+          supabase.from('uat_feedback').select('*').order('created_at', { ascending: false })
+        ]);
+
+        resUsers = usersData || [];
+        resTopics = topicsData || [];
+        resArticles = (articlesData || []).map(a => ({
+          ...a,
+          writerId: a.writer_id,
+          writerName: a.writer_name,
+          editorId: a.editor_id,
+          editorName: a.editor_name,
+          topicId: a.topic_id,
+          reviewCycles: a.review_cycles,
+          createdAt: a.created_at,
+          submittedAt: a.submitted_at,
+          updatedAt: a.updated_at,
+          aiValidation: a.ai_validation
+        }));
+        resConfig = (configData as any)?.config || DEFAULT_CONFIG;
+        resAnalytics = analyticsData;
+        resTopicLogs = (topicsData || []).flatMap((t: any) => t.moderation_history || []).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        resUat = uatData || [];
+      } else {
+        [resUsers, resTopics, resArticles, resConfig, resAnalytics, resTopicLogs, resUat] = await Promise.all([
+          fetchJson('/api/users', users || []),
+          fetchJson('/api/topics', topics || []),
+          fetchJson('/api/articles', articles || []),
+          fetchJson('/api/config', config),
+          fetchJson('/api/analytics', analytics),
+          fetchJson('/api/topics/moderation-history', topicHistoryLogs || []),
+          fetchJson('/api/uat/feedback', uatFeedback || []),
+        ]);
+      }
 
       if (resUsers) setUsers(resUsers);
       if (resTopics) setTopics(resTopics);
@@ -160,6 +215,7 @@ export default function App() {
       if (resConfig) setConfig(resConfig);
       if (resAnalytics) setAnalytics(resAnalytics);
       if (resTopicLogs) setTopicHistoryLogs(resTopicLogs);
+      if (resUat) setUatFeedback(resUat);
 
       // Load user session from localStorage
       const savedUserStr = localStorage.getItem('radar_logged_user');
@@ -168,7 +224,10 @@ export default function App() {
           const savedUser = JSON.parse(savedUserStr);
           const freshUser = resUsers.find((u: User) => u.id === savedUser.id);
           if (freshUser && freshUser.approved !== false) {
-            setCurrentUser(freshUser);
+            // Only update if reference or data changed (standard React check, but we ensure we don't loop)
+            if (JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
+              setCurrentUser(freshUser);
+            }
           } else {
             localStorage.removeItem('radar_logged_user');
             setCurrentUser(null);
@@ -193,13 +252,14 @@ export default function App() {
   // Run initial syncing on mount
   useEffect(() => {
     syncData();
-    
-    // Send background analytical tick
-    fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'pageView' }),
-    }).catch(o => {});
+
+    if (!isStandalone()) {
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pageView' }),
+      }).catch(() => { });
+    }
 
     // Sync metrics repeatedly to ensure timer expirations are loaded smoothly on screen
     const interval = setInterval(() => {
@@ -207,16 +267,20 @@ export default function App() {
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [currentUser]);
+  }, []);
 
   const handleLoginSuccess = (user: User) => {
     localStorage.setItem('radar_logged_user', JSON.stringify(user));
     setCurrentUser(user);
+    setShowAuthScreen(false);
+    setViewMode('app');
   };
 
   const handleSignOut = () => {
     localStorage.removeItem('radar_logged_user');
     setCurrentUser(null);
+    setShowAuthScreen(false);
+    setViewMode('landing');
     addToast('Logged out of RadarDesk Operations successfully.', 'info');
   };
 
@@ -224,53 +288,69 @@ export default function App() {
   const handleSwitchUser = (user: User) => {
     setCurrentUser(user);
     addToast(`Perspectives Switched: Simulating dashboard as ${user.name} (${user.role})`, 'info');
-    
-    // Trigger tick log in DB analytics
-    fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'activeUser' }),
-    }).catch(() => {});
+
+    if (!isStandalone()) {
+      // Trigger tick log in DB analytics
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activeUser' }),
+      }).catch(() => { });
+    }
   };
 
   // Modify user roles dynamically (satisfies role elevation request)
   const handleUpdateRole = async (userId: string, targetRole: UserRole) => {
     try {
-      const res = await fetch(`/api/users/${userId}/role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: targetRole }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        addToast(data.message, 'success');
-        // If current user is modified, update locally as well
+      if (isStandalone()) {
+        const { error } = await supabase.from('users').update({ role: targetRole }).eq('id', userId);
+        if (error) throw error;
+        addToast(`Operational role updated to ${targetRole}.`, 'success');
         if (currentUser && currentUser.id === userId) {
           setCurrentUser(prev => prev ? { ...prev, role: targetRole } : null);
         }
         await syncData(true);
       } else {
-        addToast(data.error || 'Elevation refused.', 'error');
+        const res = await fetch(`/api/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: targetRole }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          addToast(data.message, 'success');
+          // If current user is modified, update locally as well
+          if (currentUser && currentUser.id === userId) {
+            setCurrentUser(prev => prev ? { ...prev, role: targetRole } : null);
+          }
+          await syncData(true);
+        } else {
+          addToast(data.error || 'Elevation refused.', 'error');
+        }
       }
-    } catch {
-      addToast('Error setting participant operational role.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Error setting participant operational role.', 'error');
     }
   };
 
   // Create user profile
   const handleAddUser = async (name: string, email: string, role: UserRole) => {
     try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, role }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        addToast(`Profile "${name}" successfully registered as a system ${role}!`, 'success');
-        await syncData(true);
+      if (isStandalone()) {
+        addToast('Direct user creation from panel requires Admin API. Please use Register flow for new users.', 'warning');
       } else {
-        addToast(data.error || 'User creation refused.', 'error');
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, role }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          addToast(`Profile "${name}" initialized! Temporary password: ${data.temporaryPassword || 'Check directory.'}`, 'success');
+          await syncData(true);
+        } else {
+          addToast(data.error || 'User creation refused.', 'error');
+        }
       }
     } catch {
       addToast('Error registering new user profile.', 'error');
@@ -280,40 +360,58 @@ export default function App() {
   // Remove user profile
   const handleDeleteUser = async (userId: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        addToast(data.message || 'Workflow profile removed from registers.', 'info');
+      if (isStandalone()) {
+        const { error } = await supabase.from('users').delete().eq('id', userId);
+        if (error) throw error;
+        addToast('Workflow profile removed from registers.', 'info');
         await syncData(true);
       } else {
-        addToast(data.error || 'Failed to remove user.', 'error');
+        const res = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json();
+        if (res.ok) {
+          addToast(data.message || 'Workflow profile removed from registers.', 'info');
+          await syncData(true);
+        } else {
+          addToast(data.error || 'Failed to remove user.', 'error');
+        }
       }
-    } catch {
-      addToast('Error dropping participant from system.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Error dropping participant from system.', 'error');
     }
   };
 
   // Reset database state to mock templates
   const handleResetDatabase = async () => {
     try {
-      const res = await fetch('/api/admin/reset', {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (res.ok) {
-        addToast('System database states cleared and flashed to defaults!', 'success');
+      if (isStandalone()) {
+        // Soft reset: clear topics and articles only (users and config are sensitive)
+        const { error: tErr } = await supabase.from('topics').delete().neq('id', 'placeholder');
+        const { error: aErr } = await supabase.from('articles').delete().neq('id', 'placeholder');
+
+        if (tErr || aErr) throw new Error(tErr?.message || aErr?.message);
+
+        addToast('System operational data cleared (Topics & Articles). User registry preserved.', 'success');
         await syncData(true);
-        if (data.db && data.db.users && data.db.users.length > 0) {
-          const firstAdmin = data.db.users.find((u: User) => u.role === 'Admin') || data.db.users[0];
-          setCurrentUser(firstAdmin);
-        }
       } else {
-        addToast(data.error || 'DB Flash failed', 'error');
+        const res = await fetch('/api/admin/reset', {
+          method: 'POST',
+        });
+        const data = await res.json();
+        if (res.ok) {
+          addToast('System database states cleared and flashed to defaults!', 'success');
+          await syncData(true);
+          if (data.db && data.db.users && data.db.users.length > 0) {
+            const firstAdmin = data.db.users.find((u: User) => u.role === 'Admin') || data.db.users[0];
+            setCurrentUser(firstAdmin);
+          }
+        } else {
+          addToast(data.error || 'DB Flash failed', 'error');
+        }
       }
-    } catch {
-      addToast('Error triggering system database purge.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Error triggering system database purge.', 'error');
     }
   };
 
@@ -321,123 +419,229 @@ export default function App() {
   const handleProposeTopic = async (title: string, desc: string, cat: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch('/api/topics/propose', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isStandalone()) {
+        const { error } = await supabase.from('topics').insert({
+          id: `t-${Date.now()}`,
           title,
           description: desc,
           category: cat,
-          userId: currentUser.id,
-          userName: currentUser.name,
-          userRole: currentUser.role
-        })
-      });
-      if (res.ok) {
+          status: 'Proposed',
+          submitter_id: currentUser.id,
+          submitter_name: currentUser.name,
+          moderation_history: [{
+            action: 'Proposed',
+            actorName: currentUser.name,
+            actorRole: currentUser.role,
+            timestamp: new Date().toISOString()
+          }]
+        });
+        if (error) throw error;
         addToast('Travel Concept Proposed! Sent for editorial moderation.', 'success');
         await syncData(true);
       } else {
-        const d = await res.json();
-        addToast(d.error || 'Proposal error', 'error');
+        const res = await fetch('/api/topics/propose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description: desc,
+            category: cat,
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userRole: currentUser.role
+          })
+        });
+        if (res.ok) {
+          addToast('Travel Concept Proposed! Sent for editorial moderation.', 'success');
+          await syncData(true);
+        } else {
+          const d = await res.json();
+          addToast(d.error || 'Proposal error', 'error');
+        }
       }
-    } catch {
-      addToast('Could not register proposal concept.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Could not register proposal concept.', 'error');
     }
   };
 
   const handleEditTopic = async (topicId: string, title: string, desc: string, cat: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/topics/${topicId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isStandalone()) {
+        const { error } = await supabase.from('topics').update({
           title,
           description: desc,
           category: cat
-        })
-      });
-      if (res.ok) {
+        }).eq('id', topicId);
+        if (error) throw error;
         addToast('Travel Concept Updated successfully!', 'success');
         await syncData(true);
       } else {
-        const d = await res.json();
-        addToast(d.error || 'Update error', 'error');
+        const res = await fetch(`/api/topics/${topicId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description: desc,
+            category: cat
+          })
+        });
+        if (res.ok) {
+          addToast('Travel Concept Updated successfully!', 'success');
+          await syncData(true);
+        } else {
+          const d = await res.json();
+          addToast(d.error || 'Update error', 'error');
+        }
       }
-    } catch {
-      addToast('Could not save concept updates.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Could not save concept updates.', 'error');
     }
   };
 
   const handleModerateTopic = async (topicId: string, action: 'Approved' | 'Rejected', comments: string, reasons?: string[]) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/topics/${topicId}/moderate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isStandalone()) {
+        const topic = topics.find(t => t.id === topicId);
+        if (!topic) throw new Error('Topic not found');
+
+        const newHistory = [...(topic.moderationHistory || [])];
+        newHistory.push({
           action,
           actorName: currentUser.name,
           actorRole: currentUser.role,
+          timestamp: new Date().toISOString(),
           comments,
           reasons
-        })
-      });
-      if (res.ok) {
+        });
+
+        const { error } = await supabase.from('topics').update({
+          status: action === 'Approved' ? 'Active' : 'Rejected',
+          moderation_history: newHistory
+        }).eq('id', topicId);
+        if (error) throw error;
+
         addToast(`Topic proposal successfully moderated as ${action}!`, 'success');
         await syncData(true);
       } else {
-        const d = await res.json();
-        addToast(d.error || 'Moderation issue', 'error');
+        const res = await fetch(`/api/topics/${topicId}/moderate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            actorName: currentUser.name,
+            actorRole: currentUser.role,
+            comments,
+            reasons
+          })
+        });
+        if (res.ok) {
+          addToast(`Topic proposal successfully moderated as ${action}!`, 'success');
+          await syncData(true);
+        } else {
+          const d = await res.json();
+          addToast(d.error || 'Moderation issue', 'error');
+        }
       }
-    } catch {
-      addToast('Error registering moderation choice.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Error registering moderation choice.', 'error');
     }
   };
 
   const handleClaimTopic = async (topicId: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/topics/${topicId}/claim`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          userName: currentUser.name
-        })
-      });
-      if (res.ok) {
-        const target = topics.find(t => t.id === topicId);
-        addToast(`Concept claimed! Countdown of ${target?.durationMinutes || config?.claimDurationMinutes} minutes initiated. Finish before release timeout!`, 'success');
+      if (isStandalone()) {
+        const topic = topics.find(t => t.id === topicId);
+        if (!topic) throw new Error('Topic not found');
+
+        const newHistory = [...(topic.moderationHistory || [])];
+        newHistory.push({
+          action: 'Proposed', // keeping as part of hist
+          actorName: currentUser.name,
+          actorRole: 'Writer',
+          timestamp: new Date().toISOString(),
+          comments: `Claimed topic. Auto release started.`
+        });
+
+        const { error } = await supabase.from('topics').update({
+          claimed_by_id: currentUser.id,
+          claimed_by_name: currentUser.name,
+          claimed_at: new Date().toISOString(),
+          moderation_history: newHistory
+        }).eq('id', topicId);
+        if (error) throw error;
+
+        addToast(`Concept claimed! Direct mode active.`, 'success');
         await syncData(true);
       } else {
-        const d = await res.json();
-        addToast(d.error || 'Claiming conflict', 'error');
+        const res = await fetch(`/api/topics/${topicId}/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            userName: currentUser.name
+          })
+        });
+        if (res.ok) {
+          const target = topics.find(t => t.id === topicId);
+          addToast(`Concept claimed! Countdown of ${target?.durationMinutes || config?.claimDurationMinutes} minutes initiated. Finish before release timeout!`, 'success');
+          await syncData(true);
+        } else {
+          const d = await res.json();
+          addToast(d.error || 'Claiming conflict', 'error');
+        }
       }
-    } catch {
-      addToast('Error locking claim reservation.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Error locking claim reservation.', 'error');
     }
   };
 
   const handleReleaseTopic = async (topicId: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/topics/${topicId}/release`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isStandalone()) {
+        const topic = topics.find(t => t.id === topicId);
+        if (!topic) throw new Error('Topic not found');
+
+        const newHistory = [...(topic.moderationHistory || [])];
+        newHistory.push({
+          action: 'Proposed',
           actorName: currentUser.name,
-          actorRole: currentUser.role
-        })
-      });
-      if (res.ok) {
-        addToast('Reservation released. The topic returned back into active write catalog.', 'info');
+          actorRole: currentUser.role,
+          timestamp: new Date().toISOString(),
+          comments: `Manual release of reservation.`
+        });
+
+        const { error } = await supabase.from('topics').update({
+          claimed_by_id: null,
+          claimed_by_name: null,
+          claimed_at: null,
+          moderation_history: newHistory
+        }).eq('id', topicId);
+        if (error) throw error;
+
+        addToast('Reservation released.', 'info');
         await syncData(true);
       } else {
-        addToast('Unable to release claim.', 'error');
+        const res = await fetch(`/api/topics/${topicId}/release`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            actorName: currentUser.name,
+            actorRole: currentUser.role
+          })
+        });
+        if (res.ok) {
+          addToast('Reservation released. The topic returned back into active write catalog.', 'info');
+          await syncData(true);
+        } else {
+          addToast('Unable to release claim.', 'error');
+        }
       }
-    } catch {
-      addToast('Could not release claim.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Could not release claim.', 'error');
     }
   };
 
@@ -445,36 +649,125 @@ export default function App() {
   const handleSaveDraft = async (id: string | null, title: string, content: string, topicId: string | null) => {
     if (!currentUser) return;
     try {
-      const res = await fetch('/api/articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          title,
-          content,
-          writerId: currentUser.id,
-          writerName: currentUser.name,
-          topicId
-        })
-      });
-      if (res.ok) {
-        const updatedArt = await res.json();
-        await syncData(true);
-        return updatedArt;
+      if (isStandalone()) {
+        const now = new Date().toISOString();
+        let article: any;
+        if (id) {
+          const { data } = await supabase.from('articles').select('*').eq('id', id).single();
+          article = data;
+        }
+
+        if (article) {
+          const newRevisions = [...(article.revisions || [])];
+          newRevisions.push({
+            version: newRevisions.length + 1,
+            title: article.title,
+            content: article.content,
+            updatedAt: now,
+            score: article.score
+          });
+
+          const { data: updated, error } = await supabase.from('articles').update({
+            title,
+            content,
+            updated_at: now,
+            topic_id: topicId || article.topic_id,
+            revisions: newRevisions
+          }).eq('id', id).select().single();
+          if (error) throw error;
+          await syncData(true);
+          return {
+            ...updated,
+            writerId: updated.writer_id, writerName: updated.writer_name,
+            topicId: updated.topic_id, updatedAt: updated.updated_at
+          };
+        } else {
+          const newArt = {
+            id: `art-${Date.now()}`,
+            title,
+            content,
+            status: 'Draft',
+            writer_id: currentUser.id,
+            writer_name: currentUser.name,
+            topic_id: topicId,
+            created_at: now,
+            updated_at: now,
+            history: [{
+              id: `h-${Date.now()}`,
+              action: 'Draft Created',
+              actorName: currentUser.name,
+              actorRole: 'Writer',
+              timestamp: now,
+              details: 'Draft initialized.'
+            }]
+          };
+          const { data: created, error } = await supabase.from('articles').insert(newArt).select().single();
+          if (error) throw error;
+          await syncData(true);
+          return {
+            ...created,
+            writerId: created.writer_id, writerName: created.writer_name,
+            topicId: created.topic_id, createdAt: created.created_at, updatedAt: created.updated_at
+          };
+        }
+      } else {
+        const res = await fetch('/api/articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            title,
+            content,
+            writerId: currentUser.id,
+            writerName: currentUser.name,
+            topicId
+          })
+        });
+        if (res.ok) {
+          const updatedArt = await res.json();
+          await syncData(true);
+          return updatedArt;
+        }
       }
-    } catch {
-      addToast('Unable to persist draft manuscript.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Unable to persist draft manuscript.', 'error');
     }
   };
 
   const handleSubmitArticle = async (id: string) => {
     try {
-      const res = await fetch(`/api/articles/${id}/submit`, { method: 'POST' });
-      const data = await res.json();
-      await syncData(true);
-      return data;
-    } catch {
-      addToast('Fatal: AI verification channels unresponsive.', 'error');
+      if (isStandalone()) {
+        const { data: article } = await supabase.from('articles').select('*').eq('id', id).single();
+        if (!article) throw new Error('Article not found');
+
+        const now = new Date().toISOString();
+        const newHistory = [...(article.history || [])];
+        newHistory.push({
+          id: `h-submit-${Date.now()}`,
+          action: 'Submitted',
+          actorName: article.writer_name,
+          actorRole: 'Writer',
+          timestamp: now,
+          details: 'Article submitted directly (standalone mode).'
+        });
+
+        const { data: updated, error } = await supabase.from('articles').update({
+          status: 'Submitted',
+          submitted_at: now,
+          history: newHistory
+        }).eq('id', id).select().single();
+        if (error) throw error;
+
+        await syncData(true);
+        return { success: true, message: 'Article submitted successfully!', article: updated };
+      } else {
+        const res = await fetch(`/api/articles/${id}/submit`, { method: 'POST' });
+        const data = await res.json();
+        await syncData(true);
+        return data;
+      }
+    } catch (err: any) {
+      addToast(err.message || 'Fatal: AI verification channels unresponsive.', 'error');
       return { success: false, message: 'Server gateway failed.', article: null as any };
     }
   };
@@ -482,20 +775,38 @@ export default function App() {
   const handlePostComment = async (articleId: string, text: string) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/articles/${articleId}/comment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (isStandalone()) {
+        const article = articles.find(a => a.id === articleId);
+        if (!article) throw new Error('Article not found');
+        const newComments = [...(article.comments || [])];
+        newComments.push({
+          id: `c-${Date.now()}`,
           text,
           authorName: currentUser.name,
-          authorRole: currentUser.role
-        })
-      });
-      if (res.ok) {
+          authorRole: currentUser.role,
+          timestamp: new Date().toISOString()
+        });
+        const { error } = await supabase.from('articles').update({
+          comments: newComments
+        }).eq('id', articleId);
+        if (error) throw error;
         await syncData(true);
+      } else {
+        const res = await fetch(`/api/articles/${articleId}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            authorName: currentUser.name,
+            authorRole: currentUser.role
+          })
+        });
+        if (res.ok) {
+          await syncData(true);
+        }
       }
-    } catch {
-      addToast('Unable to post comment feedback.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Unable to post comment feedback.', 'error');
     }
   };
 
@@ -506,37 +817,88 @@ export default function App() {
     reasons?: string[];
   }) => {
     if (!currentUser) return;
-    const res = await fetch(`/api/articles/${params.articleId}/decision`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...params,
-        actorId: currentUser.id,
-        actorName: currentUser.name,
-        actorRole: currentUser.role
-      })
-    });
-    if (res.ok) {
-      await syncData(true);
-    } else {
-      const d = await res.json();
-      throw new Error(d.error || 'Decision error');
+    try {
+      if (isStandalone()) {
+        const { data: article } = await supabase.from('articles').select('*').eq('id', params.articleId).single();
+        if (!article) throw new Error('Article not found');
+
+        const now = new Date().toISOString();
+        const newHistory = [...(article.history || [])];
+        newHistory.push({
+          id: `h-decision-${Date.now()}`,
+          action: params.action === 'Approve' ? 'Approved' : 'Rejected',
+          actorName: currentUser.name,
+          actorRole: currentUser.role,
+          timestamp: now,
+          details: params.comments,
+          reasons: params.reasons
+        });
+
+        // Determine next status
+        let targetStatus = 'Draft';
+        if (params.action === 'Approve') {
+          if (currentUser.role === 'Editor') targetStatus = 'Approved';
+          else if (currentUser.role === 'Quality Checker') targetStatus = 'Verified';
+          else if (currentUser.role === 'Publisher') targetStatus = 'Live';
+          else targetStatus = 'Approved';
+        } else {
+          targetStatus = 'Rejected';
+        }
+
+        const { error } = await supabase.from('articles').update({
+          status: targetStatus,
+          updated_at: now,
+          history: newHistory,
+          editor_id: currentUser.id,
+          editor_name: currentUser.name
+        }).eq('id', params.articleId);
+        if (error) throw error;
+
+        await syncData(true);
+      } else {
+        const res = await fetch(`/api/articles/${params.articleId}/decision`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...params,
+            actorId: currentUser.id,
+            actorName: currentUser.name,
+            actorRole: currentUser.role
+          })
+        });
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error || 'Decision error');
+        }
+        await syncData(true);
+      }
+    } catch (err: any) {
+      addToast(err.message || 'Error registering decision.', 'error');
     }
   };
 
   // CONFIGS ENGINE
   const handleUpdateConfig = async (newConfig: Partial<WorkflowConfig>) => {
     try {
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig)
-      });
-      if (res.ok) {
+      if (isStandalone()) {
+        const { error } = await supabase.from('workflow_config').update({
+          config: { ...config, ...newConfig },
+          updated_at: new Date().toISOString()
+        }).eq('id', 1);
+        if (error) throw error;
         await syncData(true);
+      } else {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newConfig)
+        });
+        if (res.ok) {
+          await syncData(true);
+        }
       }
-    } catch {
-      addToast('Failed to write changes to platform config.', 'error');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to write changes to platform config.', 'error');
     }
   };
 
@@ -547,7 +909,7 @@ export default function App() {
     addToast(`Initialized article draft based on claimed concept: "${topic.title}"`, 'success');
   };
 
-  if (isLoading || !config) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center gap-4">
         <div className="w-12 h-12 rounded-full border-4 border border-indigo-200 border-t-indigo-600 animate-spin" />
@@ -559,18 +921,31 @@ export default function App() {
 
   // Gated Authentication view center
   if (!currentUser) {
+    if (showAuthScreen) {
+      return (
+        <AuthScreen
+          onLoginSuccess={handleLoginSuccess}
+          onAddToast={addToast}
+          users={users}
+          onBack={() => setShowAuthScreen(false)}
+        />
+      );
+    }
+
     return (
-      <AuthScreen
-        onLoginSuccess={handleLoginSuccess}
-        onAddToast={addToast}
-        users={users}
+      <PortalLanding
+        topics={topics}
+        articles={articles}
+        config={config}
+        onGetStarted={() => setShowAuthScreen(true)}
+        onSignIn={() => setShowAuthScreen(true)}
       />
     );
   }
 
   if (viewMode === 'landing') {
     return (
-      <OverviewHub
+      <PortalLanding
         topics={topics}
         articles={articles}
         config={config}
@@ -607,13 +982,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f4f7f9] flex flex-col lg:flex-row font-sans text-[#363636] overflow-hidden" id="editorial-workspace-frame">
-      
+
       {/* LEFT SIDEBAR - Desktop view only */}
       <aside className="hidden lg:flex w-64 sidebar-bg flex-col shrink-0 text-white min-h-screen relative shadow-lg">
         {/* Sky-lighting accent bar inside sidebar header */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
-        
-        <div 
+
+        <div
           onClick={() => setViewMode('landing')}
           className="p-6 flex items-center space-x-3 text-white border-b border-white/5 cursor-pointer hover:bg-white/5 transition-all group"
           title="Return to Welcome Hub"
@@ -625,11 +1000,10 @@ export default function App() {
         <nav className="flex-1 px-4 space-y-1.5 mt-6">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'dashboard' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'dashboard'
+              ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+              : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
             title="Personal Role Action Center"
           >
             <Home className="w-4 h-4 opacity-80 text-[#20a6eb]" />
@@ -648,11 +1022,10 @@ export default function App() {
           {(hasPermission('propose_topic') || hasPermission('claim_topic')) && (
             <button
               onClick={() => setActiveTab('topics')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'topics' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'topics'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <Compass className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Concepts Pool</span>
@@ -667,11 +1040,10 @@ export default function App() {
           {(hasPermission('submit_article') || currentUser.role === 'Admin') && (
             <button
               onClick={() => setActiveTab('writer')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'writer' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'writer'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <FileEdit className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Drafting Desk</span>
@@ -681,11 +1053,10 @@ export default function App() {
           {hasPermission('review_article') && (
             <button
               onClick={() => setActiveTab('editor')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'editor' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'editor'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <Inbox className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Queue Reviews</span>
@@ -695,11 +1066,10 @@ export default function App() {
           {(hasPermission('review_article') || hasPermission('quality_audit') || hasPermission('publish_live') || hasPermission('manage_system')) && (
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'analytics' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'analytics'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <Activity className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Analytics Dashboard</span>
@@ -708,11 +1078,10 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('performance')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'performance' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'performance'
+              ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+              : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
           >
             <Award className="w-4 h-4 opacity-85 text-amber-400" />
             <span className="flex-1 text-left">Performance Desk</span>
@@ -721,11 +1090,10 @@ export default function App() {
           {hasPermission('quality_audit') && (
             <button
               onClick={() => setActiveTab('quality-check')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'quality-check' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'quality-check'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <ShieldCheck className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Quality Desk</span>
@@ -740,11 +1108,10 @@ export default function App() {
           {hasPermission('publish_live') && (
             <button
               onClick={() => setActiveTab('publisher')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'publisher' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'publisher'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <Globe className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Publishing Desk</span>
@@ -754,11 +1121,10 @@ export default function App() {
           {hasPermission('manage_system') && (
             <button
               onClick={() => setActiveTab('admin')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-                activeTab === 'admin' 
-                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                  : 'text-white/70 hover:bg-white/5 hover:text-white'
-              }`}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'admin'
+                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
             >
               <Wrench className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Admin Settings</span>
@@ -767,14 +1133,25 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('docs')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${
-              activeTab === 'docs' 
-                ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15' 
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-            }`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'docs'
+              ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+              : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
           >
             <HelpCircle className="w-4 h-4 opacity-80" />
             <span className="flex-1 text-left">Help & Manual</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('uat')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs ${activeTab === 'uat'
+              ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/15'
+              : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+          >
+            <MessageSquare className="w-4 h-4 opacity-80 text-blue-400" />
+            <span className="flex-1 text-left">UAT Feedback</span>
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
           </button>
         </nav>
 
@@ -815,7 +1192,7 @@ export default function App() {
 
       {/* RIGHT WORKSPACE PANELS */}
       <div className="flex-1 flex flex-col min-w-0 radial-blur-bg h-screen overflow-y-auto relative">
-        
+
         {/* Glow horizontal indicator on desktop / mobile banner */}
         <div className="w-full h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
 
@@ -826,15 +1203,16 @@ export default function App() {
             <div className="lg:hidden flex items-center justify-center">
               <Logo className="w-7 h-7" />
             </div>
-            
+
             <h1 className="text-sm font-bold text-[#363636] font-display uppercase tracking-wide hidden lg:block">
-              {activeTab === 'topics' ? 'Concepts Pool Catalog' : 
-               activeTab === 'writer' ? 'Composition Desk' :
-               activeTab === 'editor' ? 'Editorial reviews pools' :
-               activeTab === 'quality-check' ? 'Quality Assurance Desk' :
-               activeTab === 'publisher' ? 'Publishing & Release Desk' :
-               activeTab === 'analytics' ? 'System Metrics & Throughput' : 
-               activeTab === 'docs' ? 'Database Spec & User Manual' : 'System Operations Console'}
+              {activeTab === 'topics' ? 'Concepts Pool Catalog' :
+                activeTab === 'writer' ? 'Composition Desk' :
+                  activeTab === 'editor' ? 'Editorial reviews pools' :
+                    activeTab === 'quality-check' ? 'Quality Assurance Desk' :
+                      activeTab === 'publisher' ? 'Publishing & Release Desk' :
+                        activeTab === 'analytics' ? 'System Metrics & Throughput' :
+                          activeTab === 'docs' ? 'Database Spec & User Manual' :
+                            activeTab === 'uat' ? 'User Acceptance Testing & Debug Logs' : 'System Operations Console'}
             </h1>
 
             <span className="status-chip bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">
@@ -874,9 +1252,9 @@ export default function App() {
             {/* Dropdown Overlay Results */}
             {searchFocused && searchQuery.trim() && (
               <>
-                <div 
-                  className="fixed inset-0 z-40 cursor-default" 
-                  onClick={() => setSearchFocused(false)} 
+                <div
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setSearchFocused(false)}
                 />
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden max-h-[380px] flex flex-col animate-slideIn">
                   <div className="bg-slate-50 border-b border-slate-100 px-3 py-2 text-[10px] uppercase font-bold text-slate-400 tracking-wider font-mono flex justify-between items-center shrink-0">
@@ -885,9 +1263,9 @@ export default function App() {
                       {(matchedArticles.length + matchedTopics.length)} records mapped
                     </span>
                   </div>
-                  
+
                   <div className="overflow-y-auto p-2 space-y-3 divide-y divide-slate-100">
-                    
+
                     {/* Articles Section */}
                     {matchedArticles.length > 0 && (
                       <div className="pt-1.5 first:pt-0 text-left">
@@ -1014,7 +1392,7 @@ export default function App() {
               <p className="text-xs font-mono font-bold text-[#363636]">99.982%</p>
             </div>
 
-            <button 
+            <button
               onClick={() => syncData(false)}
               className="px-4 py-2 firebase-gradient text-white rounded-lg text-xs font-bold shadow-md hover:scale-102 hover:shadow-orange-100 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border-0"
             >
@@ -1058,7 +1436,7 @@ export default function App() {
           </button>
           {(hasPermission('quality_audit') || ['Quality Checker', 'Editor', 'Senior Editor', 'Admin'].includes(currentUser.role)) && (
             <button
-               onClick={() => setActiveTab('quality-check')}
+              onClick={() => setActiveTab('quality-check')}
               className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'quality-check' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
             >
               Quality Check
@@ -1093,6 +1471,12 @@ export default function App() {
             </button>
           )}
           <button
+            onClick={() => setActiveTab('uat')}
+            className={`px-3 py-1.5 rounded-lg transition-all shrink-0 font-bold ${activeTab === 'uat' ? 'bg-[#363636] text-white shadow-sm' : 'bg-slate-100 text-slate-700'}`}
+          >
+            UAT
+          </button>
+          <button
             onClick={() => setActiveTab('docs')}
             className={`px-3 py-1.5 rounded-lg transition-all shrink-0 ${activeTab === 'docs' ? 'bg-[#363636] text-white font-bold shadow-sm' : ''}`}
           >
@@ -1102,7 +1486,7 @@ export default function App() {
 
         {/* Content canvas context container */}
         <div className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
-          
+
           <div className="glass-card rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm">
             {activeTab === 'dashboard' && currentUser && (
               <PersonalDashboard
@@ -1228,7 +1612,19 @@ export default function App() {
                 onDeleteUser={handleDeleteUser}
                 onResetDatabase={handleResetDatabase}
                 onRefresh={() => syncData(true)}
+                uatFeedback={uatFeedback}
               />
+            )}
+
+            {activeTab === 'uat' && (
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden animate-fadeIn">
+                <UATForm
+                  currentUser={currentUser}
+                  onClose={() => setActiveTab('dashboard')}
+                  onAddToast={addToast}
+                  isInline={true}
+                />
+              </div>
             )}
 
             {activeTab === 'docs' && (
@@ -1263,7 +1659,7 @@ export default function App() {
       {previewArticle && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" id="search-article-preview-modal">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             {/* Header */}
             <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
@@ -1289,7 +1685,7 @@ export default function App() {
 
             {/* Content Body */}
             <div className="p-6 overflow-y-auto space-y-6 font-sans">
-              
+
               {/* Status Indicator Card */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-left">
                 <div>
@@ -1374,7 +1770,7 @@ export default function App() {
       {previewTopic && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" id="search-topic-preview-modal">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             {/* Header */}
             <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
@@ -1400,7 +1796,7 @@ export default function App() {
 
             {/* Content Body */}
             <div className="p-6 overflow-y-auto space-y-6 font-sans">
-              
+
               {/* Status Card */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-left">
                 <div>

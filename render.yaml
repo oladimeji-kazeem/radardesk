@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: radardesk
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: tsx server.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SUPABASE_URL
+        fromContext: true
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        fromContext: true
+      - key: GOOGLE_GENAI_KEY
+        fromContext: true

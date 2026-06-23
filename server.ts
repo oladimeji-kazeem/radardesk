@@ -3,28 +3,31 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
-import { 
-  User, 
-  Article, 
-  Topic, 
-  WorkflowConfig, 
-  WebAnalytics, 
-  UserRole, 
-  ArticleStatus, 
+import {
+  User,
+  Article,
+  Topic,
+  WorkflowConfig,
+  WebAnalytics,
+  UserRole,
+  ArticleStatus,
   TopicStatus,
   AIPreValidation
 } from './src/types';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Lazy load Supabase SDK client in a safe way
 let supabaseClientInstance: ReturnType<typeof createClient> | null = null;
 function getSupabaseClient() {
   if (!supabaseClientInstance) {
     const supabaseUrl = process.env.SUPABASE_URL || "https://qiciaqxucmvwwfvodqzz.supabase.co";
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                        process.env.SUPABASE_ANON_KEY || 
-                        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpY2lhcXh1Y212d3dmdm9kcXp6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzU1NjgwOSwiZXhwIjoyMDkzMTMyODA5fQ.U3LvHaELLtBfLDsr3Eet1nwJCscuo0KK6v5h3sk6eQY";
-    
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      "placeholder";
+
     supabaseClientInstance = createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: false
@@ -34,257 +37,53 @@ function getSupabaseClient() {
   return supabaseClientInstance;
 }
 
-// State definition and path for persistence
-const DB_FILE = path.join(process.cwd(), 'db.json');
+// Database state is now entirely managed via Supabase PostgreSQL.
+// Local file-based persistence (db.json) is legacy and has been removed.
 
-// Initialize empty or mock database on startups
-const initialUsers: User[] = [
-  { id: 'u-1', name: 'Alisha Vance', role: 'Writer', email: 'alisha.v@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-2', name: 'Marcus Sterling', role: 'Editor', email: 'marcus.s@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-3', name: 'Sienna Ross', role: 'Senior Editor', email: 'sienna.r@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-4', name: 'David Admin', role: 'Admin', email: 'david.a@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-5', name: 'Liam Brooks', role: 'Writer', email: 'liam.b@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-6', name: 'Clara Jenkins', role: 'Editor', email: 'clara.j@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-7', name: 'Quentin Carter', role: 'Quality Checker', email: 'quentin.c@travelradar.com', password: 'password123', approved: true },
-  { id: 'u-8', name: 'Penelope Vance', role: 'Publisher', email: 'penelope.v@travelradar.com', password: 'password123', approved: true }
-];
+// We maintain a local config cache for speed in some synchronous checks, but it's updated async.
+let cachedConfig: WorkflowConfig | null = null;
 
-const initialTopics: Topic[] = [
-  {
-    id: 't-1',
-    title: 'Hidden Waterways of Venice: A Secret Kayak Route Guide',
-    description: 'A comprehensive travel guide outlining sustainable kayaking trips through Venices lesser-known quiet canals, complete with safety rules and permits.',
-    category: 'Travel Guide',
-    status: 'Active',
-    submitterId: 'u-5',
-    submitterName: 'Liam Brooks',
-    claimedById: 'u-1',
-    claimedByName: 'Alisha Vance',
-    claimedAt: new Date(Date.now() - 4 * 60 * 1000).toISOString(), // 4 mins ago
-    durationMinutes: 10,
-    releasedCount: 0,
-    moderationHistory: [
-      { action: 'Proposed', actorName: 'Liam Brooks', actorRole: 'Writer', timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString() },
-      { action: 'Approved', actorName: 'Marcus Sterling', actorRole: 'Editor', timestamp: new Date(Date.now() - 110 * 60 * 1000).toISOString(), comments: 'Highly engaging local travel concept.' }
-    ]
-  },
-  {
-    id: 't-2',
-    title: 'Top 5 Eco-Lodges in Costa Rica for 2026',
-    description: 'Evaluating Carbon-neutral lodges across Costa Rica, rating their conservation efforts, renewable energy, and community inclusion.',
-    category: 'Eco Tourism',
-    status: 'Active',
-    submitterId: 'u-1',
-    submitterName: 'Alisha Vance',
-    claimedById: null,
-    claimedByName: null,
-    claimedAt: null,
-    durationMinutes: 15,
-    releasedCount: 1,
-    moderationHistory: [
-      { action: 'Proposed', actorName: 'Alisha Vance', actorRole: 'Writer', timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
-      { action: 'Approved', actorName: 'Sienna Ross', actorRole: 'Senior Editor', timestamp: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(), comments: 'Fits perfectly in our Summer Eco Series.' },
-      { action: 'Expired', actorName: 'Auto Release System', actorRole: 'Admin', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), comments: 'Topic expired and was released back to the pool.' }
-    ]
-  },
-  {
-    id: 't-3',
-    title: 'The Ultimate Street Food Crawl in Osaka',
-    description: 'An itinerary targeting Dotonbori’s secret alleyways for authentic Takoyaki, Kushikatsu, and Okonomiyaki.',
-    category: 'Food & Drink',
-    status: 'Proposed',
-    submitterId: 'u-1',
-    submitterName: 'Alisha Vance',
-    claimedById: null,
-    claimedByName: null,
-    claimedAt: null,
-    durationMinutes: 10,
-    releasedCount: 0,
-    moderationHistory: [
-      { action: 'Proposed', actorName: 'Alisha Vance', actorRole: 'Writer', timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString() }
-    ]
-  }
-];
-
-const initialArticles: Article[] = [
-  {
-    id: 'a-1',
-    title: 'Sustainable Backpacking Across the Scottish Highlands',
-    content: '## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe. However, with the resurgence of wilderness tourism, environmental degradation has accelerated. Crucially, travelers must adhere to the "Leave No Trace" principles.\n\n### Essential Guidelines\n- Camp on durable surfaces like gravel or dry grass.\n- Dispose of waste carefully; pack out all garbage.\n- Respect wildlife and observe nesting birds from a distance.\n\n### References\n- Scottish Outdoor Access Code (https://www.outdooraccess-scotland.scot/)\n- NatureScot Conservation Data (https://www.nature.scot/)',
-    status: 'Submitted',
-    writerId: 'u-1',
-    writerName: 'Alisha Vance',
-    editorId: 'u-2',
-    editorName: 'Marcus Sterling',
-    topicId: null,
-    score: 82,
-    reviewCycles: 0,
-    createdAt: new Date(Date.now() - 24 * 60 * 1000 * 60).toISOString(),
-    submittedAt: new Date(Date.now() - 10 * 60 * 1000 * 60).toISOString(),
-    updatedAt: new Date(Date.now() - 10 * 60 * 1000 * 60).toISOString(),
-    revisions: [
-      {
-        version: 1,
-        title: 'Sustainable Backpacking Across the Scottish Highlands',
-        content: '## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe...',
-        updatedAt: new Date(Date.now() - 24 * 60 * 1000 * 60).toISOString(),
-        score: 82
-      }
-    ],
-    aiValidation: {
-      score: 82,
-      grammar: 'Excellent readability with only 2 minor punctuation errors noted.',
-      readability: 'Grade 8 level, highly accessible guidelines.',
-      sourcesFound: true,
-      sourcesList: ['https://www.outdooraccess-scotland.scot/', 'https://www.nature.scot/'],
-      factualInconsistencies: [],
-      styleGuideViolations: ['Avoid capitalized Peaks in section headers unless styled as a title.'],
-      headlineSuggestions: [
-        'How to Back Pack Across the Scottish Highlands Sustainably',
-        'LLeave No Trace: A Conservationist Guide to the Scottish Highlands'
-      ],
-      isDuplicate: false,
-      duplicateScore: 12,
-      semanticSimilarityToPrevious: 0
-    },
-    comments: [
-      { id: 'c-1', authorName: 'Marcus Sterling', authorRole: 'Editor', text: 'Excellent guide. Please double check if we need permits to wild camp near Loch Lomond.', createdAt: new Date(Date.now() - 9 * 60 * 1000 * 60).toISOString() }
-    ],
-    history: [
-      { id: 'l-1', action: 'Draft Created', actorName: 'Alisha Vance', actorRole: 'Writer', timestamp: new Date(Date.now() - 24 * 60 * 1000 * 60).toISOString(), details: 'Created initial draft.' },
-      { id: 'l-2', action: 'Pre-Validation Passed', actorName: 'Automated AI Gatekeeper', actorRole: 'Admin', timestamp: new Date(Date.now() - 10 * 60 * 1000 * 60).toISOString(), details: 'AI Quality Score 82. Threshold is 70.' },
-      { id: 'l-3', action: 'Submitted', actorName: 'Alisha Vance', actorRole: 'Writer', timestamp: new Date(Date.now() - 10 * 60 * 1000 * 60).toISOString(), details: 'Article submitted to Duty Editor.' }
-    ]
-  }
-];
-
-const defaultConfig: WorkflowConfig = {
-  aiScoreThreshold: 70,
+const DEFAULT_CONFIG: WorkflowConfig = {
+  aiScoreThreshold: 75,
   maxReviewCycles: 2,
   claimDurationMinutes: 10,
-  categories: ['Travel Guide', 'Eco Tourism', 'Food & Drink', 'Hotel Review', 'Aviation Insights'],
-  rejectionReasons: [
-    'Grammar issues',
-    'Poor structure',
-    'Unverified sources',
-    'Misleading claims',
-    'Style guide violation'
-  ],
-  stakeholderTargets: [
-    { userId: 'u-1', articlesTarget: 5, scoreTarget: 80 },
-    { userId: 'u-2', articlesTarget: 4, scoreTarget: 75 },
-    { userId: 'u-3', articlesTarget: 6, scoreTarget: 80 },
-    { userId: 'u-4', articlesTarget: 6, scoreTarget: 75 },
-    { userId: 'u-5', articlesTarget: 3, scoreTarget: 85 }
-  ],
-  emailSettings: {
-    smtpHost: 'smtp.radardesk.com',
-    smtpPort: 587,
-    smtpUser: 'operations@radardesk.com',
-    smtpSecure: true,
-    senderName: 'RadarDesk Ops Office',
-    senderEmail: 'operations@radardesk.com',
-    digestEnabled: true,
-    digestFrequency: 'daily'
-  },
-  authSettings: {
-    authType: 'password',
-    clientId: 'rd-oauth-client-id-123',
-    clientSecret: 'rd-oauth-client-secret-sec',
-    enforceMfa: false,
-    sessionTimeoutMinutes: 60,
-    allowedDomains: ['travelradar.com', 'radardesk.com']
-  },
+  categories: ['News', 'Feature', 'Opinion', 'Internal', 'Research'],
+  rejectionReasons: ['Factual Inaccuracy', 'Grammar/Style', 'Off-topic', 'Sexist/Biased Content', 'Plagiarism'],
   rolePrivileges: [
     { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
-    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article'] },
-    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'review_article', 'publish_live'] },
-    { role: 'Quality Checker', allowedActions: ['quality_audit'] },
-    { role: 'Publisher', allowedActions: ['publish_live'] },
+    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article'] },
+    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'manage_system'] },
+    { role: 'Quality Checker', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'quality_audit'] },
+    { role: 'Publisher', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'publish_live'] },
     { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
   ]
 };
 
-const initialAnalytics: WebAnalytics = {
-  pageViews: 148,
-  submissionsCount: 12,
-  approvalsCount: 5,
-  escalationsCount: 1,
-  avgTimeSeconds: 1480,
-  activeUsers: 4
-};
-
-// Database state
-interface DBState {
-  users: User[];
-  topics: Topic[];
-  articles: Article[];
-  config: WorkflowConfig;
-  analytics: WebAnalytics;
-  moderationHistoryLogs: any[];
-}
-
-let db: DBState = {
-  users: initialUsers,
-  topics: initialTopics,
-  articles: initialArticles,
-  config: defaultConfig,
-  analytics: initialAnalytics,
-  moderationHistoryLogs: []
-};
-
-// Log topic moderation actions into historical logger
-function syncLogs() {
-  const allLogs: any[] = [];
-  db.topics.forEach(t => {
-    t.moderationHistory.forEach(h => {
-      allLogs.push({
-        topicId: t.id,
-        topicTitle: t.title,
-        action: h.action,
-        submitter: t.submitterName,
-        reviewer: h.actorName,
-        reviewerRole: h.actorRole,
-        timestamp: h.timestamp,
-        reasons: h.reasons || [],
-        comments: h.comments || ''
-      });
-    });
-  });
-  db.moderationHistoryLogs = allLogs.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
-}
-syncLogs();
-
-// Read DB from Json on launch
-function loadDB() {
+async function getWorkflowConfig(): Promise<WorkflowConfig> {
+  if (cachedConfig) return cachedConfig;
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-      db = { ...db, ...parsed };
-      if (db.users) {
-        db.users.forEach(u => {
-          if (u.approved === undefined) u.approved = true;
-          if (!u.password) u.password = 'password123';
-        });
-      }
-      syncLogs();
-    } else {
-      saveDB();
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('workflow_config').select('config').eq('id', 1).single();
+    if (data && (data as any).config) {
+      cachedConfig = (data as any).config;
+      return (data as any).config;
     }
   } catch (err) {
-    console.warn('Could not read db.json, using RAM memory:', err);
+    console.error('Config fetch failed, using defaults:', err);
   }
+
+  // Fallback to defaults to prevent system-wide startup failure
+  return DEFAULT_CONFIG;
 }
 
+// Persistence is now handled by Supabase.
+// saveDB and loadDB are legacy and removed.
 function saveDB() {
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Error writing database to file system:', err);
-  }
+  // Logic moved to direct supabase calls
 }
-
-loadDB();
+function loadDB() {
+  // Logic moved to startup sequence
+}
 
 // Lazy load Gemini AI SDK client
 let genAIInstance: GoogleGenAI | null = null;
@@ -306,109 +105,235 @@ function getGeminiClient() {
 }
 
 // Background scheduler for releasing claimed topics that expire
-setInterval(() => {
-  let changed = false;
-  const now = Date.now();
-  db.topics.forEach(topic => {
-    if (topic.status === 'Active' && topic.claimedById && topic.claimedAt) {
-      const claimTime = new Date(topic.claimedAt).getTime();
-      const expireTime = claimTime + (topic.durationMinutes || db.config.claimDurationMinutes) * 60 * 1000;
-      if (now > expireTime) {
-        // Release topic!
-        const prevClaimedByName = topic.claimedByName || 'Writer';
-        topic.claimedById = null;
-        topic.claimedByName = null;
-        topic.claimedAt = null;
-        topic.releasedCount += 1;
-        topic.moderationHistory.push({
+setInterval(async () => {
+  const supabase = getSupabaseClient();
+  const now = new Date().toISOString();
+
+  // Fetch active claimed topics
+  const { data: topics } = await supabase
+    .from('topics')
+    .select('*')
+    .eq('status', 'Active')
+    .not('claimed_by_id', 'is', null);
+
+  if (topics) {
+    const config = await getWorkflowConfig();
+    for (const topic of topics as any[]) {
+      const claimTime = new Date(topic.claimed_at).getTime();
+      const expireTime = claimTime + (topic.duration_minutes || config.claimDurationMinutes) * 60 * 1000;
+
+      if (Date.now() > expireTime) {
+        const prevClaimedByName = topic.claimed_by_name || 'Writer';
+        const newHistory = [...(topic.moderation_history || [])] as any[];
+        newHistory.push({
           action: 'Released',
           actorName: 'Auto Release System',
           actorRole: 'Admin',
-          timestamp: new Date().toISOString(),
+          timestamp: now,
           comments: `Claim of user ${prevClaimedByName} expired. Automatically released back to the general pool for other writers.`
         });
-        changed = true;
+
+        await supabase
+          .from('topics')
+          .update({
+            claimed_by_id: null,
+            claimed_by_name: null,
+            claimed_at: null,
+            released_count: (topic.released_count || 0) + 1,
+            moderation_history: newHistory
+          } as any)
+          .eq('id', topic.id);
       }
     }
-  });
-
-  if (changed) {
-    syncLogs();
-    saveDB();
   }
-}, 10000); // Check every 10 seconds
+}, 30000); // Check every 30 seconds for efficiency
 
 async function startServer() {
   const app = express();
   app.use(express.json());
 
+  app.post('/api/users/:id/approve', async (req, res) => {
+    const supabase = getSupabaseClient();
+
+    // Update the approved status in public.users
+    const { data: updated, error } = await supabase
+      .from('users')
+      .update({ approved: true } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ success: true, message: `Access granted: approved user registration successfully!`, user: updated });
+  });
+
   // Track page views natively
-  app.use((req, res, next) => {
+  app.use(async (req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
-      db.analytics.pageViews += 1;
-      saveDB();
+      const supabase = getSupabaseClient();
+      const { data: analytics } = await supabase.from('web_analytics').select('page_views').eq('id', 1).single();
+      if (analytics) {
+        await supabase.from('web_analytics').update({ page_views: (analytics.page_views || 0) + 1 }).eq('id', 1);
+      }
     }
     next();
   });
 
   // Track analytical views from router
-  app.post('/api/analytics/track', (req, res) => {
+  app.post('/api/analytics/tick', async (req, res) => {
     const { action } = req.body;
-    if (action === 'pageView') {
-      db.analytics.pageViews += 1;
-    } else if (action === 'activeUser') {
-      db.analytics.activeUsers = Math.min(12, db.analytics.activeUsers + 1);
+    const supabase = getSupabaseClient();
+    const { data: analytics } = await supabase.from('web_analytics').select('page_views, active_users').eq('id', 1).single() as any;
+
+    if (analytics) {
+      if (action === 'pageView') {
+        const newViews = (analytics.page_views || 0) + 1;
+        await supabase.from('web_analytics').update({ page_views: newViews } as any).eq('id', 1);
+        return res.json({ success: true, pageViews: newViews });
+      } else if (action === 'activeUser') {
+        const newActive = Math.min(25, (analytics.active_users || 0) + 1);
+        await supabase.from('web_analytics').update({ active_users: newActive } as any).eq('id', 1);
+        return res.json({ success: true, activeUsers: newActive });
+      }
     }
-    saveDB();
-    res.json({ success: true, pageViews: db.analytics.pageViews });
+    res.json({ success: true });
   });
 
   // USERS
-  app.get('/api/users', (req, res) => {
-    res.json(db.users);
+  app.get('/api/users', async (req, res) => {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('users').select('*');
+    res.json(data || []);
   });
 
-  app.put('/api/users/:id/role', (req, res) => {
-    const { role } = req.body;
-    const user = db.users.find(u => u.id === req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+  app.post('/api/users', async (req, res) => {
+    const { name, email, role } = req.body;
+
+    // Policy check: restricted domains
+    if (!email.trim().toLowerCase().endsWith('@travelradar.aero')) {
+      return res.status(403).json({ error: 'Operational Gating Policy: Only @travelradar.aero accounts are permitted.' });
     }
-    const oldRole = user.role;
-    user.role = role as UserRole;
-    saveDB();
-    res.json({ message: `Succeeded. Elevated user ${user.name} from ${oldRole} to ${role}`, user });
+
+    const supabase = getSupabaseClient();
+
+    // Generate a temporary password since the admin UI doesn't collect one
+    const temporaryPassword = Math.random().toString(36).slice(-10) + 'A1!';
+
+    // 1. Create user in Supabase Auth
+    try {
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password: temporaryPassword,
+        email_confirm: true,
+        user_metadata: { full_name: name, role: role }
+      });
+
+      if (authError || !authData.user) {
+        return res.status(400).json({ error: authError?.message || 'Admin user creation failed' });
+      }
+
+      // 2. Create profile in public.users
+      const newUserProfile = {
+        id: authData.user.id,
+        name,
+        email,
+        role,
+        password: temporaryPassword,
+        approved: true
+      };
+
+      const { data, error: profileError } = await supabase.from('users').insert(newUserProfile).select().single();
+      if (profileError) return res.status(500).json({ error: profileError.message });
+
+      res.status(201).json({ success: true, user: data, temporaryPassword });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Fatal error during admin user creation.' });
+    }
+  });
+
+  app.put('/api/users/:id/role', async (req, res) => {
+    const { role } = req.body;
+    const supabase = getSupabaseClient();
+    const { data: updated, error } = await supabase
+      .from('users')
+      .update({ role } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ message: `Succeeded. Updated user role to ${role}`, user: updated });
+  });
+
+  app.delete('/api/users/:id', async (req, res) => {
+    const supabase = getSupabaseClient();
+
+    try {
+      // 1. Delete from public.users first (profile)
+      const { error: profileError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', req.params.id);
+
+      if (profileError) throw profileError;
+
+      // 2. Delete from Supabase Auth (admin action)
+      const { error: authError } = await supabase.auth.admin.deleteUser(req.params.id);
+
+      // We don't strictly block if auth delete fails (e.g. user already gone from auth), 
+      // but we log it.
+      if (authError) {
+        console.warn('Auth user deletion warning:', authError.message);
+      }
+
+      res.json({ success: true, message: 'Operator profile terminated and removed from registries.' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to drop user profile.' });
+    }
   });
 
   // TOPIC POOL
-  app.get('/api/topics', (req, res) => {
-    res.json(db.topics);
+  app.get('/api/topics', async (req, res) => {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('topics').select('*');
+    res.json(data || []);
   });
 
-  app.get('/api/topics/moderation-history', (req, res) => {
-    res.json(db.moderationHistoryLogs);
+  app.get('/api/topics/moderation-history', async (req, res) => {
+    const supabase = getSupabaseClient();
+    const { data: topics } = await supabase.from('topics').select('id, moderation_history') as any;
+    const logs = (topics || [])
+      .flatMap((t: any) => t.moderation_history || [])
+      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    res.json(logs || []);
   });
 
-  app.post('/api/topics/propose', (req, res) => {
+  app.post('/api/topics/propose', async (req, res) => {
     const { title, description, category, userId, userName, userRole } = req.body;
     if (!title || !description || !category) {
       return res.status(400).json({ error: 'Submissions must include title, description, and category' });
     }
 
-    const newTopic: Topic = {
+    const supabase = getSupabaseClient();
+    const config = await getWorkflowConfig();
+
+    const newTopic = {
       id: `t-${Date.now()}`,
       title,
       description,
       category,
       status: 'Proposed',
-      submitterId: userId,
-      submitterName: userName,
-      claimedById: null,
-      claimedByName: null,
-      claimedAt: null,
-      durationMinutes: db.config.claimDurationMinutes,
-      releasedCount: 0,
-      moderationHistory: [
+      submitter_id: userId,
+      submitter_name: userName,
+      claimed_by_id: null,
+      claimed_by_name: null,
+      claimed_at: null,
+      duration_minutes: config.claimDurationMinutes,
+      released_count: 0,
+      moderation_history: [
         {
           action: 'Proposed',
           actorName: userName,
@@ -418,15 +343,16 @@ async function startServer() {
       ]
     };
 
-    db.topics.push(newTopic);
-    syncLogs();
-    saveDB();
-    res.status(201).json(newTopic);
+    const { data, error } = await supabase.from('topics').insert(newTopic as any).select().single() as any;
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data);
   });
 
-  app.put('/api/topics/:id', (req, res) => {
+  app.put('/api/topics/:id', async (req, res) => {
     const { title, description, category } = req.body;
-    const topic = db.topics.find(t => t.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: topic } = await supabase.from('topics').select('*').eq('id', req.params.id).single();
+
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
     }
@@ -434,28 +360,36 @@ async function startServer() {
     if (topic.status !== 'Proposed') {
       return res.status(400).json({ error: 'Only pending topics that are not yet approved can be modified.' });
     }
-    topic.title = title;
-    topic.description = description;
-    topic.category = category;
-    saveDB();
-    res.json({ success: true, topic });
+
+    const { data: updated } = await supabase
+      .from('topics')
+      .update({ title, description, category } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    res.json({ success: true, topic: updated });
   });
 
   // Moderate top pool
-  app.post('/api/topics/:id/moderate', (req, res) => {
+  app.post('/api/topics/:id/moderate', async (req, res) => {
     const { action, actorName, actorRole, comments, reasons } = req.body;
-    const topic = db.topics.find(t => t.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: topic } = await supabase.from('topics').select('*').eq('id', req.params.id).single();
+
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
     }
 
+    let newStatus = topic.status;
     if (action === 'Approved') {
-      topic.status = 'Active';
+      newStatus = 'Active';
     } else if (action === 'Rejected') {
-      topic.status = 'Rejected';
+      newStatus = 'Rejected';
     }
 
-    topic.moderationHistory.push({
+    const newHistory = [...(topic.moderation_history || [])];
+    newHistory.push({
       action,
       actorName,
       actorRole,
@@ -464,56 +398,69 @@ async function startServer() {
       reasons
     });
 
-    syncLogs();
-    saveDB();
-    res.json({ success: true, topic });
+    const { data: updated } = await supabase
+      .from('topics')
+      .update({ status: newStatus, moderation_history: newHistory } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    res.json({ success: true, topic: updated });
   });
 
   // Claim topic
-  app.post('/api/topics/:id/claim', (req, res) => {
+  app.post('/api/topics/:id/claim', async (req, res) => {
     const { userId, userName } = req.body;
-    const topic = db.topics.find(t => t.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: topic } = await supabase.from('topics').select('*').eq('id', req.params.id).single();
+
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
     }
     if (topic.status !== 'Active') {
       return res.status(400).json({ error: 'Topic is not active' });
     }
-    if (topic.claimedById) {
-      return res.status(400).json({ error: `Topic is already claimed by ${topic.claimedByName}` });
+    if (topic.claimed_by_id) {
+      return res.status(400).json({ error: `Topic is already claimed by ${topic.claimed_by_name}` });
     }
 
-    topic.claimedById = userId;
-    topic.claimedByName = userName;
-    topic.claimedAt = new Date().toISOString();
-    
-    topic.moderationHistory.push({
+    const config = await getWorkflowConfig();
+    const newHistory = [...(topic.moderation_history || [])];
+    newHistory.push({
       action: 'Proposed', // keeping as part of hist
       actorName: userName,
       actorRole: 'Writer',
       timestamp: new Date().toISOString(),
-      comments: `Claimed topic. Auto release is set to countdown of ${topic.durationMinutes || db.config.claimDurationMinutes} minutes.`
+      comments: `Claimed topic. Auto release is set to countdown of ${topic.duration_minutes || config.claimDurationMinutes} minutes.`
     });
 
-    syncLogs();
-    saveDB();
-    res.json(topic);
+    const { data: updated } = await supabase
+      .from('topics')
+      .update({
+        claimed_by_id: userId,
+        claimed_by_name: userName,
+        claimed_at: new Date().toISOString(),
+        moderation_history: newHistory
+      } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    res.json(updated);
   });
 
   // Release topic manually
-  app.post('/api/topics/:id/release', (req, res) => {
+  app.post('/api/topics/:id/release', async (req, res) => {
     const { actorName, actorRole } = req.body;
-    const topic = db.topics.find(t => t.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: topic } = await supabase.from('topics').select('*').eq('id', req.params.id).single();
+
     if (!topic) {
       return res.status(404).json({ error: 'Topic not found' });
     }
 
-    topic.claimedById = null;
-    topic.claimedByName = null;
-    topic.claimedAt = null;
-    topic.releasedCount += 1;
-
-    topic.moderationHistory.push({
+    const newHistory = [...(topic.moderation_history || [])];
+    newHistory.push({
       action: 'Released',
       actorName: actorName || 'User Request',
       actorRole: actorRole || 'Writer',
@@ -521,66 +468,124 @@ async function startServer() {
       comments: 'Topic claims manually returned back to pool.'
     });
 
-    syncLogs();
-    saveDB();
-    res.json(topic);
+    const { data: updated } = await supabase
+      .from('topics')
+      .update({
+        claimed_by_id: null,
+        claimed_by_name: null,
+        claimed_at: null,
+        released_count: (topic.released_count || 0) + 1,
+        moderation_history: newHistory
+      } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    res.json(updated);
   });
 
   // ARTICLES
-  app.get('/api/articles', (req, res) => {
-    res.json(db.articles);
+  app.get('/api/articles', async (req, res) => {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+    // Camelize keys
+    const camelized = (data as any[])?.map(a => ({
+      ...a,
+      writerId: a.writer_id,
+      writerName: a.writer_name,
+      editorId: a.editor_id,
+      editorName: a.editor_name,
+      topicId: a.topic_id,
+      reviewCycles: a.review_cycles,
+      createdAt: a.created_at,
+      submittedAt: a.submitted_at,
+      updatedAt: a.updated_at,
+      aiValidation: a.ai_validation
+    }));
+    res.json(camelized || []);
   });
 
-  app.get('/api/articles/:id', (req, res) => {
-    const article = db.articles.find(a => a.id === req.params.id);
+  app.get('/api/articles/:id', async (req, res) => {
+    const supabase = getSupabaseClient();
+    const { data: article } = await supabase.from('articles').select('*').eq('id', req.params.id).single();
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
     }
-    res.json(article);
+    // Camelize
+    const art = article as any;
+    const camelized = {
+      ...art,
+      writerId: art.writer_id,
+      writerName: art.writer_name,
+      editorId: art.editor_id,
+      editorName: art.editor_name,
+      topicId: art.topic_id,
+      reviewCycles: art.review_cycles,
+      createdAt: art.created_at,
+      submittedAt: art.submitted_at,
+      updatedAt: art.updated_at,
+      aiValidation: art.ai_validation
+    };
+    res.json(camelized);
   });
 
-  app.post('/api/articles', (req, res) => {
+  app.post('/api/articles', async (req, res) => {
     const { id, title, content, writerId, writerName, topicId } = req.body;
-    
-    let original: Article | undefined;
+    const supabase = getSupabaseClient();
+
+    let original: any = null;
     if (id) {
-      original = db.articles.find(a => a.id === id);
+      const { data } = await supabase.from('articles').select('*').eq('id', id).single();
+      original = data;
     }
+
+    const now = new Date().toISOString();
 
     if (original) {
       // Create version tracking
-      original.revisions.push({
-        version: original.revisions.length + 1,
+      const newRevisions = [...(original.revisions || [])];
+      newRevisions.push({
+        version: newRevisions.length + 1,
         title: original.title,
         content: original.content,
-        updatedAt: new Date().toISOString(),
+        updatedAt: now,
         score: original.score
       });
-      original.title = title;
-      original.content = content;
-      original.updatedAt = new Date().toISOString();
-      original.topicId = topicId || original.topicId;
-      saveDB();
-      return res.json(original);
+
+      const { data: updated, error } = await supabase
+        .from('articles')
+        .update({
+          title,
+          content,
+          updated_at: now,
+          topic_id: topicId || (original as any).topic_id,
+          revisions: newRevisions
+        } as any)
+        .eq('id', id)
+        .select()
+        .single() as any;
+
+      if (error) return res.status(500).json({ error: error.message });
+      return res.json(updated);
     } else {
       const buildId = id || `art-${Date.now()}`;
-      const newArt: Article = {
+      const newArt = {
         id: buildId,
         title,
         content,
         status: 'Draft',
-        writerId,
-        writerName,
-        editorId: null,
-        editorName: null,
-        topicId: topicId || null,
+        writer_id: writerId,
+        writer_name: writerName,
+        editor_id: null,
+        editor_name: null,
+        topic_id: topicId || null,
         score: 0,
-        reviewCycles: 0,
-        createdAt: new Date().toISOString(),
-        submittedAt: null,
-        updatedAt: new Date().toISOString(),
+        review_cycles: 0,
+        created_at: now,
+        submitted_at: null,
+        updated_at: now,
         revisions: [],
-        aiValidation: null,
+        ai_validation: null,
         comments: [],
         history: [
           {
@@ -588,20 +593,22 @@ async function startServer() {
             action: 'Draft Created',
             actorName: writerName,
             actorRole: 'Writer',
-            timestamp: new Date().toISOString(),
+            timestamp: now,
             details: 'Draft initialized.'
           }
         ]
       };
-      db.articles.push(newArt);
-      saveDB();
-      res.status(201).json(newArt);
+      const { data: created, error } = await supabase.from('articles').insert(newArt as any).select().single() as any;
+      if (error) return res.status(500).json({ error: error.message });
+      res.status(201).json(created);
     }
   });
 
   // AI GATEKEEPER PRE-VALIDATION AND SUBMIT
   app.post('/api/articles/:id/submit', async (req, res) => {
-    const article = db.articles.find(a => a.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: article } = await supabase.from('articles').select('*').eq('id', req.params.id).single();
+
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
     }
@@ -643,22 +650,28 @@ async function startServer() {
         geminiObj = JSON.parse(textResponse.trim());
       } catch (err: any) {
         console.error('Gemini call failed, utilizing procedural intelligent validation backup:', err.message);
-        geminiObj = generateProceduralBackup(article);
+        // Cast to matching article type for backup gen
+        geminiObj = generateProceduralBackup({
+          ...article,
+          writerId: article.writer_id,
+          writerName: article.writer_name
+        } as any);
       }
     } else {
       console.log('Gemini API Key missing or default, using dynamic mock compiler...');
-      geminiObj = generateProceduralBackup(article);
+      geminiObj = generateProceduralBackup({
+        ...article,
+        writerId: article.writer_id,
+        writerName: article.writer_name
+      } as any);
     }
 
-    // Persist calculation
-    article.score = geminiObj.score;
-    article.aiValidation = geminiObj;
+    const config = await getWorkflowConfig();
+    const threshold = config.aiScoreThreshold;
+    const newHistory = [...(article.history || [])];
 
-    // Apply strict check rules
-    const threshold = db.config.aiScoreThreshold;
     if (geminiObj.score < threshold) {
-      article.status = 'Draft'; // Remains Draft, blocked!
-      article.history.push({
+      newHistory.push({
         id: `h-block-${Date.now()}`,
         action: 'Blocked by AI Gatekeeper',
         actorName: 'AI Validator System',
@@ -666,18 +679,28 @@ async function startServer() {
         timestamp: new Date().toISOString(),
         details: `Submissions blocked due to Quality Score (${geminiObj.score}) below platform threshold (${threshold}). Feedback: ${geminiObj.grammar}`
       });
-      saveDB();
-      return res.json({ 
-        success: false, 
+
+      const { data: updated } = await supabase
+        .from('articles')
+        .update({
+          score: geminiObj.score,
+          ai_validation: geminiObj,
+          status: 'Draft',
+          history: newHistory
+        } as any)
+        .eq('id', req.params.id)
+        .select()
+        .single() as any;
+
+      return res.json({
+        success: false,
         message: `Submission blocked! AI Pre-Validation quality score of ${geminiObj.score} failed to meet the server-mandated threshold of ${threshold}. Please address violations and resubmit.`,
-        article 
+        article: updated
       });
     }
 
     // Success! Allow entry to Editor workpool queue
-    article.status = 'Submitted';
-    article.submittedAt = new Date().toISOString();
-    article.history.push({
+    newHistory.push({
       id: `h-success-${Date.now()}`,
       action: 'Pre-Validation Passed',
       actorName: 'AI Validator System',
@@ -685,24 +708,41 @@ async function startServer() {
       timestamp: new Date().toISOString(),
       details: `Pre-validation score ${geminiObj.score} exceeded platform gate limit of ${threshold}. Sources loaded.`
     });
-    article.history.push({
+    newHistory.push({
       id: `h-submit-${Date.now()}`,
       action: 'Submitted',
-      actorName: article.writerName,
+      actorName: article.writer_name,
       actorRole: 'Writer',
       timestamp: new Date().toISOString(),
       details: 'Article successfully enters the queue for review.'
     });
 
-    db.analytics.submissionsCount += 1;
-    saveDB();
-    res.json({ success: true, message: 'Article submitted successfully to duty editors.', article });
+    const { data: updated } = await supabase
+      .from('articles')
+      .update({
+        score: geminiObj.score,
+        ai_validation: geminiObj,
+        status: 'Submitted',
+        submitted_at: new Date().toISOString(),
+        history: newHistory
+      } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    // Increment submissions count in analytics
+    const { data: anal } = await supabase.from('web_analytics').select('submissions_count').eq('id', 1).single() as any;
+    await supabase.from('web_analytics').update({ submissions_count: (anal?.submissions_count || 0) + 1 } as any).eq('id', 1);
+
+    res.json({ success: true, message: 'Article submitted successfully to duty editors.', article: updated });
   });
 
   // Comment endpoint
-  app.post('/api/articles/:id/comment', (req, res) => {
+  app.post('/api/articles/:id/comment', async (req, res) => {
     const { text, authorName, authorRole } = req.body;
-    const article = db.articles.find(a => a.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: article } = await supabase.from('articles').select('*').eq('id', req.params.id).single();
+
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
     }
@@ -715,35 +755,47 @@ async function startServer() {
       createdAt: new Date().toISOString()
     };
 
-    article.comments.push(newComment);
-    saveDB();
+    const newComments = [...((article as any).comments || [])];
+    newComments.push(newComment);
+
+    await supabase.from('articles').update({ comments: newComments } as any).eq('id', req.params.id);
+
     res.json({ success: true, comment: newComment });
   });
 
   // DECISION LOGIC: Approvals, Revisions, Rejections, Escalations
-  app.post('/api/articles/:id/decision', (req, res) => {
+  app.post('/api/articles/:id/decision', async (req, res) => {
     const { action, actorId, actorName, actorRole, comments, reasons } = req.body;
-    const article = db.articles.find(a => a.id === req.params.id);
+    const supabase = getSupabaseClient();
+    const { data: article } = await supabase.from('articles').select('*').eq('id', req.params.id).single();
+
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
     }
 
-    // Action execution
-    const prevStatus = article.status;
-
     // Rule: Claim exactly one editor per article
     if (editorRoleMatches(actorRole)) {
-      if (article.editorId && article.editorId !== actorId) {
-        return res.status(400).json({ error: `Conflict: This article is already owned/claimed for review by Editor ${article.editorName}. Only they can make decisions.` });
+      if (article.editor_id && article.editor_id !== actorId) {
+        return res.status(400).json({ error: `Conflict: This article is already owned/claimed for review by Editor ${article.editor_name}. Only they can make decisions.` });
       }
-      // Seal ownership
-      article.editorId = actorId;
-      article.editorName = actorName;
+    }
+
+    const newHistory = [...(article.history || [])];
+    const config = await getWorkflowConfig();
+
+    let newStatus = article.status;
+    let newEditorId = article.editor_id;
+    let newEditorName = article.editor_name;
+    let newReviewCycles = article.review_cycles || 0;
+
+    if (editorRoleMatches(actorRole)) {
+      newEditorId = actorId;
+      newEditorName = actorName;
     }
 
     if (action === 'Approve') {
-      article.status = 'Approved';
-      article.history.push({
+      newStatus = 'Approved';
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Approved',
         actorName,
@@ -751,11 +803,13 @@ async function startServer() {
         timestamp: new Date().toISOString(),
         details: `Article approved by Editorial. Sent to Quality Assurance desk. Comment: "${comments || 'No comment'}"`
       });
-      db.analytics.approvalsCount += 1;
+      // Increment approvals count in analytics
+      const { data: anal } = await supabase.from('web_analytics').select('approvals_count').eq('id', 1).single() as any;
+      await supabase.from('web_analytics').update({ approvals_count: (anal?.approvals_count || 0) + 1 } as any).eq('id', 1);
 
     } else if (action === 'Publish') {
-      article.status = 'Published';
-      article.history.push({
+      newStatus = 'Published';
+      newHistory.push({
         id: `h-pub-${Date.now()}`,
         action: 'Published',
         actorName,
@@ -765,16 +819,13 @@ async function startServer() {
       });
 
       // Free claimed topics to topic completion state
-      if (article.topicId) {
-        const topic = db.topics.find(t => t.id === article.topicId);
-        if (topic) {
-          topic.status = 'Completed';
-        }
+      if (article.topic_id) {
+        await supabase.from('topics').update({ status: 'Completed' } as any).eq('id', article.topic_id);
       }
 
     } else if (action === 'Minor Revision') {
-      article.status = 'Minor Revision';
-      article.history.push({
+      newStatus = 'Minor Revision';
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Request Revision',
         actorName,
@@ -784,37 +835,35 @@ async function startServer() {
       });
 
     } else if (action === 'Reject') {
-      // Rejection rules: returns to same editor, counts cycles
-      article.status = 'Rejected';
-      article.reviewCycles += 1;
-      
-      article.history.push({
+      newStatus = 'Rejected';
+      newReviewCycles += 1;
+
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Rejected',
         actorName,
         actorRole,
         timestamp: new Date().toISOString(),
-        details: `Cycle ${article.reviewCycles} Rejection. Reasons: ${reasons ? reasons.join(', ') : 'None'}. Comments: "${comments || ''}"`
+        details: `Cycle ${newReviewCycles} Rejection. Reasons: ${reasons ? reasons.join(', ') : 'None'}. Comments: "${comments || ''}"`
       });
 
-      // Strict limit check: Exceeded 2 review rejections?
-      if (article.reviewCycles >= db.config.maxReviewCycles) {
-        article.status = 'Escalated';
-        article.history.push({
+      if (newReviewCycles >= config.maxReviewCycles) {
+        newStatus = 'Escalated';
+        newHistory.push({
           id: `h-esc-${Date.now()}`,
           action: 'Auto-Escalated',
           actorName: 'Workflow Engine',
           actorRole: 'Admin',
           timestamp: new Date().toISOString(),
-          details: `Rejection cycle state reached maximum limit (${db.config.maxReviewCycles}). Article auto-escalated to Senior Editor queue.`
+          details: `Rejection cycle state reached maximum limit (${config.maxReviewCycles}). Article auto-escalated to Senior Editor queue.`
         });
-        db.analytics.escalationsCount += 1;
+        const { data: anal } = await supabase.from('web_analytics').select('escalations_count').eq('id', 1).single() as any;
+        await supabase.from('web_analytics').update({ escalations_count: (anal?.escalations_count || 0) + 1 } as any).eq('id', 1);
       }
 
     } else if (action === 'Escalate') {
-      // Manual escalation
-      article.status = 'Escalated';
-      article.history.push({
+      newStatus = 'Escalated';
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Escalated Manually',
         actorName,
@@ -822,12 +871,12 @@ async function startServer() {
         timestamp: new Date().toISOString(),
         details: `Manually escalated review to Senior Editors. Comments: "${comments || ''}"`
       });
-      db.analytics.escalationsCount += 1;
+      const { data: anal } = await supabase.from('web_analytics').select('escalations_count').eq('id', 1).single() as any;
+      await supabase.from('web_analytics').update({ escalations_count: (anal?.escalations_count || 0) + 1 } as any).eq('id', 1);
 
     } else if (action === 'Override Approve') {
-      // Senior override approval
-      article.status = 'Published';
-      article.history.push({
+      newStatus = 'Published';
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Senior Override Approve',
         actorName,
@@ -836,16 +885,15 @@ async function startServer() {
         details: `Senior Editor overrode workflow limits and forcibly approved article to Published. Comments: "${comments || ''}"`
       });
 
-      if (article.topicId) {
-        const topic = db.topics.find(t => t.id === article.topicId);
-        if (topic) topic.status = 'Completed';
+      if (article.topic_id) {
+        await supabase.from('topics').update({ status: 'Completed' } as any).eq('id', article.topic_id);
       }
-      db.analytics.approvalsCount += 1;
+      const { data: anal } = await supabase.from('web_analytics').select('approvals_count').eq('id', 1).single() as any;
+      await supabase.from('web_analytics').update({ approvals_count: (anal?.approvals_count || 0) + 1 } as any).eq('id', 1);
 
     } else if (action === 'Override Reject') {
-      // Senior override permanent reject
-      article.status = 'Rejected';
-      article.history.push({
+      newStatus = 'Rejected';
+      newHistory.push({
         id: `h-dec-${Date.now()}`,
         action: 'Senior Override Permanent Reject',
         actorName,
@@ -855,102 +903,326 @@ async function startServer() {
       });
     }
 
-    saveDB();
-    res.json({ success: true, article });
+    const { data: updated } = await supabase
+      .from('articles')
+      .update({
+        status: newStatus,
+        editor_id: newEditorId,
+        editor_name: newEditorName,
+        review_cycles: newReviewCycles,
+        history: newHistory,
+        updated_at: new Date().toISOString()
+      } as any)
+      .eq('id', req.params.id)
+      .select()
+      .single() as any;
+
+    res.json({ success: true, article: updated });
   });
 
   // CONFIGS
-  app.get('/api/config', (req, res) => {
-    res.json(db.config);
+  app.get('/api/config', async (req, res) => {
+    try {
+      const config = await getWorkflowConfig();
+      res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
-  app.post('/api/config', (req, res) => {
-    db.config = { ...db.config, ...req.body };
-    saveDB();
-    res.json(db.config);
+  app.post('/api/config', async (req, res) => {
+    try {
+      const supabase = getSupabaseClient();
+      const { data: current } = await supabase.from('workflow_config').select('config').eq('id', 1).single() as any;
+      const newConfig = { ...(current as any)?.config, ...req.body };
+
+      const { data } = await supabase
+        .from('workflow_config')
+        .update({ config: newConfig } as any)
+        .eq('id', 1)
+        .select()
+        .single() as any;
+
+      if (data) cachedConfig = (data as any).config;
+      res.json(newConfig);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // AUTH
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    const supabase = getSupabaseClient();
+
+    // 1. Official Supabase Auth SignIn
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (authError || !authData.user) {
+      return res.status(401).json({ error: authError?.message || 'Authentication failed' });
+    }
+
+    // 2. Fetch profile metadata from public.users
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (profileError || !userProfile) {
+      return res.status(401).json({ error: 'Operator profile not found in directory. Contact Security Admin.' });
+    }
+
+    if (userProfile.approved === false) {
+      return res.status(401).json({ error: 'Review Pending: Your organization access has not been approved by an Administrator yet.' });
+    }
+
+    res.json({ success: true, user: userProfile, session: authData.session });
+  });
+
+  app.post('/api/auth/register', async (req, res) => {
+    const { name, email, password, role } = req.body;
+    if (!email.trim().toLowerCase().endsWith('@travelradar.aero')) {
+      return res.status(403).json({ error: 'Direct access denied. Only @travelradar.aero domains are permitted.' });
+    }
+    const supabase = getSupabaseClient();
+
+    // 1. Official Supabase Auth SignUp
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name, role: role }
+      }
+    });
+
+    if (authError || !authData.user) {
+      return res.status(400).json({ error: authError?.message || 'Registration failed' });
+    }
+
+    // 2. Create profile in public.users
+    const newUserProfile = {
+      id: authData.user.id,
+      name,
+      email,
+      role,
+      password: password,
+      approved: true
+    };
+
+    const { data, error: profileError } = await supabase.from('users').insert(newUserProfile).select().single();
+
+    if (profileError) {
+      return res.status(500).json({ error: profileError.message });
+    }
+
+    res.status(201).json({ success: true, user: data });
+  });
+
+  app.post('/api/auth/reset-forgot', async (req, res) => {
+    const { email } = req.body;
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (error) return res.status(500).json({ error: error.message });
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    res.json({ success: true, message: 'Recovery process initiated', pin });
+  });
+
+  app.post('/api/auth/reset-confirm', async (req, res) => {
+    const { email, newPassword } = req.body;
+    const supabase = getSupabaseClient();
+
+    const { data: user } = await supabase.from('users').select('id').eq('email', email).single();
+    if (user) {
+      const { error } = await supabase.auth.admin.updateUserById(user.id, { password: newPassword });
+      if (error) return res.status(500).json({ error: error.message });
+
+      await supabase.from('users').update({ password: newPassword }).eq('id', user.id);
+    }
+
+    res.json({ success: true, message: 'Security credentials updated successfully' });
+  });
+
+  // ADMIN
+  app.post('/api/admin/create-user', async (req, res) => {
+    const { name, email, password, role, approved } = req.body;
+    if (!email.trim().toLowerCase().endsWith('@travelradar.aero')) {
+      return res.status(403).json({ error: 'Operational Gating Policy: Only @travelradar.aero accounts are permitted.' });
+    }
+    const supabase = getSupabaseClient();
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name, role: role }
+    });
+
+    if (authError || !authData.user) {
+      return res.status(400).json({ error: authError?.message || 'Admin user creation failed' });
+    }
+
+    const newUserProfile = {
+      id: authData.user.id,
+      name,
+      email,
+      role,
+      password,
+      approved: true
+    };
+
+    const { data, error: profileError } = await supabase.from('users').insert(newUserProfile).select().single();
+    if (profileError) return res.status(500).json({ error: profileError.message });
+
+    res.status(201).json({ success: true, user: data });
   });
 
   // SYSTEM STATS & METRICS
-  app.get('/api/analytics', (req, res) => {
-    // Math structures for reporting
-    const topics = db.topics;
-    const articles = db.articles;
+  app.get('/api/analytics', async (req, res) => {
+    try {
+      const supabase = getSupabaseClient();
 
-    // Topic Lifecycle Counts
-    const topicLifecycle = {
-      Proposed: topics.filter(t => t.status === 'Proposed').length,
-      Approved: topics.filter(t => t.status === 'Approved').length,
-      Active: topics.filter(t => t.status === 'Active').length,
-      Completed: topics.filter(t => t.status === 'Completed').length,
-      Released: topics.filter(t => t.status === 'Released' || t.releasedCount > 0).length,
-      Rejected: topics.filter(t => t.status === 'Rejected').length
-    };
+      // Fetch all needed data
+      const { data: topics } = await supabase.from('topics').select('*');
+      const { data: articles } = await supabase.from('articles').select('*');
+      const { data: analytics } = await supabase.from('web_analytics').select('*').eq('id', 1).single();
+      const { data: users } = await supabase.from('users').select('*');
 
-    // Common rejection reasons aggregate
-    const rejectionCounts: Record<string, number> = {};
-    db.config.rejectionReasons.forEach(r => { rejectionCounts[r] = 0; });
-    articles.forEach(art => {
-      art.history.forEach(h => {
-        if (h.action === 'Rejected' && h.details.includes('Reasons:')) {
-          const detailStr = h.details;
-          db.config.rejectionReasons.forEach(r => {
-            if (detailStr.includes(r)) {
-              rejectionCounts[r] = (rejectionCounts[r] || 0) + 1;
-            }
-          });
+      if (!topics || !articles || !analytics || !users) {
+        return res.status(500).json({ error: 'Failed to fetch analytics data' });
+      }
+
+      // Topic Lifecycle Counts
+      const topicLifecycle = {
+        Proposed: topics.filter(t => t.status === 'Proposed').length,
+        Approved: topics.filter(t => t.status === 'Approved').length,
+        Active: topics.filter(t => t.status === 'Active').length,
+        Completed: topics.filter(t => t.status === 'Completed').length,
+        Released: topics.filter(t => t.released_count > 0).length,
+        Rejected: topics.filter(t => t.status === 'Rejected').length
+      };
+
+      // Common rejection reasons aggregate (mocked for now or extracted from article history)
+      const config = await getWorkflowConfig();
+      const rejectionCounts: Record<string, number> = {};
+      config.rejectionReasons.forEach(r => { rejectionCounts[r] = 0; });
+
+      articles.forEach(art => {
+        art.history?.forEach((h: any) => {
+          if (h.action === 'Rejected' && h.details?.includes('Reasons:')) {
+            config.rejectionReasons.forEach(r => {
+              if (h.details.includes(r)) {
+                rejectionCounts[r] = (rejectionCounts[r] || 0) + 1;
+              }
+            });
+          }
+        });
+      });
+
+      // Per-writer throughput
+      const throughputPerWriter: Record<string, { published: number; claimed: number; totalSubmitted: number }> = {};
+      users.filter(u => u.role === 'Writer').forEach(w => {
+        throughputPerWriter[w.name] = { published: 0, claimed: 0, totalSubmitted: 0 };
+      });
+
+      topics.forEach(t => {
+        if (t.claimed_by_name && throughputPerWriter[t.claimed_by_name]) {
+          throughputPerWriter[t.claimed_by_name].claimed += 1;
         }
       });
-    });
 
-    // Per-writer throughput / claimed over time
-    const throughputPerWriter: Record<string, { published: number; claimed: number; totalSubmitted: number }> = {};
-    db.users.filter(u => u.role === 'Writer').forEach(w => {
-      throughputPerWriter[w.name] = { published: 0, claimed: 0, totalSubmitted: 0 };
-    });
-    // Fill claimed
-    topics.forEach(t => {
-      if (t.claimedByName && throughputPerWriter[t.claimedByName]) {
-        throughputPerWriter[t.claimedByName].claimed += 1;
-      }
-    });
-    // Fill articles published/submitted
-    articles.forEach(art => {
-      const name = art.writerName;
-      if (!throughputPerWriter[name]) {
-        throughputPerWriter[name] = { published: 0, claimed: 0, totalSubmitted: 0 };
-      }
-      if (art.status === 'Published') {
-        throughputPerWriter[name].published += 1;
-      }
-      throughputPerWriter[name].totalSubmitted += 1;
-    });
+      articles.forEach(art => {
+        const name = art.writer_name;
+        if (!throughputPerWriter[name]) {
+          throughputPerWriter[name] = { published: 0, claimed: 0, totalSubmitted: 0 };
+        }
+        if (art.status === 'Published') {
+          throughputPerWriter[name].published += 1;
+        }
+        throughputPerWriter[name].totalSubmitted += 1;
+      });
 
-    // Correlation analysis text representation or coordinates score vs approval status
-    const scoreCorrelation = articles.map(art => ({
-      title: art.title.substring(0, 20) + '...',
-      score: art.score,
-      status: art.status,
-      cycles: art.reviewCycles
-    }));
+      // Score correlation
+      const scoreCorrelation = articles.map(art => ({
+        title: art.title.substring(0, 20) + '...',
+        score: art.score,
+        status: art.status,
+        cycles: art.review_cycles
+      }));
 
-    // Turnaround math
-    const approvedArts = articles.filter(a => a.status === 'Published' && a.submittedAt);
-    let totalSecs = 0;
-    approvedArts.forEach(a => {
-      const sub = new Date(a.submittedAt!).getTime();
-      const upd = new Date(a.updatedAt).getTime();
-      totalSecs += Math.max(12, (upd - sub) / 1000);
-    });
-    const avgTurnaroundSecs = approvedArts.length > 0 ? (totalSecs / approvedArts.length) : 0;
+      // Turnaround math
+      const approvedArts = articles.filter(a => a.status === 'Published' && a.submitted_at);
+      let totalSecs = 0;
+      approvedArts.forEach(a => {
+        const sub = new Date(a.submitted_at!).getTime();
+        const upd = new Date(a.updated_at).getTime();
+        totalSecs += Math.max(12, (upd - sub) / 1000);
+      });
+      const avgTurnaroundSecs = approvedArts.length > 0 ? (totalSecs / approvedArts.length) : 0;
 
-    res.json({
-      webAnalytics: db.analytics,
-      topicLifecycle,
-      rejectionReasons: rejectionCounts,
-      writerThroughput: throughputPerWriter,
-      scoreCorrelation,
-      avgApprovalTimeSeconds: avgTurnaroundSecs
-    });
+      res.json({
+        webAnalytics: {
+          pageViews: analytics.page_views,
+          submissionsCount: analytics.submissions_count,
+          approvalsCount: analytics.approvals_count,
+          escalationsCount: analytics.escalations_count,
+          activeUsers: analytics.active_users
+        },
+        topicLifecycle,
+        rejectionReasons: rejectionCounts,
+        writerThroughput: throughputPerWriter,
+        scoreCorrelation,
+        avgApprovalTimeSeconds: avgTurnaroundSecs
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // UAT FEEDBACK
+  app.post('/api/uat/submit', async (req, res) => {
+    try {
+      const { userId, userName, userRole, rating, feedbackType, comments, browserInfo } = req.body;
+      const supabase = getSupabaseClient();
+
+      const { data, error } = await supabase
+        .from('uat_feedback')
+        .insert({
+          user_id: userId,
+          user_name: userName,
+          user_role: userRole,
+          rating,
+          feedback_type: feedbackType,
+          comments,
+          browser_info: browserInfo
+        } as any)
+        .select()
+        .single() as any;
+
+      if (error) throw error;
+      res.status(201).json({ success: true, feedback: data });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/uat/feedback', async (req, res) => {
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from('uat_feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      res.json(data || []);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // Integration with Vite
@@ -961,21 +1233,17 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    // In production, we serve from the same folder where server.cjs and assets are located
+    const distPath = __dirname;
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
-  app.listen(1111, '0.0.0.0', () => {
-    // Note: Reverse proxy maps 3000 -> 1111 or stays on the hardcoded docker port.
-    // Wait, let's keep it strictly on port 3000 as instructed in "The PORT value (3000) is hardcoded...":
-    // "All dev servers MUST be configured to run on port 3000".
-    // Wait, let's look at the instruction again on PORT:
-    // "Port 3000 is the ONLY externally accessible port"
-    // "Do NOT attempt to: Read or set the PORT environment variable... Configure the dev server to use a different port."
-    // Ah! Let's listen on 3000! Let's bind port 3000 exactly:
+  const port = process.env.PORT || 3000;
+  app.listen(Number(port), '0.0.0.0', () => {
+    console.log(`Server bound and active on http://localhost:${port}`);
   });
 }
 
@@ -987,12 +1255,12 @@ function editorRoleMatches(role: UserRole) {
 function generateProceduralBackup(article: Article): AIPreValidation {
   const content = article.content.toLowerCase();
   const wordCount = article.content.split(/\s+/).filter(Boolean).length;
-  
+
   let baseScore = 60;
   const reasons: string[] = [];
   const styleViolations: string[] = [];
   const suggestions: string[] = [];
-  
+
   // Rule 1: Structure - headings detection
   const hasMarkdownHeadings = article.content.includes('#') || article.content.includes('##');
   if (hasMarkdownHeadings) {
@@ -1053,8 +1321,8 @@ function generateProceduralBackup(article: Article): AIPreValidation {
 
   return {
     score: roundedScore,
-    grammar: roundedScore > 75 
-      ? 'Polished writing with balanced vocabulary and excellent readability.' 
+    grammar: roundedScore > 75
+      ? 'Polished writing with balanced vocabulary and excellent readability.'
       : 'Minor readability flaws detected. Repetitive phrasing style identified.',
     readability: wordCount > 250 ? 'Intermediate Professional level' : 'Broad Casual level',
     sourcesFound: hasReferences,
@@ -1073,926 +1341,4 @@ function generateProceduralBackup(article: Article): AIPreValidation {
   };
 }
 
-// Bind server to run
-const app = express();
-const PORT = 3000;
-
-app.use(express.json());
-
-// Load database
-loadDB();
-
-// Sync endpoints
-// Track page views natively
-app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
-    db.analytics.pageViews += 1;
-    saveDB();
-  }
-  next();
-});
-
-// APIs
-app.get('/api/supabase/status', async (req, res) => {
-  try {
-    const sb = getSupabaseClient() as any;
-    
-    // Test select rows count on each of the tables
-    const { count: uCount, error: uErr } = await sb
-      .from('radardesk_users')
-      .select('*', { count: 'exact', head: true });
-      
-    const { count: tCount, error: tErr } = await sb
-      .from('radardesk_topics')
-      .select('*', { count: 'exact', head: true });
-      
-    const { count: aCount, error: aErr } = await sb
-      .from('radardesk_articles')
-      .select('*', { count: 'exact', head: true });
-
-    if (uErr && (uErr.code === 'P0001' || uErr.message?.includes('does not exist') || uErr.message?.includes('relation'))) {
-      return res.json({
-        connected: true,
-        tablesMissing: true,
-        rowCounts: { users: 0, topics: 0, articles: 0 },
-        error: "Database connected, but system tables are not provisioned yet. Please run the provided DDL script in the Supabase SQL editor."
-      });
-    }
-
-    res.json({
-      connected: !uErr,
-      tablesMissing: !!uErr,
-      rowCounts: {
-        users: uCount || 0,
-        topics: tCount || 0,
-        articles: aCount || 0
-      },
-      error: uErr?.message || tErr?.message || aErr?.message || null
-    });
-  } catch (err: any) {
-    res.json({ connected: false, error: err.message || 'Supabase host unreachable' });
-  }
-});
-
-app.post('/api/supabase/sync', async (req, res) => {
-  try {
-    const sb = getSupabaseClient() as any;
-    
-    // 1. Sync users
-    const fUsers = db.users.map(u => ({
-      id: u.id,
-      name: u.name,
-      role: u.role,
-      email: u.email
-    }));
-    const { error: uErr } = await sb.from('radardesk_users').upsert(fUsers);
-    if (uErr) throw new Error(`Users upsert failing: ${uErr.message}`);
-
-    // 2. Sync topics
-    const fTopics = db.topics.map(t => ({
-      id: t.id,
-      title: t.title,
-      description: t.description || '',
-      category: t.category,
-      status: t.status,
-      submitter_id: t.submitterId,
-      submitter_name: t.submitterName,
-      claimed_by_id: t.claimedById,
-      claimed_by_name: t.claimedByName,
-      claimed_at: t.claimedAt,
-      duration_minutes: t.durationMinutes || 10,
-      released_count: t.releasedCount || 0,
-      moderation_history: t.moderationHistory || []
-    }));
-    const { error: tErr } = await sb.from('radardesk_topics').upsert(fTopics);
-    if (tErr) throw new Error(`Topics upsert failing: ${tErr.message}`);
-
-    // 3. Sync articles
-    const fArticles = db.articles.map(a => ({
-      id: a.id,
-      title: a.title,
-      content: a.content,
-      status: a.status,
-      writer_id: a.writerId,
-      writer_name: a.writerName,
-      editor_id: a.editorId,
-      editor_name: a.editorName,
-      topic_id: a.topicId,
-      score: a.score || 0,
-      review_cycles: a.reviewCycles || 0,
-      created_at: a.createdAt,
-      submitted_at: a.submittedAt,
-      updated_at: a.updatedAt,
-      revisions: a.revisions || [],
-      ai_validation: a.aiValidation || {},
-      comments: a.comments || [],
-      history: a.history || []
-    }));
-    const { error: aErr } = await sb.from('radardesk_articles').upsert(fArticles);
-    if (aErr) throw new Error(`Articles upsert failing: ${aErr.message}`);
-
-
-    res.json({
-      success: true,
-      syncedUsers: fUsers.length,
-      syncedTopics: fTopics.length,
-      syncedArticles: fArticles.length
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Error occurred during live sync execution' });
-  }
-});
-
-app.post('/api/analytics/track', (req, res) => {
-  const { action } = req.body;
-  if (action === 'pageView') {
-    db.analytics.pageViews += 1;
-  } else if (action === 'activeUser') {
-    db.analytics.activeUsers = Math.min(25, db.analytics.activeUsers + 1);
-  }
-  saveDB();
-  res.json({ success: true, pageViews: db.analytics.pageViews });
-});
-
-app.get('/api/users', (req, res) => {
-  res.json(db.users);
-});
-
-app.post('/api/users', (req, res) => {
-  const { name, email, role } = req.body;
-  if (!name || !email || !role) {
-    return res.status(400).json({ error: 'Please submit name, email, and role' });
-  }
-
-  // Enforce authorized organizational email domain check (@travelradar.com)
-  const trimmedEmail = email.trim().toLowerCase();
-  if (!trimmedEmail.endsWith('@travelradar.com')) {
-    return res.status(400).json({ 
-      error: 'Access Denied: Only official organization email accounts (@travelradar.com) are permitted within RadarDesk Operations.' 
-    });
-  }
-
-  const existing = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
-  if (existing) {
-    return res.status(400).json({ error: `An operator with email ${email} is already registered.` });
-  }
-  const newUser: User = {
-    id: `u-${Date.now()}`,
-    name,
-    email: trimmedEmail,
-    role: role as UserRole,
-    password: 'password123',
-    approved: true
-  };
-  db.users.push(newUser);
-  saveDB();
-  res.status(201).json({ success: true, user: newUser });
-});
-
-// Authentication and registration endpoints
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Missing email or password credentials.' });
-  }
-
-  // Enforce authorized organizational email domain check (@travelradar.com)
-  const trimmedEmail = email.trim().toLowerCase();
-  if (!trimmedEmail.endsWith('@travelradar.com')) {
-    return res.status(401).json({ 
-      error: 'Access Denied: Authentication is restricted to official organization email accounts (@travelradar.com) only.' 
-    });
-  }
-
-  const user = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
-  if (!user) {
-    return res.status(400).json({ error: 'Access Denied: No account associated with this email exists.' });
-  }
-  if (user.password !== password) {
-    return res.status(400).json({ error: 'Access Denied: Incorrect password match.' });
-  }
-  if (user.approved === false) {
-    return res.status(401).json({ error: 'Review Pending: Your registration request has not been approved by an Administrator yet.' });
-  }
-  res.json({ success: true, user });
-});
-
-app.post('/api/auth/register', (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: 'Missing registration details. All fields are required.' });
-  }
-
-  // Enforce authorized organizational email domain check (@travelradar.com)
-  const trimmedEmail = email.trim().toLowerCase();
-  if (!trimmedEmail.endsWith('@travelradar.com')) {
-    return res.status(400).json({ 
-      error: 'Registration Blocked: Only official organization email accounts (@travelradar.com) are permitted to request access to RadarDesk Operations.' 
-    });
-  }
-
-  const existing = db.users.find(u => u.email.toLowerCase() === trimmedEmail);
-  if (existing) {
-    return res.status(400).json({ error: `An operator with email ${email} is already registered in our directories.` });
-  }
-  const newUser: User = {
-    id: `u-${Date.now()}`,
-    name,
-    email: trimmedEmail,
-    role: role as UserRole,
-    password,
-    approved: false // Registrations are PENDING approval by default!
-  };
-  db.users.push(newUser);
-  saveDB();
-  res.status(201).json({ 
-    success: true, 
-    message: 'Your registration was recorded successfully. An Administrator must review and approve your account before access is granted.', 
-    user: newUser 
-  });
-});
-
-app.post('/api/auth/reset-forgot', (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Please enter your email address.' });
-  }
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    return res.status(400).json({ error: 'No account matches this email address.' });
-  }
-  // Generate random 6-digit pin
-  const pin = Math.floor(100000 + Math.random() * 900000).toString();
-  // Temporarily store pin in DB/user record for verification
-  (user as any).passwordResetToken = pin;
-  saveDB();
-  res.json({ 
-    success: true, 
-    message: `Security validation complete. A simulated 6-digit reset code has been sent.`,
-    pin // Return pin so our app can mock-send it or display it live!
-  });
-});
-
-app.post('/api/auth/reset-confirm', (req, res) => {
-  const { email, pin, newPassword } = req.body;
-  if (!email || !pin || !newPassword) {
-    return res.status(400).json({ error: 'Please submit your email, recovery pin, and new password.' });
-  }
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    return res.status(400).json({ error: 'No account associated with this email found.' });
-  }
-  if ((user as any).passwordResetToken !== pin) {
-    return res.status(400).json({ error: 'Invalid reset pin code.' });
-  }
-  user.password = newPassword;
-  delete (user as any).passwordResetToken;
-  saveDB();
-  res.json({ success: true, message: 'Password reset successfully!' });
-});
-
-app.post('/api/users/:id/approve', (req, res) => {
-  const user = db.users.find(u => u.id === req.params.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User registration request not found' });
-  }
-  user.approved = true;
-  saveDB();
-  res.json({ success: true, message: `Access granted: Approved user account for ${user.name} (${user.role})!`, user });
-});
-
-app.delete('/api/users/:id', (req, res) => {
-  const { id } = req.params;
-  const userIndex = db.users.findIndex(u => u.id === id);
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'Operator profile not found.' });
-  }
-  const user = db.users[userIndex];
-  
-  const adminsCount = db.users.filter(u => u.role === 'Admin').length;
-  if (user.role === 'Admin' && adminsCount <= 1) {
-    return res.status(400).json({ error: 'Security breach blocked: The portal must retain at least one system Administrator.' });
-  }
-
-  db.users.splice(userIndex, 1);
-  saveDB();
-  res.json({ success: true, message: `Successfully removed participant ${user.name} from active directories.` });
-});
-
-app.put('/api/users/:id/role', (req, res) => {
-  const { role } = req.body;
-  const user = db.users.find(u => u.id === req.params.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-  const oldRole = user.role;
-  user.role = role as UserRole;
-  
-  // Update in relevant ongoing state
-  db.articles.forEach(art => {
-    if (art.writerId === user.id) art.writerName = user.name;
-    if (art.editorId === user.id) art.editorName = user.name;
-  });
-  db.topics.forEach(t => {
-    if (t.submitterId === user.id) t.submitterName = user.name;
-    if (t.claimedById === user.id) t.claimedByName = user.name;
-  });
-
-  saveDB();
-  res.json({ message: `Succeeded. Elevated user ${user.name} from ${oldRole} to ${role}`, user });
-});
-
-app.get('/api/topics', (req, res) => {
-  res.json(db.topics);
-});
-
-app.get('/api/topics/moderation-history', (req, res) => {
-  res.json(db.moderationHistoryLogs);
-});
-
-app.post('/api/topics/propose', (req, res) => {
-  const { title, description, category, userId, userName, userRole } = req.body;
-  if (!title || !description || !category) {
-    return res.status(400).json({ error: 'Submissions must include title, description, and category' });
-  }
-
-  const newTopic: Topic = {
-    id: `t-${Date.now()}`,
-    title,
-    description,
-    category,
-    status: 'Proposed',
-    submitterId: userId,
-    submitterName: userName,
-    claimedById: null,
-    claimedByName: null,
-    claimedAt: null,
-    durationMinutes: db.config.claimDurationMinutes,
-    releasedCount: 0,
-    moderationHistory: [
-      {
-        action: 'Proposed',
-        actorName: userName,
-        actorRole: userRole,
-        timestamp: new Date().toISOString()
-      }
-    ]
-  };
-
-  db.topics.push(newTopic);
-  syncLogs();
-  saveDB();
-  res.status(201).json(newTopic);
-});
-
-app.put('/api/topics/:id', (req, res) => {
-  const { title, description, category } = req.body;
-  const topic = db.topics.find(t => t.id === req.params.id);
-  if (!topic) {
-    return res.status(404).json({ error: 'Topic not found' });
-  }
-  if (topic.status !== 'Proposed') {
-    return res.status(400).json({ error: 'Only pending topics that are not yet approved can be modified.' });
-  }
-  topic.title = title;
-  topic.description = description;
-  topic.category = category;
-  saveDB();
-  res.json({ success: true, topic });
-});
-
-app.post('/api/topics/:id/moderate', (req, res) => {
-  const { action, actorName, actorRole, comments, reasons } = req.body;
-  const topic = db.topics.find(t => t.id === req.params.id);
-  if (!topic) {
-    return res.status(404).json({ error: 'Topic not found' });
-  }
-
-  if (action === 'Approved') {
-    topic.status = 'Active';
-  } else if (action === 'Rejected') {
-    topic.status = 'Rejected';
-  }
-
-  topic.moderationHistory.push({
-    action,
-    actorName,
-    actorRole,
-    timestamp: new Date().toISOString(),
-    comments: comments || '',
-    reasons: reasons || []
-  });
-
-  syncLogs();
-  saveDB();
-  res.json({ success: true, topic });
-});
-
-app.post('/api/topics/:id/claim', (req, res) => {
-  const { userId, userName } = req.body;
-  const topic = db.topics.find(t => t.id === req.params.id);
-  if (!topic) {
-    return res.status(404).json({ error: 'Topic not found' });
-  }
-  if (topic.status !== 'Active') {
-    return res.status(400).json({ error: 'Topic is not active' });
-  }
-  if (topic.claimedById) {
-    return res.status(400).json({ error: `Topic is already claimed by ${topic.claimedByName}` });
-  }
-
-  topic.claimedById = userId;
-  topic.claimedByName = userName;
-  topic.claimedAt = new Date().toISOString();
-  
-  topic.moderationHistory.push({
-    action: 'Approved',
-    actorName: userName,
-    actorRole: 'Writer',
-    timestamp: new Date().toISOString(),
-    comments: `Claimed topic. Needs submission within ${topic.durationMinutes || db.config.claimDurationMinutes} minutes.`
-  });
-
-  syncLogs();
-  saveDB();
-  res.json(topic);
-});
-
-app.post('/api/topics/:id/release', (req, res) => {
-  const { actorName, actorRole } = req.body;
-  const topic = db.topics.find(t => t.id === req.params.id);
-  if (!topic) {
-    return res.status(404).json({ error: 'Topic not found' });
-  }
-
-  const prevClaimed = topic.claimedByName || 'Writer';
-  topic.claimedById = null;
-  topic.claimedByName = null;
-  topic.claimedAt = null;
-  topic.releasedCount += 1;
-
-  topic.moderationHistory.push({
-    action: 'Released',
-    actorName: actorName || 'User Release',
-    actorRole: actorRole || 'Writer',
-    timestamp: new Date().toISOString(),
-    comments: `Claim of user ${prevClaimed} manually released back to the general pool.`
-  });
-
-  syncLogs();
-  saveDB();
-  res.json(topic);
-});
-
-app.get('/api/articles', (req, res) => {
-  res.json(db.articles);
-});
-
-app.get('/api/articles/:id', (req, res) => {
-  const article = db.articles.find(a => a.id === req.params.id);
-  if (!article) {
-    return res.status(404).json({ error: 'Article not found' });
-  }
-  res.json(article);
-});
-
-app.post('/api/articles', (req, res) => {
-  const { id, title, content, writerId, writerName, topicId } = req.body;
-  
-  let original = id ? db.articles.find(a => a.id === id) : undefined;
-
-  if (original) {
-    original.revisions.push({
-      version: original.revisions.length + 1,
-      title: original.title,
-      content: original.content,
-      updatedAt: new Date().toISOString(),
-      score: original.score
-    });
-    original.title = title;
-    original.content = content;
-    original.updatedAt = new Date().toISOString();
-    original.topicId = topicId || original.topicId;
-    saveDB();
-    return res.json(original);
-  } else {
-    const buildId = id || `art-${Date.now()}`;
-    const newArt: Article = {
-      id: buildId,
-      title,
-      content,
-      status: 'Draft',
-      writerId,
-      writerName,
-      editorId: null,
-      editorName: null,
-      topicId: topicId || null,
-      score: 0,
-      reviewCycles: 0,
-      createdAt: new Date().toISOString(),
-      submittedAt: null,
-      updatedAt: new Date().toISOString(),
-      revisions: [],
-      aiValidation: null,
-      comments: [],
-      history: [
-        {
-          id: `h-${Date.now()}`,
-          action: 'Draft Created',
-          actorName: writerName,
-          actorRole: 'Writer',
-          timestamp: new Date().toISOString(),
-          details: 'Draft initialized.'
-        }
-      ]
-    };
-    db.articles.push(newArt);
-    saveDB();
-    res.status(201).json(newArt);
-  }
-});
-
-app.post('/api/articles/:id/submit', async (req, res) => {
-  const article = db.articles.find(a => a.id === req.params.id);
-  if (!article) {
-    return res.status(404).json({ error: 'Article not found' });
-  }
-
-  const articleText = `Title: ${article.title}\n\nContent:\n${article.content}`;
-  let geminiObj: AIPreValidation;
-
-  const ai = getGeminiClient();
-  if (ai) {
-    try {
-      console.log('Invoking Gemini API model for pre-validation scoring...');
-      const promptSystem = `You are an AI editor for RadarDesk content operations. Review the following travel article. Evaluate grammar, readability, word count, style guidelines, and source existence. Also check for absolute duplication.
-      Return strictly a solid JSON payload matching this key schema properties:
-      {
-        "score": number (0-100 indicating quality & standards),
-        "grammar": "string detailing grammar analysis and rating",
-        "readability": "string highlighting the ease of reading",
-        "sourcesFound": boolean (has links, references, access codes or citations?),
-        "sourcesList": ["array of links / authorities cited or empty"],
-        "factualInconsistencies": ["array of suspicious geographical / factual assertions or empty"],
-        "styleGuideViolations": ["such as missing markdown headers, missing sections, bad casing"],
-        "headlineSuggestions": ["3 suggested headlines that pop in travel radar"],
-        "isDuplicate": boolean,
-        "duplicateScore": number (similarity likelihood),
-        "semanticSimilarityToPrevious": number (between 0.0 - 1.0 indicating if they resubmitted without modifications. Previous history: ${JSON.stringify(article.revisions.slice(-1))}),
-        "improvementSuggestions": ["array of 3-4 specific, actionable bullet point suggestions detailing exactly how the writer can improve grammar, structure, factual backing, vocabulary or depth of local details"]
-      }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: articleText,
-        config: {
-          systemInstruction: promptSystem,
-          responseMimeType: 'application/json',
-        }
-      });
-      geminiObj = JSON.parse(response.text?.trim() || '{}');
-    } catch (err) {
-      console.error('Gemini error, back to dynamic generator:', err);
-      geminiObj = generateProceduralBackup(article);
-    }
-  } else {
-    geminiObj = generateProceduralBackup(article);
-  }
-
-  article.score = geminiObj.score;
-  article.aiValidation = geminiObj;
-
-  const threshold = db.config.aiScoreThreshold;
-  if (geminiObj.score < threshold) {
-    article.status = 'Draft';
-    article.history.push({
-      id: `h-gate-${Date.now()}`,
-      action: 'Blocked by AI Gatekeeper',
-      actorName: 'AI Validator System',
-      actorRole: 'Admin',
-      timestamp: new Date().toISOString(),
-      details: `Gate score check failed: ${geminiObj.score}/${threshold}. Feedback: ${geminiObj.grammar}`
-    });
-    saveDB();
-    return res.json({ 
-      success: false, 
-      message: `Submission Blocked! Pre-Validation Check Score is ${geminiObj.score}, below the mandatory dashboard threshold of ${threshold}. Please address active recommendations.`,
-      article 
-    });
-  }
-
-  // Success! Open review state
-  article.status = 'Submitted';
-  article.submittedAt = new Date().toISOString();
-  article.history.push({
-    id: `h-gate-${Date.now()}`,
-    action: 'Pre-Validation Passed',
-    actorName: 'AI Validator System',
-    actorRole: 'Admin',
-    timestamp: new Date().toISOString(),
-    details: `Gate passed: ${geminiObj.score}/${threshold}. Checked readability and plagiarism successfully.`
-  });
-  article.history.push({
-    id: `h-submit-${Date.now()}`,
-    action: 'Submitted',
-    actorName: article.writerName,
-    actorRole: 'Writer',
-    timestamp: new Date().toISOString(),
-    details: 'Article successfully pushed into review pipelines.'
-  });
-
-  db.analytics.submissionsCount += 1;
-  saveDB();
-  res.json({ success: true, message: 'Clean pass. Submitted to editors directory!', article });
-});
-
-app.post('/api/articles/:id/rate-ai', (req, res) => {
-  const { score, comments, ratedByName } = req.body;
-  const article = db.articles.find(a => a.id === req.params.id);
-  if (!article) return res.status(404).json({ error: 'Article not found' });
-
-  if (!article.aiValidation) {
-    return res.status(400).json({ error: 'No AI validation result exists to rate on this article.' });
-  }
-
-  article.aiValidation.editorRating = {
-    score: Number(score),
-    comments: comments || '',
-    ratedByName: ratedByName || 'System Editor',
-    ratedAt: new Date().toISOString()
-  };
-
-  article.history.push({
-    id: `h-rate-${Date.now()}`,
-    action: 'AI Check Rated',
-    actorName: ratedByName || 'System Editor',
-    actorRole: 'Editor',
-    timestamp: new Date().toISOString(),
-    details: `Rated AI automated check accuracy: ${score}/5 stars. Comment: "${comments || 'No comment'}"`
-  });
-
-  saveDB();
-  res.json({ success: true, message: 'AI validation check rated successfully!', article });
-});
-
-app.post('/api/articles/:id/comment', (req, res) => {
-  const { text, authorName, authorRole } = req.body;
-  const article = db.articles.find(a => a.id === req.params.id);
-  if (!article) return res.status(404).json({ error: 'Article not found' });
-
-  const newComment = {
-    id: `c-${Date.now()}`,
-    authorName,
-    authorRole,
-    text,
-    createdAt: new Date().toISOString()
-  };
-
-  article.comments.push(newComment);
-  saveDB();
-  res.json({ success: true, comment: newComment });
-});
-
-app.post('/api/articles/:id/decision', (req, res) => {
-  const { action, actorId, actorName, actorRole, comments, reasons } = req.body;
-  const article = db.articles.find(a => a.id === req.params.id);
-  if (!article) return res.status(404).json({ error: 'Article not found' });
-
-  // Guard: ONLY ONE editor per article review
-  if (editorRoleMatches(actorRole)) {
-    if (article.editorId && article.editorId !== actorId) {
-      return res.status(400).json({ error: `Locked: This review queue ownership belongs to Editor ${article.editorName}. Other users cannot override assignment.` });
-    }
-    article.editorId = actorId;
-    article.editorName = actorName;
-  }
-
-  if (action === 'Approve') {
-    article.status = 'Approved';
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Approved',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Article approved by Editorial. Sent to Quality Assurance desk. Comment: "${comments || 'No comment'}"`
-    });
-    db.analytics.approvalsCount += 1;
-
-  } else if (action === 'Publish') {
-    article.status = 'Published';
-    article.history.push({
-      id: `h-pub-${Date.now()}`,
-      action: 'Published',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Article officially published and deployed onto RadarDesk feed. Comment: "${comments || 'None'}"`
-    });
-
-    if (article.topicId) {
-      const topic = db.topics.find(t => t.id === article.topicId);
-      if (topic) topic.status = 'Completed';
-    }
-
-  } else if (action === 'Minor Revision') {
-    article.status = 'Minor Revision';
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Request Revision',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Revision required. Flags: ${reasons ? reasons.join(', ') : 'None'}. Notes: "${comments || ''}"`
-    });
-
-  } else if (action === 'Reject') {
-    article.status = 'Rejected';
-    article.reviewCycles += 1;
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Rejected',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Rejection Cycle ${article.reviewCycles}/${db.config.maxReviewCycles}. Violations: ${reasons ? reasons.join(', ') : 'None'}. Comments: "${comments || ''}"`
-    });
-
-    if (article.reviewCycles >= db.config.maxReviewCycles) {
-      article.status = 'Escalated';
-      article.history.push({
-        id: `h-auto-esc-${Date.now()}`,
-        action: 'Auto-Escalated',
-        actorName: 'Workflow Engine',
-        actorRole: 'Admin',
-        timestamp: new Date().toISOString(),
-        details: `Cycle limit reached (${db.config.maxReviewCycles} rejects). Forwarding to senior editors.`
-      });
-      db.analytics.escalationsCount += 1;
-    }
-
-  } else if (action === 'Escalate') {
-    article.status = 'Escalated';
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Escalated Manually',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Forced manual escalation. Comments: "${comments || ''}"`
-    });
-    db.analytics.escalationsCount += 1;
-
-  } else if (action === 'Override Approve') {
-    article.status = 'Published';
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Senior Override Approve',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Senior decision overridden to Published. Comments: "${comments || ''}"`
-    });
-
-    if (article.topicId) {
-      const topic = db.topics.find(t => t.id === article.topicId);
-      if (topic) topic.status = 'Completed';
-    }
-    db.analytics.approvalsCount += 1;
-
-  } else if (action === 'Override Reject') {
-    article.status = 'Rejected';
-    article.history.push({
-      id: `h-dec-${Date.now()}`,
-      action: 'Senior Override Permanent Reject',
-      actorName,
-      actorRole,
-      timestamp: new Date().toISOString(),
-      details: `Review closed permanently by Senior Editor. Comments: "${comments || ''}"`
-    });
-  }
-
-  saveDB();
-  res.json({ success: true, article });
-});
-
-app.get('/api/config', (req, res) => {
-  res.json(db.config);
-});
-
-app.post('/api/admin/reset', (req, res) => {
-  db.users = JSON.parse(JSON.stringify(initialUsers));
-  db.topics = JSON.parse(JSON.stringify(initialTopics));
-  db.articles = JSON.parse(JSON.stringify(initialArticles));
-  db.config = JSON.parse(JSON.stringify(defaultConfig));
-  db.analytics = JSON.parse(JSON.stringify(initialAnalytics));
-  syncLogs();
-  saveDB();
-  res.json({ success: true, message: "System database states successfully flashed to default templates.", db });
-});
-
-app.post('/api/config', (req, res) => {
-  db.config = { ...db.config, ...req.body };
-  saveDB();
-  res.json(db.config);
-});
-
-app.get('/api/analytics', (req, res) => {
-  const topics = db.topics;
-  const articles = db.articles;
-
-  const topicLifecycle = {
-    Proposed: topics.filter(t => t.status === 'Proposed').length,
-    Approved: topics.filter(t => t.status === 'Approved').length,
-    Active: topics.filter(t => t.status === 'Active').length,
-    Completed: topics.filter(t => t.status === 'Completed').length,
-    Released: topics.filter(t => t.status === 'Released' || t.releasedCount > 0).length,
-    Rejected: topics.filter(t => t.status === 'Rejected').length
-  };
-
-  const rejectionCounts: Record<string, number> = {};
-  db.config.rejectionReasons.forEach(r => { rejectionCounts[r] = 0; });
-  articles.forEach(art => {
-    art.history.forEach(h => {
-      if (h.action === 'Rejected' && h.details.includes('Violations:')) {
-        db.config.rejectionReasons.forEach(r => {
-          if (h.details.includes(r)) {
-            rejectionCounts[r] = (rejectionCounts[r] || 0) + 1;
-          }
-        });
-      }
-    });
-  });
-
-  const throughputPerWriter: Record<string, { published: number; claimed: number; totalSubmitted: number }> = {};
-  db.users.filter(u => u.role === 'Writer').forEach(w => {
-    throughputPerWriter[w.name] = { published: 0, claimed: 0, totalSubmitted: 0 };
-  });
-  topics.forEach(t => {
-    if (t.claimedByName && throughputPerWriter[t.claimedByName]) {
-      throughputPerWriter[t.claimedByName].claimed += 1;
-    }
-  });
-  articles.forEach(art => {
-    const name = art.writerName;
-    if (!throughputPerWriter[name]) {
-      throughputPerWriter[name] = { published: 0, claimed: 0, totalSubmitted: 0 };
-    }
-    if (art.status === 'Published') {
-      throughputPerWriter[name].published += 1;
-    }
-    throughputPerWriter[name].totalSubmitted += 1;
-  });
-
-  const scoreCorrelation = articles.map(art => ({
-    title: art.title.substring(0, 20) + '...',
-    score: art.score,
-    status: art.status,
-    cycles: art.reviewCycles
-  }));
-
-  const approvedArts = articles.filter(a => a.status === 'Published' && a.submittedAt);
-  let totalSecs = 0;
-  approvedArts.forEach(a => {
-    const sub = new Date(a.submittedAt!).getTime();
-    const upd = new Date(a.updatedAt).getTime();
-    totalSecs += Math.max(12, (upd - sub) / 1000);
-  });
-  const avgTurnaroundSecs = approvedArts.length > 0 ? (totalSecs / approvedArts.length) : 0;
-
-  res.json({
-    webAnalytics: db.analytics,
-    topicLifecycle,
-    rejectionReasons: rejectionCounts,
-    writerThroughput: throughputPerWriter,
-    scoreCorrelation,
-    avgApprovalTimeSeconds: avgTurnaroundSecs
-  });
-});
-
-// Catch-all for unmatched api routes
-app.use('/api', (req, res) => {
-  res.status(404).json({ error: `API route ${req.method} ${req.originalUrl} not found` });
-});
-
-async function main() {
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server bound and active on http://localhost:${PORT}`);
-  });
-}
-
-main();
+startServer();

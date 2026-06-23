@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Article, User, WorkflowConfig, Topic } from '../types';
-import { 
-  Send, 
-  Tv, 
-  Smartphone, 
-  Globe, 
-  Clock, 
-  CheckCircle, 
-  Flame, 
-  Archive, 
+import {
+  Send,
+  Tv,
+  Smartphone,
+  Globe,
+  Clock,
+  CheckCircle,
+  Flame,
+  Archive,
   ExternalLink,
   Sparkles,
   RefreshCw,
@@ -100,10 +100,10 @@ export default function PublisherDesk({
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        
+
         {/* Left Queues Column */}
         <div className="xl:col-span-4 space-y-6">
-          
+
           {/* Pending publications */}
           <div className="space-y-3.5">
             <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wide">
@@ -124,11 +124,10 @@ export default function PublisherDesk({
                       setActiveArticleId(art.id);
                       setPublishedComments('');
                     }}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all relative flex flex-col gap-1 text-xs cursor-pointer ${
-                      art.id === activeArticleId 
-                        ? 'bg-orange-50/40 border-[#e86420] shadow-md ring-1 ring-orange-200' 
+                    className={`w-full text-left p-3.5 rounded-xl border transition-all relative flex flex-col gap-1 text-xs cursor-pointer ${art.id === activeArticleId
+                        ? 'bg-orange-50/40 border-[#e86420] shadow-md ring-1 ring-orange-200'
                         : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-center w-full text-[10px] text-zinc-400">
                       <span>By: {art.writerName}</span>
@@ -179,7 +178,7 @@ export default function PublisherDesk({
         <div className="xl:col-span-8">
           {selectedArticle ? (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" id="publishing-simulator-panel">
-              
+
               {/* Device Selector & Live preview heading */}
               <div className="bg-slate-900 text-white p-4.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -192,18 +191,16 @@ export default function PublisherDesk({
                 <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
                   <button
                     onClick={() => setPreviewDevice('desktop')}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      previewDevice === 'desktop' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${previewDevice === 'desktop' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Tv className="w-3.5 h-3.5" />
                     <span>RadarDesk Web</span>
                   </button>
                   <button
                     onClick={() => setPreviewDevice('mobile')}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      previewDevice === 'mobile' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all cursor-pointer ${previewDevice === 'mobile' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Smartphone className="w-3.5 h-3.5" />
                     <span>Mobile App Feed</span>
@@ -218,9 +215,9 @@ export default function PublisherDesk({
                   <div className="w-full bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden font-sans">
                     <div className="bg-slate-50 border-b border-slate-200 p-3 flex items-center gap-2 text-xs text-slate-400 font-mono">
                       <Globe className="w-3.5 h-3.5 text-slate-400" />
-                      <span>https://travelradar.com/articles/preview-{selectedArticle.id}</span>
+                      <span>https://travelradar.aero/articles/preview-{selectedArticle.id}</span>
                     </div>
-                    
+
                     <div className="p-6 md:p-8 space-y-6">
                       <div className="space-y-3">
                         <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#e86420]">

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { User, WorkflowConfig, UserRole, EmailSettings, AuthSettings, RolePrivilege, Article } from '../types';
-import { 
-  Settings, 
-  Users, 
-  Sliders, 
-  ShieldCheck, 
-  History, 
-  Plus, 
-  Trash2, 
+import {
+  Settings,
+  Users,
+  Sliders,
+  ShieldCheck,
+  History,
+  Plus,
+  Trash2,
   Check,
   Award,
   BookOpen,
@@ -24,7 +24,9 @@ import {
   Lock,
   Clock,
   Globe,
-  CheckSquare
+  CheckSquare,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -40,6 +42,7 @@ interface AdminPanelProps {
   onDeleteUser: (userId: string) => Promise<void>;
   onResetDatabase: () => Promise<void>;
   onRefresh?: () => void;
+  uatFeedback?: any[];
 }
 
 const ALL_SYSTEM_PRIVILEGES = [
@@ -66,14 +69,15 @@ export default function AdminPanel({
   onAddUser,
   onDeleteUser,
   onResetDatabase,
-  onRefresh
+  onRefresh,
+  uatFeedback = []
 }: AdminPanelProps) {
-  // Tabs: users | privileges | settings | rules | topicsHistory | publishedHistory | danger
-  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'publishedHistory' | 'danger'>('users');
+  // Tabs: users | privileges | settings | rules | topicsHistory | publishedHistory | uat | danger
+  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'publishedHistory' | 'uat' | 'danger'>('users');
   const [elevatingUserId, setElevatingUserId] = useState<string | null>(null);
-  
+
   const publishedArticles = articles ? articles.filter(art => art.status === 'Published') : [];
-  
+
   // Rule edit form states
   const [gateLimit, setGateLimit] = useState(config.aiScoreThreshold);
   const [maxCycles, setMaxCycles] = useState(config.maxReviewCycles);
@@ -116,12 +120,12 @@ export default function AdminPanel({
   };
 
   // Email Notification Settings Form states
-  const [smtpHost, setSmtpHost] = useState(config.emailSettings?.smtpHost || 'smtp.radardesk.com');
+  const [smtpHost, setSmtpHost] = useState(config.emailSettings?.smtpHost || 'smtp.travelradar.aero');
   const [smtpPort, setSmtpPort] = useState(config.emailSettings?.smtpPort || 587);
-  const [smtpUser, setSmtpUser] = useState(config.emailSettings?.smtpUser || 'operations@radardesk.com');
+  const [smtpUser, setSmtpUser] = useState(config.emailSettings?.smtpUser || 'operations@travelradar.aero');
   const [smtpSecure, setSmtpSecure] = useState(config.emailSettings?.smtpSecure ?? true);
-  const [senderName, setSenderName] = useState(config.emailSettings?.senderName || 'RadarDesk Ops Office');
-  const [senderEmail, setSenderEmail] = useState(config.emailSettings?.senderEmail || 'operations@radardesk.com');
+  const [senderName, setSenderName] = useState(config.emailSettings?.senderName || 'TravelRadar Ops Office');
+  const [senderEmail, setSenderEmail] = useState(config.emailSettings?.senderEmail || 'operations@travelradar.aero');
   const [digestEnabled, setDigestEnabled] = useState(config.emailSettings?.digestEnabled ?? true);
   const [digestFrequency, setDigestFrequency] = useState(config.emailSettings?.digestFrequency || 'daily');
 
@@ -131,7 +135,7 @@ export default function AdminPanel({
   const [clientSecret, setClientSecret] = useState(config.authSettings?.clientSecret || '••••••••••••••••••••');
   const [enforceMfa, setEnforceMfa] = useState(config.authSettings?.enforceMfa ?? false);
   const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(config.authSettings?.sessionTimeoutMinutes || 60);
-  const [allowedDomainsStr, setAllowedDomainsStr] = useState((config.authSettings?.allowedDomains || ['travelradar.com', 'radardesk.com']).join(', '));
+  const [allowedDomainsStr, setAllowedDomainsStr] = useState((config.authSettings?.allowedDomains || ['travelradar.aero']).join(', '));
 
   // Role Privileges state
   const rolePrivileges: RolePrivilege[] = config.rolePrivileges || [
@@ -159,17 +163,17 @@ export default function AdminPanel({
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailLower = newUserEmail.trim().toLowerCase();
-    
+
     if (!newUserName.trim() || !emailLower) {
       onAddToast('Please fill out all operator profile fields.', 'warning');
       return;
     }
 
-    if (!emailLower.endsWith('@travelradar.com')) {
-      onAddToast('Operational Gating Policy: Only official organization email accounts (@travelradar.com) are permitted in RadarDesk Operations.', 'error');
+    if (!emailLower.endsWith('@travelradar.aero')) {
+      onAddToast('Operational Gating Policy: Only official organization email accounts (@travelradar.aero) are permitted in RadarDesk Operations.', 'error');
       return;
     }
-    
+
     setIsSubmittingUser(true);
     try {
       await onAddUser(newUserName, emailLower, newUserRole);
@@ -280,8 +284,8 @@ export default function AdminPanel({
     const updatedPrivileges = rolePrivileges.map(priv => {
       if (priv.role === role) {
         const hasIt = priv.allowedActions.includes(action);
-        const nextActions = hasIt 
-          ? priv.allowedActions.filter(a => a !== action) 
+        const nextActions = hasIt
+          ? priv.allowedActions.filter(a => a !== action)
           : [...priv.allowedActions, action];
         return { ...priv, allowedActions: nextActions };
       }
@@ -299,7 +303,7 @@ export default function AdminPanel({
   // Save SMTP Email Notification and Active Authentication Settings
   const handleSaveEmailAndAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Parse domains safely
     const domains = allowedDomainsStr
       .split(',')
@@ -339,7 +343,7 @@ export default function AdminPanel({
 
   return (
     <div className="space-y-6 text-slate-800 text-left" id="admin-management-module">
-      
+
       {/* Intro Header */}
       <div className="bg-gradient-to-br from-[#1c2229] to-[#363636] rounded-2xl p-6 text-white relative overflow-hidden border border-slate-700 shadow-md">
         <div className="absolute right-0 bottom-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -362,9 +366,8 @@ export default function AdminPanel({
       <div className="flex flex-wrap bg-slate-100 p-1.5 rounded-xl gap-1 border border-slate-200" id="admin-subtabs">
         <button
           onClick={() => setActiveSubTab('users')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-users"
         >
           <Users className="w-4 h-4 text-slate-500" />
@@ -373,9 +376,8 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('privileges')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'privileges' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'privileges' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-privileges"
         >
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -384,9 +386,8 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('settings')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-settings"
         >
           <Settings className="w-4 h-4 text-blue-500" />
@@ -395,9 +396,8 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('rules')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'rules' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'rules' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-rules"
         >
           <Sliders className="w-4 h-4 text-[#e86420]" />
@@ -406,9 +406,8 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('topicsHistory')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'topicsHistory' ? 'bg-white text-[#363636] shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'topicsHistory' ? 'bg-white text-[#363636] shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-history"
         >
           <History className="w-4 h-4 text-purple-500" />
@@ -417,9 +416,8 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('publishedHistory')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'publishedHistory' ? 'bg-white text-[#363636] shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'publishedHistory' ? 'bg-white text-[#363636] shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
           id="subtab-published-history"
         >
           <BookOpen className="w-4 h-4 text-emerald-600" />
@@ -428,20 +426,29 @@ export default function AdminPanel({
 
         <button
           onClick={() => setActiveSubTab('danger')}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-            activeSubTab === 'danger' ? 'bg-rose-50 text-rose-700 shadow-sm border border-rose-200' : 'text-rose-600 hover:text-rose-700 hover:bg-rose-50/50'
-          }`}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'danger' ? 'bg-rose-50 text-rose-700 shadow-sm border border-rose-200' : 'text-rose-600 hover:text-rose-700 hover:bg-rose-50/50'
+            }`}
           id="subtab-danger"
         >
           <Server className="w-4 h-4 text-rose-500" />
           <span>System Diagnostics</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('uat')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'uat' ? 'bg-white text-blue-600 shadow-sm border border-blue-100' : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50/50'
+            }`}
+          id="subtab-uat"
+        >
+          <MessageSquare className="w-4 h-4 text-blue-500" />
+          <span>UAT Testing Logs</span>
         </button>
       </div>
 
       {/* Tab content 1: USER REGISTRY */}
       {activeSubTab === 'users' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-users-section">
-          
+
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-4">
             <div>
               <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
@@ -468,7 +475,7 @@ export default function AdminPanel({
                 <UserPlus className="w-4 h-4 text-slate-500" />
                 <span>Input New Operational Personnel Details</span>
               </h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-extrabold uppercase">Full Name</label>
@@ -488,7 +495,7 @@ export default function AdminPanel({
                   <input
                     type="email"
                     required
-                    placeholder="e.g. alisha.v@travelradar.com"
+                    placeholder="e.g. alisha.v@travelradar.aero"
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-slate-400"
@@ -568,7 +575,7 @@ export default function AdminPanel({
                 const uPrivsEntry = rolePrivileges.find(p => p.role === u.role);
                 const privsCount = uPrivsEntry ? uPrivsEntry.allowedActions.length : 0;
                 return (
-                  <div 
+                  <div
                     key={u.id}
                     className="flex border border-slate-150 rounded-2xl p-4 justify-between items-center bg-white hover:border-slate-200 hover:shadow-xs transition-colors animate-fadeIn"
                     id={`operator-node-${u.id}`}
@@ -638,7 +645,7 @@ export default function AdminPanel({
       {/* Tab content 2: RIGHTS & PRIVILEGES MATRIX */}
       {activeSubTab === 'privileges' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-privileges-section">
-          
+
           <div className="border-b border-slate-150 pb-4">
             <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -667,7 +674,7 @@ export default function AdminPanel({
                       <div className="font-bold text-slate-850">{privilege.label}</div>
                       <div className="text-[10px] text-slate-400 mt-0.5 whitespace-normal max-w-sm">{privilege.desc}</div>
                     </td>
-                    
+
                     {ALL_ROLES.map(role => {
                       const roleEntry = rolePrivileges.find(p => p.role === role);
                       const isUnlocked = roleEntry ? roleEntry.allowedActions.includes(privilege.id) : false;
@@ -676,11 +683,10 @@ export default function AdminPanel({
 
                       return (
                         <td key={`${role}-${privilege.id}`} className="p-4 text-center">
-                          <label className={`inline-flex items-center justify-center p-1.5 rounded-lg cursor-pointer transition-all ${
-                            isUnlocked 
-                              ? 'text-emerald-600 hover:bg-emerald-50 bg-emerald-50/30' 
-                              : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'
-                          }`}>
+                          <label className={`inline-flex items-center justify-center p-1.5 rounded-lg cursor-pointer transition-all ${isUnlocked
+                            ? 'text-emerald-600 hover:bg-emerald-50 bg-emerald-50/30'
+                            : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'
+                            }`}>
                             <input
                               type="checkbox"
                               checked={isUnlocked}
@@ -716,7 +722,7 @@ export default function AdminPanel({
       {/* Tab content 3: SMTP Settings & Authentication Settings */}
       {activeSubTab === 'settings' && (
         <form onSubmit={handleSaveEmailAndAuth} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-settings-section">
-          
+
           <div className="flex justify-between items-center border-b border-slate-150 pb-4">
             <div>
               <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
@@ -725,7 +731,7 @@ export default function AdminPanel({
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">Control global application integrations. Touch email notification relays and safety authentication keys with full validation.</p>
             </div>
-            
+
             <button
               type="submit"
               className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl cursor-pointer transition-all active:scale-95 shadow-sm shrink-0 flex items-center gap-1.5"
@@ -737,7 +743,7 @@ export default function AdminPanel({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            
+
             {/* SMTP Settings Panel */}
             <div className="border border-slate-150 rounded-2xl p-5 space-y-4 text-left">
               <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -753,7 +759,7 @@ export default function AdminPanel({
                     required
                     value={smtpHost}
                     onChange={(e) => setSmtpHost(e.target.value)}
-                    placeholder="e.g. smtp.radardesk.com"
+                    placeholder="e.g. smtp.travelradar.aero"
                     className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-slate-400 font-mono"
                     id="smtp-host"
                   />
@@ -780,7 +786,7 @@ export default function AdminPanel({
                   required
                   value={smtpUser}
                   onChange={(e) => setSmtpUser(e.target.value)}
-                  placeholder="e.g. operations@radardesk.com"
+                  placeholder="e.g. operations@travelradar.aero"
                   className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-slate-400 font-mono"
                   id="smtp-user"
                 />
@@ -872,11 +878,10 @@ export default function AdminPanel({
                       key={mode}
                       type="button"
                       onClick={() => setAuthType(mode)}
-                      className={`py-2 px-3 rounded-xl border text-center text-xs font-bold font-mono transition-all uppercase cursor-pointer ${
-                        authType === mode 
-                          ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 ring-2 ring-emerald-100/80' 
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
-                      }`}
+                      className={`py-2 px-3 rounded-xl border text-center text-xs font-bold font-mono transition-all uppercase cursor-pointer ${authType === mode
+                        ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 ring-2 ring-emerald-100/80'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                        }`}
                       id={`auth-btn-${mode}`}
                     >
                       {mode}
@@ -901,7 +906,7 @@ export default function AdminPanel({
                       id="auth-client-id"
                     />
                   </div>
-                  
+
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-500 font-extrabold uppercase flex items-center gap-1">
                       <Lock className="w-3.5 h-3.5 text-rose-300" />
@@ -920,7 +925,7 @@ export default function AdminPanel({
               )}
 
               <div className="space-y-4 pt-1">
-                
+
                 <div className="flex items-center space-x-2 bg-slate-50/70 p-3 rounded-xl border border-slate-150">
                   <input
                     type="checkbox"
@@ -958,7 +963,7 @@ export default function AdminPanel({
                     type="text"
                     value={allowedDomainsStr}
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
-                    placeholder="e.g. travelradar.com, radardesk.com"
+                    placeholder="e.g. travelradar.aero, radardesk.com"
                     className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-slate-400 font-mono"
                     id="auth-allowed-domains"
                   />
@@ -982,7 +987,7 @@ export default function AdminPanel({
       {/* Tab content 4: RULES CONFIGURATION */}
       {activeSubTab === 'rules' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-rules-section">
-          
+
           <div className="border-b border-slate-150 pb-4">
             <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
               <Sliders className="w-4 h-4 text-[#e86420]" />
@@ -1049,7 +1054,7 @@ export default function AdminPanel({
 
           {/* Mapped Categories & Rejections lists */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="taxonomy-columns-row">
-            
+
             {/* Travel category tags */}
             <div className="space-y-3.5 text-left bg-slate-50 p-5 rounded-2xl border border-slate-150">
               <h4 className="text-xs font-black text-slate-800 flex items-center justify-between">
@@ -1079,14 +1084,14 @@ export default function AdminPanel({
 
               <div className="flex flex-wrap gap-2 pt-1" id="category-tags-pool">
                 {config.categories.map(cat => (
-                  <span 
-                    key={cat} 
+                  <span
+                    key={cat}
                     className="inline-flex items-center space-x-1.5 bg-white border border-slate-205 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-lg shadow-2xs"
                     id={`cat-badge-${cat}`}
                   >
                     <span>{cat}</span>
-                    <button 
-                      onClick={() => handleRemoveCategory(cat)} 
+                    <button
+                      onClick={() => handleRemoveCategory(cat)}
                       className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded p-0.5"
                     >
                       ×
@@ -1125,14 +1130,14 @@ export default function AdminPanel({
 
               <div className="flex flex-wrap gap-2 pt-1" id="rejection-reasons-pool">
                 {(config.rejectionReasons || []).map(reason => (
-                  <span 
-                    key={reason} 
+                  <span
+                    key={reason}
                     className="inline-flex items-center space-x-1.5 bg-white border border-red-100 text-rose-800 text-[10px] font-mono px-2 py-1 rounded-lg"
                     id={`reason-badge-${reason}`}
                   >
                     <span>{reason}</span>
-                    <button 
-                      onClick={() => handleRemoveRejection(reason)} 
+                    <button
+                      onClick={() => handleRemoveRejection(reason)}
                       className="text-rose-600 hover:text-rose-800"
                     >
                       ×
@@ -1150,7 +1155,7 @@ export default function AdminPanel({
       {/* Tab content 5: SYSTEM MODERATION AND AUDIT TRAIL LOGS */}
       {activeSubTab === 'topicsHistory' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-history-section">
-          
+
           <div className="border-b border-[#faf9f0] pb-4">
             <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
               <History className="w-4 h-4 text-purple-500" />
@@ -1170,11 +1175,10 @@ export default function AdminPanel({
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                       <strong className="text-[#363636] font-extrabold text-xs block sm:inline mr-2">Topic: "{log.topicTitle}"</strong>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wide uppercase ${
-                        log.action === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold tracking-wide uppercase ${log.action === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
                         log.action === 'Rejected' ? 'bg-rose-100 text-rose-800' :
-                        log.action === 'Released' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                          log.action === 'Released' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
                         {log.action}
                       </span>
                     </div>
@@ -1184,7 +1188,7 @@ export default function AdminPanel({
                   </div>
 
                   <div className="text-slate-500 text-[11px] leading-relaxed">
-                    <span className="font-semibold block sm:inline text-slate-705">Actor:</span> {log.reviewer} ({log.reviewerRole}) 
+                    <span className="font-semibold block sm:inline text-slate-705">Actor:</span> {log.reviewer} ({log.reviewerRole})
                     {log.comments && (
                       <p className="mt-1.5 italic bg-[#fafaf8] p-2 rounded border border-slate-100 text-slate-600">
                         "{log.comments}"
@@ -1240,14 +1244,14 @@ export default function AdminPanel({
                       // Find publication timestamp
                       const pubEvent = art.history?.find(h => h.action === 'Published');
                       const pubDateStr = pubEvent ? new Date(pubEvent.timestamp).toLocaleDateString() + ' ' + new Date(pubEvent.timestamp).toLocaleTimeString() : new Date(art.updatedAt).toLocaleDateString();
-                      
+
                       // Find senior editor approval event
                       const seApprovalEvent = art.history?.find(h => h.action === 'Approved' && h.actorRole === 'Senior Editor');
-                      const seApprovalTimeStr = seApprovalEvent 
+                      const seApprovalTimeStr = seApprovalEvent
                         ? `${new Date(seApprovalEvent.timestamp).toLocaleDateString()} ${new Date(seApprovalEvent.timestamp).toLocaleTimeString()} (by ${seApprovalEvent.actorName})`
-                        : (art.history?.find(h => h.action === 'Approved') 
-                            ? `${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleDateString()} ${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleTimeString()} (approved by standard ${art.history.find(h => h.action === 'Approved')!.actorRole})`
-                            : 'Pending / Autopromoted');
+                        : (art.history?.find(h => h.action === 'Approved')
+                          ? `${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleDateString()} ${new Date(art.history.find(h => h.action === 'Approved')!.timestamp).toLocaleTimeString()} (approved by standard ${art.history.find(h => h.action === 'Approved')!.actorRole})`
+                          : 'Pending / Autopromoted');
 
                       return (
                         <tr key={art.id} className="hover:bg-slate-50 transition-colors">
@@ -1287,7 +1291,7 @@ export default function AdminPanel({
       {/* Tab content 6: SYSTEM DESTRUCTIVE COMMANDS & DIAGNOSTICS */}
       {activeSubTab === 'danger' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-danger-section">
-          
+
           <div className="border-b border-[#faf9f0] pb-4">
             <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
               <Database className="w-4 h-4 text-rose-500" />
@@ -1305,7 +1309,7 @@ export default function AdminPanel({
                   <span>Interactive System Health Log Check</span>
                 </h4>
                 <p className="text-[11px] text-slate-500 leading-relaxed mb-3">Checking internal communication channels and JSON database connectivity status.</p>
-                
+
                 <div className="space-y-2 text-[11px]">
                   <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200">
                     <span className="font-mono text-slate-500">Database Engine Host:</span>
@@ -1354,11 +1358,10 @@ export default function AdminPanel({
                   type="button"
                   onClick={handleTriggerDatabasePurge}
                   disabled={resetConfirmText !== 'FLUSH' || isResetting}
-                  className={`w-full py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 ${
-                    resetConfirmText === 'FLUSH' 
-                      ? 'bg-rose-600 hover:bg-rose-700 cursor-pointer shadow border border-rose-700' 
-                      : 'bg-slate-350 border-slate-400 opacity-40 cursor-not-allowed'
-                  }`}
+                  className={`w-full py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 ${resetConfirmText === 'FLUSH'
+                    ? 'bg-rose-600 hover:bg-rose-700 cursor-pointer shadow border border-rose-700'
+                    : 'bg-slate-350 border-slate-400 opacity-40 cursor-not-allowed'
+                    }`}
                 >
                   {isResetting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-red-100" />}
                   <span>Wipe All Databases & Restore Defaults</span>

@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Database, 
-  BookOpen, 
-  Terminal, 
-  Settings, 
-  CheckCircle, 
-  ArrowRight, 
-  HelpCircle, 
-  RefreshCw, 
-  Play, 
-  Layout, 
-  Sparkles, 
-  ShieldCheck, 
-  Globe, 
-  Eye, 
-  Compass, 
+import {
+  Database,
+  BookOpen,
+  Terminal,
+  Settings,
+  CheckCircle,
+  ArrowRight,
+  HelpCircle,
+  RefreshCw,
+  Play,
+  Layout,
+  Sparkles,
+  ShieldCheck,
+  Globe,
+  Eye,
+  Compass,
   FileText,
   Layers,
   CheckSquare,
   AlertTriangle
 } from 'lucide-react';
 import { Topic, Article, WorkflowConfig } from '../types';
+import { supabase, isStandalone } from '../lib/supabase';
 
 interface DocsAndManualProps {
   topics: Topic[];
@@ -38,7 +39,7 @@ export default function DocsAndManual({
   syncMainData
 }: DocsAndManualProps) {
   const [activeSubTab, setActiveSubTab] = useState<'user-manual' | 'tech-db-spec' | 'supabase-console' | 'deployment-info'>('user-manual');
-  
+
   // Supabase states
   const [supabaseStatus, setSupabaseStatus] = useState<'untested' | 'connected' | 'error'>('untested');
   const [supabaseErrorDetails, setSupabaseErrorDetails] = useState<string | null>(null);
@@ -54,17 +55,34 @@ export default function DocsAndManual({
   const verifySupabaseConnection = async () => {
     setTestingConnection(true);
     try {
-      const res = await fetch('/api/supabase/status');
-      const data = await res.json();
-      if (res.ok && data.connected) {
+      if (isStandalone()) {
+        const { data: users, error: uErr } = await supabase.from('users').select('id', { count: 'exact', head: true });
+        const { data: topics, error: tErr } = await supabase.from('topics').select('id', { count: 'exact', head: true });
+        const { data: articles, error: aErr } = await supabase.from('articles').select('id', { count: 'exact', head: true });
+
+        if (uErr || tErr || aErr) throw new Error(uErr?.message || tErr?.message || aErr?.message);
+
         setSupabaseStatus('connected');
-        setRowsCount(data.rowCounts || { users: 0, topics: 0, articles: 0 });
+        setRowsCount({
+          users: users?.length || 0,
+          topics: topics?.length || 0,
+          articles: articles?.length || 0
+        });
         setSupabaseErrorDetails(null);
-        onAddToast('Supabase target Gateway connected and active!', 'success');
+        onAddToast('Direct Supabase connection verified!', 'success');
       } else {
-        setSupabaseStatus('error');
-        setSupabaseErrorDetails(data.error || 'Connection verification failed');
-        onAddToast('Operational warning: Supabase connection failed. Fallback operational mode active.', 'warning');
+        const res = await fetch('/api/supabase/status');
+        const data = await res.json();
+        if (res.ok && data.connected) {
+          setSupabaseStatus('connected');
+          setRowsCount(data.rowCounts || { users: 0, topics: 0, articles: 0 });
+          setSupabaseErrorDetails(null);
+          onAddToast('Supabase target Gateway connected and active!', 'success');
+        } else {
+          setSupabaseStatus('error');
+          setSupabaseErrorDetails(data.error || 'Connection verification failed');
+          onAddToast('Operational warning: Supabase connection failed. Fallback operational mode active.', 'warning');
+        }
       }
     } catch (err: any) {
       setSupabaseStatus('error');
@@ -75,6 +93,10 @@ export default function DocsAndManual({
   };
 
   const handleSupabaseSync = async () => {
+    if (isStandalone()) {
+      onAddToast('Synchronization is handled automatically in direct Supabase mode.', 'info');
+      return;
+    }
     setIsSyncing(true);
     try {
       const res = await fetch('/api/supabase/sync', {
@@ -163,12 +185,12 @@ CREATE TABLE IF NOT EXISTS public.radardesk_articles (
 
 -- Insert Demo Admin Profile to boot
 INSERT INTO public.radardesk_users (id, name, role, email) 
-VALUES ('u-4', 'David Admin', 'Admin', 'david.a@travelradar.com')
+VALUES ('u-4', 'David Admin', 'Admin', 'david.a@travelradar.aero')
 ON CONFLICT (id) DO NOTHING;`;
 
   return (
     <div className="space-y-6" id="documentation-module">
-      
+
       {/* Flight Gradient Header Header */}
       <div className="bg-gradient-to-r from-[#20a6eb] via-slate-800 to-[#e86420] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10 mix-blend-multiply" />
@@ -188,11 +210,10 @@ ON CONFLICT (id) DO NOTHING;`;
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-2">
-            <div className={`p-3 rounded-xl border font-mono text-center text-xs ${
-              supabaseStatus === 'connected' 
-              ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300' 
+            <div className={`p-3 rounded-xl border font-mono text-center text-xs ${supabaseStatus === 'connected'
+              ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
               : 'bg-amber-500/15 border-amber-400/30 text-amber-200'
-            }`}>
+              }`}>
               <div className="flex items-center gap-1.5 justify-center">
                 <div className={`w-2 h-2 rounded-full ${supabaseStatus === 'connected' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-ping'}`} />
                 <span className="font-extrabold uppercase font-mono tracking-wide">
@@ -209,36 +230,32 @@ ON CONFLICT (id) DO NOTHING;`;
       <div className="flex bg-slate-200 p-1 rounded-xl max-w-2xl text-xs font-semibold">
         <button
           onClick={() => setActiveSubTab('user-manual')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
-            activeSubTab === 'user-manual' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${activeSubTab === 'user-manual' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
+            }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>User Playbook</span>
         </button>
         <button
           onClick={() => setActiveSubTab('tech-db-spec')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
-            activeSubTab === 'tech-db-spec' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${activeSubTab === 'tech-db-spec' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
+            }`}
         >
           <Database className="w-3.5 h-3.5" />
           <span>Database Spec</span>
         </button>
         <button
           onClick={() => setActiveSubTab('supabase-console')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
-            activeSubTab === 'supabase-console' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${activeSubTab === 'supabase-console' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
+            }`}
         >
           <Terminal className="w-3.5 h-3.5" />
           <span>Supabase Sync</span>
         </button>
         <button
           onClick={() => setActiveSubTab('deployment-info')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${
-            activeSubTab === 'deployment-info' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg transition-all cursor-pointer ${activeSubTab === 'deployment-info' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30'
+            }`}
         >
           <Globe className="w-3.5 h-3.5 text-[#20a6eb]" />
           <span>Deploy & Tech</span>
@@ -249,10 +266,10 @@ ON CONFLICT (id) DO NOTHING;`;
 
         {/* Dynamic sub tab layouts */}
         <div className="lg:col-span-12">
-          
+
           {activeSubTab === 'user-manual' && (
             <div className="space-y-6">
-              
+
               {/* Stage-by-stage workflow schematic */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
@@ -266,7 +283,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 relative">
-                  
+
                   {/* Step 1 */}
                   <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col justify-between relative group hover:border-[#20a6eb] transition-all">
                     <div className="space-y-1.5">
@@ -351,7 +368,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 <div className="text-xs text-slate-600 leading-relaxed font-sans space-y-1.5">
                   <p>In accordance with RadarDesk data sovereignty and RBAC safety directives, enrollment onto any level of the workspace is strictly restricted to active corporate personnel:</p>
                   <ul className="list-disc pl-5 space-y-1 text-[11px] text-slate-500">
-                    <li><strong>Validated Domains Alone:</strong> Registration is restricted to users holding registered organizational email addresses matching <strong><code>@travelradar.com</code></strong>. All other registrations are rejected immediately at the API gate level.</li>
+                    <li><strong>Validated Domains Alone:</strong> Registration is restricted to users holding registered organizational email addresses matching <strong><code>@travelradar.aero</code></strong>. All other registrations are rejected immediately at the API gate level.</li>
                     <li><strong>Dual-key Authentication:</strong> Self-registered operators are placed in a <em>"Pending Approval"</em> pool. Complete workspace features are locked until an authorized System Admin elects to grant licenses on the System Control directory.</li>
                   </ul>
                 </div>
@@ -359,13 +376,13 @@ ON CONFLICT (id) DO NOTHING;`;
 
               {/* Roles playbook card */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                   <h3 className="font-bold text-slate-850 flex items-center gap-2 text-sm text-[#e86420] uppercase font-display">
                     <Layers className="w-4 h-4" />
                     <span>Role-Based Operational Guide</span>
                   </h3>
-                  
+
                   <div className="space-y-3 font-sans text-xs">
                     <div className="p-3 bg-orange-50/50 rounded-xl border border-orange-100 flex gap-2">
                       <div className="font-bold text-orange-700 shrink-0 select-none font-mono">WRITER:</div>
@@ -402,7 +419,7 @@ ON CONFLICT (id) DO NOTHING;`;
                     <Sparkles className="w-4 h-4" />
                     <span>AI Pre-Validation Engine Playbook</span>
                   </h3>
-                  
+
                   <p className="text-xs text-slate-500 leading-relaxed font-sans">
                     Every article submitted by a writer automatically routes through our Gemini AI pre-validation model. This model conducts real-time checks to prevent poor content from consuming precious human editor cycles:
                   </p>
@@ -458,7 +475,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
           {activeSubTab === 'tech-db-spec' && (
             <div className="space-y-6">
-              
+
               {/* ERD Blueprint Diagram */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
@@ -467,7 +484,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-                  
+
                   {/* Users spec */}
                   <div className="border border-slate-100 bg-slate-50/50 p-4 rounded-xl">
                     <div className="font-bold text-orange-650 mb-2 border-b border-orange-100 pb-1 flex justify-between">
@@ -555,16 +572,16 @@ ON CONFLICT (id) DO NOTHING;`;
 
           {activeSubTab === 'supabase-console' && (
             <div className="space-y-6">
-              
+
               {/* Credentials & live sync buttons */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
-                
+
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-150 pb-4">
                   <div>
                     <h3 className="font-bold text-slate-800 text-sm">Supabase Integration Gateway Status</h3>
                     <p className="text-xs text-slate-400">Manage real-time persistent synchronization status between JSON files and Cloud tables.</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <button
                       onClick={verifySupabaseConnection}
@@ -588,7 +605,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
                 {/* DB parameters view cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-                  
+
                   <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
                     <span className="text-slate-400 text-[10px] block uppercase font-bold">Target project URL</span>
                     <span className="text-slate-800 font-semibold truncate block">https://qiciaqxucmvwwfvodqzz.supabase.co</span>
@@ -612,7 +629,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <h4 className="text-xs font-bold text-slate-700 uppercase mb-3 font-mono">Live Supabase Database Row Indicators</h4>
                   <div className="grid grid-cols-3 gap-4 text-center">
-                    
+
                     <div className="bg-white p-4.5 rounded-xl border border-slate-200/60 shadow-inner">
                       <span className="text-slate-400 block text-[9px] uppercase font-bold font-mono">radardesk_users</span>
                       <span className="text-xl font-extrabold text-[#e86420] mt-1 block">{rowsCount.users || 0} rows</span>
@@ -652,7 +669,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
           {activeSubTab === 'deployment-info' && (
             <div className="space-y-6">
-              
+
               {/* Architecture Blueprint Card */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
@@ -666,7 +683,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-sans">
-                  
+
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-1.5">
                     <span className="font-extrabold text-[10px] text-[#20a6eb] uppercase font-mono block">Express Backend</span>
                     <p className="text-[11px] text-slate-500 leading-normal">
@@ -700,7 +717,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
               {/* Local Install & Setup Manual */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans text-xs">
-                
+
                 {/* Section A: Installation & Setup */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
@@ -784,7 +801,7 @@ ON CONFLICT (id) DO NOTHING;`;
                   <div className="space-y-1">
                     <span className="font-mono text-[10px] text-emerald-300 font-extrabold block">Domain Restrictions</span>
                     <p className="text-[11px] text-slate-400 leading-normal">
-                      Account authentications and registrations undergo domain checks at both the database schema layer and routing middleware gates. Only accounts ending in <strong>@travelradar.com</strong> can establish tokens.
+                      Account authentications and registrations undergo domain checks at both the database schema layer and routing middleware gates. Only accounts ending in <strong>@travelradar.aero</strong> can establish tokens.
                     </p>
                   </div>
                   <div className="space-y-1">
