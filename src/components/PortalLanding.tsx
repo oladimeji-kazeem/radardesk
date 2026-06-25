@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-    Search,
-    Menu,
-    X,
-    Facebook,
-    Twitter,
-    Youtube,
-    Instagram,
     ArrowRight,
     Play,
     Clock,
@@ -15,9 +8,7 @@ import {
     ChevronRight,
     Plane,
     MapPin,
-    Bell,
     Mail,
-    PlayCircle,
     ChevronLeft,
     User,
     Activity,
@@ -26,8 +17,6 @@ import {
     BarChart3
 } from 'lucide-react';
 import { Article, Topic, WorkflowConfig } from '../types';
-import { Logo } from './Logo';
-import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 
 interface ScrollContainerProps {
     title?: string;
@@ -236,8 +225,6 @@ interface PortalLandingProps {
 }
 
 export default function PortalLanding({ topics, articles, config, onGetStarted, onSignIn, onNavigate }: PortalLandingProps) {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
     const [activeCategory, setActiveCategory] = useState('All');
     const [trendingOffset, setTrendingOffset] = useState(0);
     const [heroIndex, setHeroIndex] = useState(0);
@@ -279,13 +266,6 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
         return () => clearInterval(timer);
     }, []);
 
-    // Sync scroll state for header effects
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
     // Filter published articles
     const publishedArticles = articles
         .filter(a => a.status === 'Published' || a.status === 'Approved')
@@ -308,7 +288,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
     const categories = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Newsletters', 'Aircraft Sales'];
 
     return (
-        <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
+        <div className="bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20">
 
 
 
@@ -919,119 +899,6 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
 
             </main>
 
-            {/* Footer */}
-            <footer className="bg-white text-[#1a1a1a] pt-32 pb-12 relative overflow-hidden border-t border-black/5">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#20a6eb] via-[#e86420] to-[#363636]" />
-
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
-                    <div className="space-y-8">
-                        <div className="flex items-center gap-4">
-                            <Logo className="w-10 h-10 bg-white p-1 rounded-xl shadow-2xl border border-black/5" />
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-black tracking-tighter">TRAVEL RADAR</span>
-                                <span className="text-[10px] font-black tracking-[0.3em] text-[#e86420]">Network</span>
-                            </div>
-                        </div>
-                        <p className="text-[13px] text-[#1a1a1a]/40 leading-relaxed max-w-xs font-medium italic">
-                            "Redefining aviation journalism through high-fidelity insights and enterprise-grade reporting."
-                        </p>
-                        <div className="flex items-center gap-5 pt-4">
-                            {[Facebook, Twitter, Youtube, Instagram].map((Icon, idx) => (
-                                <a key={idx} href="#" className="p-3 bg-black/5 hover:bg-[#20a6eb] rounded-2xl transition-all hover:-translate-y-1 shadow-lg border border-black/5 group">
-                                    <Icon className="w-5 h-5 group-hover:text-white" />
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 className="text-[11px] font-black tracking-[0.3em] mb-10 text-[#20a6eb] flex items-center gap-2">
-                            <span className="w-1.5 h-4 bg-[#20a6eb] rounded-full" /> Intelligence
-                        </h4>
-                        <ul className="space-y-5 text-[12px] font-black text-[#1a1a1a]/30 uppercase tracking-widest">
-                            <li><a href="#" className="hover:text-[#20a6eb] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#20a6eb] group-hover:translate-x-1 transition-transform" /> Aviation News</a></li>
-                            <li><a href="#" className="hover:text-[#20a6eb] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#20a6eb] group-hover:translate-x-1 transition-transform" /> Market Analysis</a></li>
-                            <li><a href="#" className="hover:text-[#20a6eb] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#20a6eb] group-hover:translate-x-1 transition-transform" /> Trip Reports</a></li>
-                            <li><a href="#" className="hover:text-[#20a6eb] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#20a6eb] group-hover:translate-x-1 transition-transform" /> Safety Audits</a></li>
-                            <li><a href="#" className="hover:text-[#20a6eb] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#20a6eb] group-hover:translate-x-1 transition-transform" /> Aircraft Sales</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-[11px] font-black tracking-[0.3em] mb-10 text-[#e86420] flex items-center gap-2">
-                            <span className="w-1.5 h-4 bg-[#e86420] rounded-full" /> Operation
-                        </h4>
-                        <ul className="space-y-5 text-[12px] font-black text-[#1a1a1a]/30 uppercase tracking-widest">
-                            <li><a href="#" className="hover:text-[#e86420] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#e86420] group-hover:translate-x-1 transition-transform" /> About Network</a></li>
-                            <li><a href="#" className="hover:text-[#e86420] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#e86420] group-hover:translate-x-1 transition-transform" /> Editorial Desk</a></li>
-                            <li><a href="#" className="hover:text-[#e86420] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#e86420] group-hover:translate-x-1 transition-transform" /> Career Portal</a></li>
-                            <li><a href="#" className="hover:text-[#e86420] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#e86420] group-hover:translate-x-1 transition-transform" /> Data Privacy</a></li>
-                            <li><a href="#" className="hover:text-[#e86420] transition-all flex items-center gap-2 group"><ChevronRight className="w-3 h-3 text-[#e86420] group-hover:translate-x-1 transition-transform" /> Global Support</a></li>
-                        </ul>
-                    </div>
-
-                    <div className="firebase-card-effect p-10 rounded-[2.5rem] border-black/5 shadow-[0_30px_60px_rgba(0,0,0,0.05)] bg-white">
-                        <h4 className="text-sm font-black tracking-[0.2em] mb-6 flex items-center gap-2">
-                            <Bell className="w-5 h-5 text-[#20a6eb] animate-bounce" /> Weekly Pulse
-                        </h4>
-                        <p className="text-[12px] text-[#1a1a1a]/40 mb-8 leading-relaxed font-black">Join 150k+ professionals globally.</p>
-                        <div className="flex flex-col gap-4">
-                            <input
-                                type="email"
-                                placeholder="terminal@radar.aero"
-                                className="bg-black/5 border border-black/5 px-5 py-4 rounded-2xl text-[11px] outline-none focus:border-[#20a6eb] transition-all text-[#1a1a1a] placeholder:text-black/10 font-black"
-                            />
-                            <button className="firebase-gradient text-white py-4 rounded-2xl text-[11px] font-black tracking-[0.2em] transition-all hover:scale-[1.02] border-0 cursor-pointer shadow-lg firebase-glow-blue">
-                                Subscribe Terminal
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="max-w-7xl mx-auto px-6 pt-12 border-t border-black/5 flex flex-col md:flex-row items-center justify-between gap-8 text-[11px] font-black text-[#1a1a1a]/20 tracking-[0.3em]">
-                    <p>© {new Date().getFullYear()} TRAVEL RADAR ECOSYSTEM. SECURITY TUNNEL ACTIVE.</p>
-                    <div className="flex items-center gap-10">
-                        <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" /> Cloud Node: AMS-01</span>
-                        <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-[#20a6eb] shadow-[0_0_10px_#20a6eb]" /> Latency: 14ms</span>
-                    </div>
-                </div>
-            </footer>
-
-            {/* Mobile Menu Overlay */}
-            <AnimatePresence>
-                {isMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, x: '100%' }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: '100%' }}
-                        className="fixed inset-0 z-[60] bg-white flex flex-col p-8"
-                    >
-                        <div className="flex justify-between items-center mb-12">
-                            <Logo className="w-10 h-10 shadow-lg p-1 rounded-full bg-white" />
-                            <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg border-0 bg-transparent cursor-pointer"><X className="w-8 h-8" /></button>
-                        </div>
-                        <nav className="flex flex-col gap-8">
-                            {categories.map((cat) => (
-                                <a key={cat} href="#" className="text-3xl font-black uppercase tracking-tighter text-[#1a1a1a] hover:text-[#20a6eb] transition-colors">{cat}</a>
-                            ))}
-                        </nav>
-                        <div className="mt-auto space-y-4 pt-12 border-t border-gray-100">
-                            <button
-                                onClick={() => { onSignIn(); setIsMenuOpen(false); }}
-                                className="w-full py-4 bg-gray-100 text-[#1a1a1a] rounded-xl font-black uppercase tracking-widest border-0 cursor-pointer"
-                            >
-                                Sign In
-                            </button>
-                            <button
-                                onClick={() => { onGetStarted(); setIsMenuOpen(false); }}
-                                className="w-full py-4 bg-[#20a6eb] text-white rounded-xl font-black uppercase tracking-widest shadow-xl border-0 cursor-pointer"
-                            >
-                                Get Started
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <style dangerouslySetInnerHTML={{
                 __html: `

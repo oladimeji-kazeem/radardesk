@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Article } from '../types';
 import { Logo } from './Logo';
-import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 
 interface AviationPortalProps {
     articles: Article[];
@@ -29,8 +28,6 @@ interface AviationPortalProps {
 
 export default function AviationPortal({ articles, onBack, initialSubPage = 'overview', onNavigate }: AviationPortalProps) {
     const [activeSubPage, setActiveSubPage] = useState(initialSubPage);
-    const [scrolled, setScrolled] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 8;
 
@@ -43,11 +40,6 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
         { id: 'manufacturing', label: 'Manufacturing', icon: Factory },
     ];
 
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     // Sync sub-page from URL if path changes externally
     useEffect(() => {
@@ -230,10 +222,10 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
     }[activeSubPage] || { metric: '0', unit: 'N/A', pulse: 'N/A' };
 
     return (
-        <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
+        <div className="bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20">
 
             {/* Aviation Sector Sub-Nav */}
-            <div className="bg-white border-b border-black/5 sticky top-[73px] z-40 backdrop-blur-md">
+            <div className="bg-white border-b border-black/5 sticky top-0 z-40 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 overflow-x-auto scrollbar-hide py-3">
                     <div className="flex items-center gap-2">
                         {subPages.map(page => {
@@ -405,19 +397,6 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
                 </div>
             </main>
 
-            <footer className="bg-white border-t border-black/5 pt-20 pb-10 mt-12">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-10 text-[9px] font-black text-[#1a1a1a]/20 tracking-[0.3em]">
-                    <div className="flex items-center gap-3">
-                        <Logo className="w-6 h-6 grayscale opacity-20" />
-                        <p>© 2026 TRAVEL RADAR OPERATIONS HUB.</p>
-                    </div>
-                    <div className="flex items-center gap-8">
-                        <a href="#" className="hover:text-[#20a6eb] transition-all">Protocol</a>
-                        <a href="#" className="hover:text-[#20a6eb] transition-all">Telemetry</a>
-                        <a href="#" className="hover:text-[#20a6eb] transition-all">Archive</a>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }

@@ -29,7 +29,6 @@ import {
     ChevronDown,
     Share2
 } from 'lucide-react';
-import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 import { Article } from '../types';
 
 interface TravelPortalProps {
@@ -758,7 +757,6 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                     </div>
                 </div>
             </div>
-            <NewsTicker recentNews={articles} onNavigate={() => { }} />
         </div>
     );
 }

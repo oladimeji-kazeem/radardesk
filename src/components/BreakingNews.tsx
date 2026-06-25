@@ -17,7 +17,6 @@ import {
     Terminal
 } from 'lucide-react';
 import { Article } from '../types';
-import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 
 interface BreakingNewsProps {
     articles: Article[];
@@ -25,14 +24,10 @@ interface BreakingNewsProps {
 }
 
 export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps) {
-    const [scrolled, setScrolled] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'All' | 'Aviation' | 'Market' | 'Travel' | 'Strategy'>('All');
     const [protocolStatus, setProtocolStatus] = useState('Stable');
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
 
         const timer = setInterval(() => {
             const statuses = ['Stable', 'Uplink Busy', 'Intercepting', 'Decoding'];
@@ -61,7 +56,6 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
         scrollContainer?.addEventListener('mouseleave', handleMouseLeave);
 
         return () => {
-            window.removeEventListener('scroll', handleScroll);
             clearInterval(timer);
             clearInterval(scrollInterval);
             scrollContainer?.removeEventListener('mouseenter', handleMouseEnter);
@@ -86,7 +80,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
     const timelineStories = sortedArticles.slice(7);
 
     return (
-        <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
+        <div className="bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20">
 
             <main className="max-w-[1600px] mx-auto px-4 md:px-8 py-12">
                 {/* Live Protocol Header */}
@@ -348,20 +342,6 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                 </div>
             </main>
 
-            <footer className="bg-white border-t border-black/5 py-24 mt-20">
-                <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
-                    <div className="flex items-center justify-center gap-4 text-[#1a1a1a]/20">
-                        <Radio className="w-6 h-6" />
-                        <span className="w-12 h-[1px] bg-[#1a1a1a]/10" />
-                        <Activity className="w-6 h-6" />
-                        <span className="w-12 h-[1px] bg-[#1a1a1a]/10" />
-                        <Terminal className="w-6 h-6" />
-                    </div>
-                    <div className="text-[10px] font-black text-[#1a1a1a]/30 uppercase tracking-[0.5em]">
-                        RADARDESK INTELLIGENCE NETWORK • GLOBAL BUREAU • 2026
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }

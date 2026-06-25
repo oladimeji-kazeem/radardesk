@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
     Facebook,
     Twitter,
@@ -12,10 +12,11 @@ import {
     ChevronRight,
     Bell,
     Plane,
-    ShieldCheck,
-    Wind,
     TrendingUp,
-    Activity
+    Activity,
+    LogOut,
+    User,
+    ArrowRight
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { Article } from '../types';
@@ -138,6 +139,109 @@ export function MainHeader({
     );
 }
 
+export function MobileMenuDrawer({
+    isOpen,
+    onClose,
+    categories,
+    activeCategory,
+    onNavigate,
+    onSignIn,
+    onGetStarted
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    categories: string[];
+    activeCategory: string;
+    onNavigate: (cat: string) => void;
+    onSignIn: () => void;
+    onGetStarted: () => void;
+}) {
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+                    />
+                    <motion.div
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%' }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white z-[70] shadow-2xl flex flex-col"
+                    >
+                        <div className="p-8 flex justify-between items-center border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <Logo className="w-8 h-8 rounded-lg bg-white shadow-md p-1" />
+                                <span className="text-xl font-black tracking-tighter">RADAR</span>
+                            </div>
+                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors border-0 bg-transparent cursor-pointer">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <nav className="flex-1 overflow-y-auto p-8 space-y-2">
+                            {categories.map((cat) => (
+                                <motion.button
+                                    key={cat}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => { onNavigate(cat); onClose(); }}
+                                    className={`w-full text-left p-4 rounded-2xl flex items-center justify-between group transition-all border-0 bg-transparent cursor-pointer ${activeCategory === cat ? 'bg-[#20a6eb]/10 text-[#20a6eb]' : 'hover:bg-gray-50 text-[#1a1a1a]/70 hover:text-[#1a1a1a]'
+                                        }`}
+                                >
+                                    <span className="text-lg font-black tracking-tight uppercase">{cat}</span>
+                                    <ChevronRight className={`w-5 h-5 transition-transform ${activeCategory === cat ? 'translate-x-0' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
+                                </motion.button>
+                            ))}
+
+                            <div className="pt-8 mt-8 border-t border-gray-100 space-y-4">
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-4">Terminal Access</div>
+                                <button
+                                    onClick={() => { onSignIn(); onClose(); }}
+                                    className="w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-gray-50 transition-all border-0 bg-transparent cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                                        <User className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-sm font-black uppercase">Sign In</span>
+                                        <span className="text-[10px] text-gray-400">Access your dashboard</span>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => { onGetStarted(); onClose(); }}
+                                    className="w-full p-4 rounded-2xl flex items-center gap-4 firebase-gradient text-white shadow-xl hover:scale-[1.02] transition-all border-0 cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                        <Activity className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-sm font-black uppercase">Join Radar Desk</span>
+                                        <span className="text-[10px] text-white/60 font-bold">Standard Operations</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </nav>
+
+                        <div className="p-8 bg-gray-50 border-t border-gray-100">
+                            <p className="text-[9px] font-bold text-gray-400 tracking-[0.2em] mb-4">SYSTEM STATUS: <span className="text-emerald-500">NOMINAL</span></p>
+                            <div className="flex items-center gap-4 text-gray-400">
+                                <Facebook className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <Twitter className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <Youtube className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+}
+
 interface NewsTickerProps {
     recentNews: Article[];
     onNavigate: (cat: string) => void;
@@ -182,10 +286,20 @@ interface SharedLayoutProps {
     activeCategory: string;
     articles: Article[];
     onNavigate: (cat: string) => void;
+    onSignIn?: () => void;
+    onGetStarted?: () => void;
     showTicker?: boolean;
 }
 
-export function SharedLayout({ children, activeCategory, articles, onNavigate, showTicker = true }: SharedLayoutProps) {
+export function SharedLayout({
+    children,
+    activeCategory,
+    articles,
+    onNavigate,
+    onSignIn = () => { },
+    onGetStarted = () => { },
+    showTicker = true
+}: SharedLayoutProps) {
     const [scrolled, setScrolled] = React.useState(false);
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -199,7 +313,7 @@ export function SharedLayout({ children, activeCategory, articles, onNavigate, s
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
-            <TopUtilityBar onSignIn={() => { }} onGetStarted={() => { }} />
+            <TopUtilityBar onSignIn={onSignIn} onGetStarted={onGetStarted} />
             <MainHeader
                 scrolled={scrolled}
                 isMenuOpen={isMenuOpen}
@@ -207,6 +321,15 @@ export function SharedLayout({ children, activeCategory, articles, onNavigate, s
                 categories={categories}
                 activeCategory={activeCategory}
                 onNavigate={onNavigate}
+            />
+            <MobileMenuDrawer
+                isOpen={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                categories={categories}
+                activeCategory={activeCategory}
+                onNavigate={onNavigate}
+                onSignIn={onSignIn}
+                onGetStarted={onGetStarted}
             />
             {showTicker && <NewsTicker recentNews={articles} onNavigate={onNavigate} />}
             {children}
