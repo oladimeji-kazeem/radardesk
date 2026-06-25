@@ -332,9 +332,17 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                             <p className="text-[#1a1a1a]/60 text-sm md:text-lg line-clamp-2 max-w-4xl font-medium leading-relaxed italic">
                                                 {heroContents[heroIndex].content}
                                             </p>
-                                            <button className="shrink-0 bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb] transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer">
-                                                READ FULL STORY <ArrowRight className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex flex-wrap gap-4 shrink-0">
+                                                <button className="bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb] transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer">
+                                                    READ FULL STORY <ArrowRight className="w-4 h-4" />
+                                                </button>
+                                                <button className="bg-[#e86420] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#e86420]/90 transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer">
+                                                    JOIN INTELLIGENCE NETWORK
+                                                </button>
+                                                <button className="bg-white text-[#1a1a1a] px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-black/5 transition-all hover:scale-105 shadow-lg border border-black/5 cursor-pointer">
+                                                    ACCESS DASHBOARD
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>

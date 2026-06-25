@@ -22,17 +22,16 @@ import {
     Binary
 } from 'lucide-react';
 import { Article } from '../types';
-import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 
 export type RadarSector =
-    | 'Commercial Aviation'
-    | 'Defense & Space'
-    | 'Horizon'
-    | 'Breaking Pulse'
-    | 'Active Incidents'
-    | 'Market Flashpoints'
-    | 'Live Vectors'
-    | 'The Wire';
+    | 'Route'
+    | 'Fleet'
+    | 'Passenger'
+    | 'Cargo'
+    | 'Sustainability'
+    | 'Finance'
+    | 'Regulations'
+    | 'Tourism & Demand';
 
 interface RadarPortalProps {
     articles: Article[];
@@ -41,133 +40,125 @@ interface RadarPortalProps {
     onBack: () => void;
 }
 
-const CATEGORIES = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Newsletters', 'Aircraft Sales'];
 
-export default function RadarPortal({ articles, onNavigate, initialSector, onBack }: RadarPortalProps) {
-    const [scrolled, setScrolled] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+export default function RadarPortal({ articles, onNavigate, initialSector = 'Route', onBack }: RadarPortalProps) {
     const [activeSector, setActiveSector] = useState<RadarSector>(initialSector);
 
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     useEffect(() => {
         setActiveSector(initialSector);
     }, [initialSector]);
 
     const sectorConfig = {
-        'Commercial Aviation': {
-            icon: Plane,
+        'Route': {
+            icon: Globe,
             color: 'bg-[#20a6eb]',
             accent: 'text-[#20a6eb]',
-            subtitle: 'Airline Operations & Global Fleet Intel',
+            subtitle: 'Global Pathing & Capacity Surveillance',
             telemetry: [
-                { title: 'Global Capacity Index', value: '104.2', trend: 'up', label: 'YoY Growth', icon: Activity },
-                { title: 'Fleet Orders (MTD)', value: '184', trend: 'up', label: 'Net Delta', icon: Box },
-                { title: 'Route Expansion Score', value: '0.82', trend: 'stable', label: 'Market Sentiment', icon: Layers }
+                { title: 'Global Connectivity', value: '94.2', trend: 'up', label: 'Nodes Active', icon: Globe },
+                { title: 'Path Efficiency', value: '0.88', trend: 'up', label: 'Fuel Delta', icon: Activity },
+                { title: 'Direct Route %', value: '62%', trend: 'stable', label: 'Airspace Flow', icon: Radio }
             ]
         },
-        'Defense & Space': {
-            icon: ShieldCheck,
+        'Fleet': {
+            icon: Plane,
             color: 'bg-slate-800',
             accent: 'text-slate-800',
-            subtitle: 'Strategic Aerospace & Tactical Systems',
+            subtitle: 'Asset Lifecycle & Deployment Intel',
             telemetry: [
-                { title: 'Orbital Launch Cadence', value: '12.4', trend: 'up', label: 'Global Weekly', icon: Satellite },
-                { title: 'Defense Contract Delta', value: '+$4.2B', trend: 'up', label: 'Sector Spread', icon: Target },
-                { title: 'LEO Grid Density', value: '0.94', trend: 'up', label: 'Traffic Alert', icon: Binary }
+                { title: 'Active Airframes', value: '28.4K', trend: 'up', label: 'Global Count', icon: Plane },
+                { title: 'Retirement Rate', value: '4.2', trend: 'up', label: 'Monthly Delta', icon: Target },
+                { title: 'Average Age', value: '12.4Y', trend: 'stable', label: 'Sector Mean', icon: Clock }
             ]
         },
-        'Horizon': {
-            icon: Wind,
+        'Passenger': {
+            icon: Target,
             color: 'bg-emerald-600',
             accent: 'text-emerald-600',
-            subtitle: 'Sustainable Aviation & Future Tech',
+            subtitle: 'Mobility Trends & Demand Pulse',
             telemetry: [
-                { title: 'SAF Blend Progress', value: '4.8%', trend: 'up', label: 'Global Avg', icon: Zap },
-                { title: 'eVTOL Cert Milestone', value: 'Stage 4', trend: 'up', label: 'FAA Audit', icon: Target },
-                { title: 'Carbon Offset Index', value: '0.76', trend: 'up', label: 'Protocol A', icon: Globe }
+                { title: 'Yield Index', value: '112.4', trend: 'up', label: 'Market Base', icon: TrendingUp },
+                { title: 'Load Factors', value: '84%', trend: 'up', label: 'Global Avg', icon: Activity },
+                { title: 'Ancillary Growth', value: '+14%', trend: 'up', label: 'Rev Delta', icon: Zap }
             ]
         },
-        'Breaking Pulse': {
-            icon: Bell,
-            color: 'bg-red-500',
-            accent: 'text-red-500',
-            subtitle: 'Live Operational Intelligence Loop',
+        'Cargo': {
+            icon: Box,
+            color: 'bg-amber-600',
+            accent: 'text-amber-600',
+            subtitle: 'Logistics Yield & Supply Chain Vectors',
             telemetry: [
-                { title: 'Feed Uplink Status', value: 'STABLE', trend: 'stable', label: 'Latency 24ms', icon: Radio },
-                { title: 'Active Incidents', value: '14', trend: 'up', label: 'Global Count', icon: Activity },
-                { title: 'Wire Frequency', value: '8.4', trend: 'up', label: 'Items / Min', icon: Zap }
+                { title: 'Freight Ton KMs', value: '4.2B', trend: 'down', label: 'Weekly Vol', icon: Activity },
+                { title: 'Yield (per kg)', value: '$2.42', trend: 'up', label: 'Spot Price', icon: Zap },
+                { title: 'Payload Utilization', value: '72%', trend: 'stable', label: 'Global Mean', icon: Layers }
             ]
         },
-        'Active Incidents': {
-            icon: Bell,
-            color: 'bg-red-600',
-            accent: 'text-red-600',
-            subtitle: 'Critical Alerts & Emergency Ops',
-            telemetry: [
-                { title: 'Squawk 7700 Count', value: '3', trend: 'up', label: 'Active Now', icon: Activity },
-                { title: 'Airspace Closures', value: '8', trend: 'up', label: 'Global Regions', icon: Target },
-                { title: 'Alert Response', value: '99%', trend: 'stable', label: 'System Ready', icon: ShieldCheck }
-            ]
-        },
-        'Market Flashpoints': {
-            icon: TrendingUp,
-            color: 'bg-amber-500',
-            accent: 'text-amber-500',
-            subtitle: 'Financial Volatility & Strategic Shifts',
-            telemetry: [
-                { title: 'Market Volatility', value: '4.2', trend: 'up', label: 'Aviation Index', icon: Activity },
-                { title: 'M&A Activity', value: '$12.4B', trend: 'up', label: 'Pending Deals', icon: Box },
-                { title: 'Sentiment Score', value: '0.64', trend: 'down', label: 'Bearish Bias', icon: Layers }
-            ]
-        },
-        'Live Vectors': {
-            icon: Activity,
-            color: 'bg-[#20a6eb]',
-            accent: 'text-[#20a6eb]',
-            subtitle: 'Real-time Supply Chain & Fuel Telemetry',
-            telemetry: [
-                { title: 'Jet A1 Spot Price', value: '$92.4', trend: 'down', label: 'bbl / USG', icon: Zap },
-                { title: 'Supply Chain Latency', value: '14 days', trend: 'up', label: 'Global Median', icon: Box },
-                { title: 'Refinery Output', value: '92%', trend: 'stable', label: 'Capacity Util', icon: Globe }
-            ]
-        },
-        'The Wire': {
-            icon: Wind,
+        'Sustainability': {
+            icon: Zap,
             color: 'bg-emerald-500',
             accent: 'text-emerald-500',
-            subtitle: 'Raw Intelligence & Unedited Dispatches',
+            subtitle: 'Decarbonization & ESG Compliance',
             telemetry: [
-                { title: 'Wire Throughput', value: '240', trend: 'up', label: 'Messages / Hour', icon: Radio },
-                { title: 'Source Reliability', value: '0.88', trend: 'up', label: 'Verification Index', icon: Target },
-                { title: 'Global Coverage', value: '100%', trend: 'stable', label: 'Full Spectrum', icon: Globe }
+                { title: 'SAF Blend Progress', value: '4.2%', trend: 'up', label: 'Global Avg', icon: Zap },
+                { title: 'Fleet Emissions', value: '-2.4%', trend: 'down', label: 'YoY Delta', icon: Activity },
+                { title: 'Net Zero Alignment', value: '0.64', trend: 'up', label: 'Protocol A', icon: Target }
+            ]
+        },
+        'Finance': {
+            icon: TrendingUp,
+            color: 'bg-[#20a6eb]',
+            accent: 'text-[#20a6eb]',
+            subtitle: 'Capital Flows & Equity Performance',
+            telemetry: [
+                { title: 'Sector Market Cap', value: '$1.4T', trend: 'up', label: 'Total Value', icon: TrendingUp },
+                { title: 'Operating Margin', value: '8.4%', trend: 'up', label: 'Global Avg', icon: Activity },
+                { title: 'P/E (Sector Avg)', value: '14.2', trend: 'stable', label: 'Valuation', icon: Binary }
+            ]
+        },
+        'Regulations': {
+            icon: ShieldCheck,
+            color: 'bg-slate-700',
+            accent: 'text-slate-700',
+            subtitle: 'Policy Shifts & Compliance Audits',
+            telemetry: [
+                { title: 'Open Directives', value: '124', trend: 'up', label: 'Global Count', icon: Bell },
+                { title: 'Compliance Rate', value: '98.2%', trend: 'stable', label: 'Operator Mean', icon: ShieldCheck },
+                { title: 'Policy Volatility', value: 'High', trend: 'up', label: 'Sector Pulse', icon: Radio }
+            ]
+        },
+        'Tourism & Demand': {
+            icon: Globe,
+            color: 'bg-rose-500',
+            accent: 'text-rose-500',
+            subtitle: 'Destination Heatmaps & Leisure Flows',
+            telemetry: [
+                { title: 'Visitor Volume', value: '42M', trend: 'up', label: 'Weekly Trans', icon: Globe },
+                { title: 'Booking Lead Time', value: '42D', trend: 'down', label: 'Market Intent', icon: Clock },
+                { title: 'RevPar (Global)', value: '$142', trend: 'up', label: 'Weekly Delta', icon: TrendingUp }
             ]
         }
     };
 
     const subSectors = [
-        { id: 'Breaking Pulse', label: 'Pulse', icon: Bell },
-        { id: 'Commercial Aviation', label: 'Commercial', icon: Plane },
-        { id: 'Defense & Space', label: 'Defense', icon: ShieldCheck },
-        { id: 'Horizon', label: 'Horizon', icon: Wind },
-        { id: 'Active Incidents', label: 'Incidents', icon: Bell },
-        { id: 'Market Flashpoints', label: 'Flashpoints', icon: TrendingUp },
-        { id: 'Live Vectors', label: 'Vectors', icon: Activity },
-        { id: 'The Wire', label: 'The Wire', icon: Radio },
+        { id: 'Route', label: 'Route', icon: Globe },
+        { id: 'Fleet', label: 'Fleet', icon: Plane },
+        { id: 'Passenger', label: 'Passenger', icon: Target },
+        { id: 'Cargo', label: 'Cargo', icon: Box },
+        { id: 'Sustainability', label: 'Sustainability', icon: Zap },
+        { id: 'Finance', label: 'Finance', icon: TrendingUp },
+        { id: 'Regulations', label: 'Regulations', icon: ShieldCheck },
+        { id: 'Tourism & Demand', label: 'Tourism', icon: Globe },
     ];
 
     const config = sectorConfig[activeSector];
     const Icon = config.icon;
 
     // Filter articles for the active sector
-    const sectorArticles = articles.filter(a => a.status === 'Published' && (
-        a.category === activeSector ||
-        (activeSector === 'Breaking Pulse' && ['Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(a.category || ''))
-    )).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const sectorArticles = articles.filter(a =>
+        (a.status === 'Published' || a.status === 'Approved') &&
+        a.category === activeSector
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Group into categories (using category field or just split)
     const streams = [
@@ -197,7 +188,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector, onBac
         <div className="min-h-screen bg-[#f8fafb] text-[#1a1a1a] font-sans">
 
             {/* Radar Sector Sub-Nav */}
-            <div className="bg-white border-b border-black/5 sticky top-[73px] z-40 backdrop-blur-md">
+            <div className="bg-white border-b border-black/5 sticky top-0 z-40 backdrop-blur-md">
                 <div className="max-w-[1500px] mx-auto px-6 overflow-x-auto scrollbar-hide py-3">
                     <div className="flex items-center gap-2">
                         {subSectors.map(sector => (

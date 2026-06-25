@@ -20,6 +20,7 @@ import BreakingNews from './components/BreakingNews';
 import AviationPortal from './components/AviationPortal';
 import TravelPortal from './components/TravelPortal';
 import RadarPortal, { RadarSector } from './components/RadarPortal';
+import AirIntelligencePortal from './components/AirIntelligencePortal';
 import { SharedLayout } from './components/SharedLayout';
 import { User as UserIcon, BookOpen, LogOut } from 'lucide-react';
 import { supabase, isStandalone } from './lib/supabase';
@@ -87,7 +88,7 @@ export default function App() {
   const [activeTopicFromPool, setActiveTopicFromPool] = useState<Topic | null>(null);
   const [activeArticleForEditing, setActiveArticleForEditing] = useState<Article | null>(null);
   const [showUATForm, setShowUATForm] = useState(false);
-  const [activePortal, setActivePortal] = useState<'home' | 'breaking-news' | 'aviation' | 'travel' | 'radar'>('home');
+  const [activePortal, setActivePortal] = useState<'home' | 'breaking-news' | 'aviation' | 'travel' | 'radar' | 'air-intelligence'>('home');
   const [activeRadarSector, setActiveRadarSector] = useState<RadarSector>('Commercial Aviation');
 
   // Global search and details preview states
@@ -98,7 +99,11 @@ export default function App() {
 
   // Handle URL routing for Breaking News and Aviation portals
   const handleUrlChange = () => {
-    const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const fullPath = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+    const path = fullPath.startsWith(BASE_URL) && BASE_URL !== ''
+      ? (fullPath.slice(BASE_URL.length) || '/')
+      : fullPath;
 
     if (path === '/breaking-news') {
       setActivePortal('breaking-news');
@@ -114,10 +119,12 @@ export default function App() {
       else if (sector === 'live-vectors') setActiveRadarSector('Live Vectors');
       else if (sector === 'the-wire') setActiveRadarSector('The Wire');
       else if (!sector) setActiveRadarSector('Breaking Pulse');
-    } else if (path === '/aviation') {
+    } else if (path === '/aviation' || path.startsWith('/aviation/')) {
       setActivePortal('aviation');
     } else if (path === '/travel' || path.startsWith('/travel/')) {
       setActivePortal('travel');
+    } else if (path === '/air-intelligence' || path.startsWith('/air-intelligence/')) {
+      setActivePortal('air-intelligence');
     } else if (path === '/aircraft-sales') {
       setActivePortal('home');
     } else {
@@ -126,22 +133,28 @@ export default function App() {
   };
 
   const handleNavigate = (target: string) => {
+    const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    let targetPath = '/';
+
     if (target === 'Breaking News') {
-      window.history.pushState({}, '', '/breaking-news');
-    } else if (['Radar', 'Breaking Pulse', 'Commercial Aviation', 'Defense & Space', 'Horizon', 'Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(target)) {
-      const sector = (target === 'Radar' || target === 'Breaking Pulse') ? 'Breaking Pulse' : target;
+      targetPath = '/breaking-news';
+    } else if (['Radar', 'Route', 'Fleet', 'Passenger', 'Cargo', 'Sustainability', 'Finance', 'Regulations', 'Tourism & Demand'].includes(target)) {
+      const sector = target === 'Radar' ? 'Route' : target;
       const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
-      window.history.pushState({}, '', `/radar/${sectorPath}`);
+      targetPath = `/radar/${sectorPath}`;
     } else if (target === 'Aviation') {
-      window.history.pushState({}, '', '/aviation');
+      targetPath = '/aviation';
     } else if (target === 'Travel' || target.startsWith('travel/')) {
-      const path = target === 'Travel' ? '/travel' : (target.startsWith('/') ? target : `/${target}`);
-      window.history.pushState({}, '', path);
+      targetPath = target === 'Travel' ? '/travel' : (target.startsWith('/') ? target : `/${target}`);
+    } else if (target === 'Air Intelligence' || target.startsWith('air-intelligence/')) {
+      targetPath = target === 'Air Intelligence' ? '/air-intelligence' : (target.startsWith('/') ? target : `/${target}`);
     } else if (target === 'Aircraft Sales') {
-      window.history.pushState({}, '', '/aircraft-sales');
-    } else {
-      window.history.pushState({}, '', '/');
+      targetPath = '/aircraft-sales';
+    } else if (target !== '/') {
+      targetPath = target.startsWith('/') ? target : `/${target}`;
     }
+
+    window.history.pushState({}, '', `${BASE_URL}${targetPath}`);
     handleUrlChange();
   };
 
@@ -1037,7 +1050,8 @@ export default function App() {
           <AviationPortal
             articles={articles}
             onBack={() => {
-              window.history.pushState({}, '', '/');
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
               setActivePortal('home');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
@@ -1054,7 +1068,25 @@ export default function App() {
             articles={articles}
             initialSector={activeRadarSector}
             onBack={() => {
-              window.history.pushState({}, '', '/');
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'air-intelligence') {
+      return (
+        <SharedLayout activeCategory="Air Intelligence" articles={articles} onNavigate={handleNavigate}>
+          <AirIntelligencePortal
+            articles={articles}
+            onBack={() => {
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
               setActivePortal('home');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
@@ -1111,7 +1143,8 @@ export default function App() {
           <TravelPortal
             articles={articles}
             onBack={() => {
-              window.history.pushState({}, '', '/');
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
               setActivePortal('home');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
@@ -1127,7 +1160,8 @@ export default function App() {
           <AviationPortal
             articles={articles}
             onBack={() => {
-              window.history.pushState({}, '', '/');
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
               setActivePortal('home');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
@@ -1144,7 +1178,25 @@ export default function App() {
             articles={articles}
             initialSector={activeRadarSector}
             onBack={() => {
-              window.history.pushState({}, '', '/');
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'air-intelligence') {
+      return (
+        <SharedLayout activeCategory="Air Intelligence" articles={articles} onNavigate={handleNavigate}>
+          <AirIntelligencePortal
+            articles={articles}
+            onBack={() => {
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              window.history.pushState({}, '', `${BASE_URL}/`);
               setActivePortal('home');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
@@ -1166,25 +1218,35 @@ export default function App() {
         }}
         onNavigate={(target) => {
           if (target === 'Breaking News') {
-            window.history.pushState({}, '', '/breaking-news');
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            window.history.pushState({}, '', `${BASE_URL}/breaking-news`);
             setActivePortal('breaking-news');
-          } else if (['Radar', 'Breaking Pulse', 'Commercial Aviation', 'Defense & Space', 'Horizon', 'Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(target)) {
-            const sector = (target === 'Radar' || target === 'Breaking Pulse') ? 'Breaking Pulse' : target;
+          } else if (['Radar', 'Route', 'Fleet', 'Passenger', 'Cargo', 'Sustainability', 'Finance', 'Regulations', 'Tourism & Demand'].includes(target)) {
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            const sector = target === 'Radar' ? 'Route' : target;
             const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
-            window.history.pushState({}, '', `/radar/${sectorPath}`);
+            window.history.pushState({}, '', `${BASE_URL}/radar/${sectorPath}`);
             setActivePortal('radar');
             setActiveRadarSector(sector as RadarSector);
             window.dispatchEvent(new PopStateEvent('popstate'));
           } else if (target === 'Aviation') {
-            window.history.pushState({}, '', '/aviation');
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            window.history.pushState({}, '', `${BASE_URL}/aviation`);
             setActivePortal('aviation');
             window.dispatchEvent(new PopStateEvent('popstate'));
           } else if (target === 'Travel') {
-            window.history.pushState({}, '', '/travel');
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            window.history.pushState({}, '', `${BASE_URL}/travel`);
             setActivePortal('travel');
             window.dispatchEvent(new PopStateEvent('popstate'));
+          } else if (target === 'Air Intelligence') {
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            window.history.pushState({}, '', `${BASE_URL}/air-intelligence`);
+            setActivePortal('air-intelligence');
+            window.dispatchEvent(new PopStateEvent('popstate'));
           } else if (target === 'Aircraft Sales') {
-            window.history.pushState({}, '', '/aircraft-sales');
+            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            window.history.pushState({}, '', `${BASE_URL}/aircraft-sales`);
             // TODO: implement aircraft sales portal or redirect
           }
         }}

@@ -14,7 +14,10 @@ import {
     ChevronLeft,
     Activity,
     Shield,
-    Terminal
+    Terminal,
+    BarChart3,
+    MapPin,
+    AlertCircle
 } from 'lucide-react';
 import { Article } from '../types';
 import { Logo } from './Logo';
@@ -26,17 +29,16 @@ interface AviationPortalProps {
     onNavigate?: (cat: string) => void;
 }
 
-export default function AviationPortal({ articles, onBack, initialSubPage = 'overview', onNavigate }: AviationPortalProps) {
+export default function AviationPortal({ articles, onBack, initialSubPage = 'dashboard', onNavigate }: AviationPortalProps) {
     const [activeSubPage, setActiveSubPage] = useState(initialSubPage);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 8;
 
     const subPages = [
-        { id: 'overview', label: 'Overview', icon: Globe },
-        { id: 'aircrafts', label: 'Aircrafts', icon: Plane },
+        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
         { id: 'airlines', label: 'Airlines', icon: Globe },
-        { id: 'airshow-events', label: 'Airshow & Events', icon: Calendar },
-        { id: 'career', label: 'Career', icon: Briefcase },
+        { id: 'aircrafts', label: 'Aircrafts', icon: Plane },
+        { id: 'airports', label: 'Airports', icon: MapPin },
         { id: 'manufacturing', label: 'Manufacturing', icon: Factory },
     ];
 
@@ -97,9 +99,63 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
     // Sector Specific Widget Content
     const renderSectorWidget = () => {
         switch (activeSubPage) {
+            case 'dashboard':
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div className="text-[8px] font-black text-[#20a6eb] tracking-widest uppercase">Global Activity</div>
+                                <div className="flex gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[7px] text-emerald-400 font-black">LIVE</span>
+                                </div>
+                            </div>
+                            <div className="flex items-end gap-1 h-12">
+                                {[40, 65, 45, 80, 55, 90, 70, 85, 60, 75].map((h, i) => (
+                                    <div key={i} className="flex-1 bg-[#20a6eb]/20 rounded-t-sm" style={{ height: `${h}%` }} />
+                                ))}
+                            </div>
+                            <div className="text-[7px] text-white/30 uppercase tracking-[0.2em] text-center">Spectral Traffic Load: 94.2%</div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                                <div className="text-[7px] text-white/40 mb-1 uppercase">Delay Heatmap</div>
+                                <div className="text-xs font-black text-[#e86420]">SCORCHING</div>
+                            </div>
+                            <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                                <div className="text-[7px] text-white/40 mb-1 uppercase">Congestion</div>
+                                <div className="text-xs font-black text-emerald-400">NOMINAL</div>
+                            </div>
+                        </div>
+                        <div className="bg-[#e86420]/10 p-3 rounded-xl border border-[#e86420]/20 flex items-center gap-3">
+                            <AlertCircle className="w-4 h-4 text-[#e86420]" />
+                            <div className="text-[8px] font-black text-[#e86420] uppercase">Weather Disruption in North Atlantic Sector</div>
+                        </div>
+                    </div>
+                );
+            case 'airlines':
+                return (
+                    <div className="space-y-4">
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest uppercase">Performance Index</div>
+                            <div className="space-y-2">
+                                {['Qatar Airways', 'Emirates', 'Delta'].map(airline => (
+                                    <div key={airline} className="flex justify-between items-center text-[10px] font-bold">
+                                        <span className="text-white/60">{airline}</span>
+                                        <span className="text-[#20a6eb]">98.2</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
             case 'aircrafts':
                 return (
                     <div className="space-y-4">
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest uppercase">Active Fleet Telemetry</div>
+                            <div className="text-2xl font-black text-white italic">12,402 <span className="text-[10px] not-italic text-white/30 font-bold">Units Airborn</span></div>
+                        </div>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
                             <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest">Fleet Modernization</div>
                             <div className="flex justify-between items-center mb-1">
@@ -110,63 +166,20 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
                                 <div className="h-full bg-emerald-500 w-[72%]" />
                             </div>
                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-widest">OEM Backlog Status</div>
-                            <div className="text-xl font-black italic">12,402 <span className="text-[10px] text-white/30 not-italic ml-2">Units</span></div>
-                        </div>
                     </div>
                 );
-            case 'airlines':
+            case 'airports':
                 return (
                     <div className="space-y-4">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest">Global Route Expansion</div>
-                            <div className="text-2xl font-black italic">+14% <span className="text-[8px] text-emerald-400 ml-2">Growth</span></div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="text-[7px] font-black text-white/30 tracking-[0.2em]">Top Carrier Indices</div>
-                            {['Delta', 'Qantas', 'Emirates'].map((c, i) => (
-                                <div key={c} className="flex justify-between items-center text-[10px]">
-                                    <span className="text-white/60">{i + 1}. {c}</span>
-                                    <span className="font-bold text-[#20a6eb]">S-Rank</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            case 'airshow-events':
-                return (
-                    <div className="space-y-4">
-                        <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-widest">Upcoming Signals</div>
-                        <div className="space-y-3">
-                            {[
-                                { name: 'Paris Air Show', date: 'June 2026', status: 'Primary' },
-                                { name: 'Dubai HeliShow', date: 'Oct 2026', status: 'Secondary' }
-                            ].map(e => (
-                                <div key={e.name} className="bg-white/5 p-3 rounded-xl border border-white/10 group cursor-pointer hover:bg-white/10 transition-all">
-                                    <div className="text-[10px] font-bold">{e.name}</div>
-                                    <div className="text-[8px] text-white/40">{e.date} • {e.status} Target</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            case 'career':
-                return (
-                    <div className="space-y-4">
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-center">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest">Talent Demand Index</div>
-                            <div className="text-3xl font-black text-white italic">HIGH</div>
-                            <div className="text-[7px] text-emerald-400 mt-1">+12.5% Month Over Month</div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
-                                <div className="text-[7px] text-white/40 mb-1">Open Roles</div>
-                                <div className="text-xs font-bold text-[#20a6eb]">4.2K+</div>
-                            </div>
-                            <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-center">
-                                <div className="text-[7px] text-white/40 mb-1">Avg Salary</div>
-                                <div className="text-xs font-bold text-[#e86420]">$120K</div>
+                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-widest uppercase">Congestion Alerts</div>
+                            <div className="space-y-2">
+                                {['LHR', 'DXB', 'SIN'].map(code => (
+                                    <div key={code} className="flex justify-between items-center text-[10px] font-bold">
+                                        <span className="text-white/60">{code}</span>
+                                        <span className="text-amber-500">Peak Demand</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -213,12 +226,11 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'ove
     };
 
     const subPageStats = {
-        aircrafts: { metric: '42', unit: 'Models Logged', pulse: 'Steady' },
-        airlines: { metric: '128', unit: 'Route Updates', pulse: 'High' },
-        'airshow-events': { metric: '15', unit: 'Active Reports', pulse: 'Live' },
-        career: { metric: '1.2K', unit: 'Open Positions', pulse: 'Growth' },
-        manufacturing: { metric: '3', unit: 'Critical Milestones', pulse: 'Strategic' },
-        overview: { metric: '256', unit: 'Intel Nodes', pulse: 'Stable' }
+        dashboard: { metric: '94.2%', unit: 'Activity Index', pulse: 'Critical' },
+        airlines: { metric: '150+', unit: 'Carrier Profiles', pulse: 'Steady' },
+        aircrafts: { metric: '12K', unit: 'Live Vectors', pulse: 'Nominal' },
+        airports: { metric: '422', unit: 'Hub Nodes', pulse: 'Active' },
+        manufacturing: { metric: 'Q4 28', unit: 'Delivery Cycle', pulse: 'Strategic' }
     }[activeSubPage] || { metric: '0', unit: 'N/A', pulse: 'N/A' };
 
     return (

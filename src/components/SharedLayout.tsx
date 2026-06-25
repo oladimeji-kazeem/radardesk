@@ -77,7 +77,8 @@ export function MainHeader({
                 <div
                     className="flex items-center gap-3 cursor-pointer group"
                     onClick={() => {
-                        window.history.pushState({}, '', '/');
+                        const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                        window.history.pushState({}, '', `${BASE_URL}/`);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
@@ -309,7 +310,7 @@ export function SharedLayout({
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const categories = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Newsletters', 'Aircraft Sales'];
+    const categories = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Air Intelligence', 'Aircraft Sales'];
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
