@@ -97,6 +97,34 @@ export default function App() {
   const [previewTopic, setPreviewTopic] = useState<Topic | null>(null);
 
   // Handle URL routing for Breaking News and Aviation portals
+  const handleUrlChange = () => {
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+
+    if (path === '/breaking-news') {
+      setActivePortal('breaking-news');
+    } else if (path.startsWith('/radar')) {
+      setActivePortal('radar');
+      const sector = path.split('/')[2];
+      if (sector === 'breaking-pulse') setActiveRadarSector('Breaking Pulse');
+      else if (sector === 'commercial-aviation') setActiveRadarSector('Commercial Aviation');
+      else if (sector === 'defense-space') setActiveRadarSector('Defense & Space');
+      else if (sector === 'horizon') setActiveRadarSector('Horizon');
+      else if (sector === 'active-incidents') setActiveRadarSector('Active Incidents');
+      else if (sector === 'market-flashpoints') setActiveRadarSector('Market Flashpoints');
+      else if (sector === 'live-vectors') setActiveRadarSector('Live Vectors');
+      else if (sector === 'the-wire') setActiveRadarSector('The Wire');
+      else if (!sector) setActiveRadarSector('Breaking Pulse');
+    } else if (path === '/aviation') {
+      setActivePortal('aviation');
+    } else if (path === '/travel' || path.startsWith('/travel/')) {
+      setActivePortal('travel');
+    } else if (path === '/aircraft-sales') {
+      setActivePortal('home');
+    } else {
+      setActivePortal('home');
+    }
+  };
+
   const handleNavigate = (target: string) => {
     if (target === 'Breaking News') {
       window.history.pushState({}, '', '/breaking-news');
@@ -114,39 +142,10 @@ export default function App() {
     } else {
       window.history.pushState({}, '', '/');
     }
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    handleUrlChange();
   };
 
   useEffect(() => {
-    const handleUrlChange = () => {
-      const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
-
-      if (path === '/breaking-news') {
-        setActivePortal('breaking-news');
-      } else if (path.startsWith('/radar')) {
-        setActivePortal('radar');
-        const sector = path.split('/')[2];
-        if (sector === 'breaking-pulse') setActiveRadarSector('Breaking Pulse');
-        else if (sector === 'commercial-aviation') setActiveRadarSector('Commercial Aviation');
-        else if (sector === 'defense-space') setActiveRadarSector('Defense & Space');
-        else if (sector === 'horizon') setActiveRadarSector('Horizon');
-        else if (sector === 'active-incidents') setActiveRadarSector('Active Incidents');
-        else if (sector === 'market-flashpoints') setActiveRadarSector('Market Flashpoints');
-        else if (sector === 'live-vectors') setActiveRadarSector('Live Vectors');
-        else if (sector === 'the-wire') setActiveRadarSector('The Wire');
-        else if (!sector) setActiveRadarSector('Breaking Pulse');
-      } else if (path === '/aviation') {
-        setActivePortal('aviation');
-      } else if (path === '/travel' || path.startsWith('/travel/')) {
-        setActivePortal('travel');
-      } else if (path === '/aircraft-sales') {
-        // Handle aircraft sales if needed, or fallback
-        setActivePortal('home');
-      } else {
-        setActivePortal('home');
-      }
-    };
-
     // Initial check
     handleUrlChange();
 
