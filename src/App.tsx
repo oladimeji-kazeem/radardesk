@@ -16,6 +16,11 @@ import PersonalDashboard from './components/PersonalDashboard';
 import PerformanceManagement from './components/PerformanceManagement';
 import AuthScreen from './components/AuthScreen';
 import UATForm from './components/UATForm';
+import BreakingNews from './components/BreakingNews';
+import AviationPortal from './components/AviationPortal';
+import TravelPortal from './components/TravelPortal';
+import RadarPortal, { RadarSector } from './components/RadarPortal';
+import { SharedLayout } from './components/SharedLayout';
 import { User as UserIcon, BookOpen, LogOut } from 'lucide-react';
 import { supabase, isStandalone } from './lib/supabase';
 import {
@@ -82,12 +87,77 @@ export default function App() {
   const [activeTopicFromPool, setActiveTopicFromPool] = useState<Topic | null>(null);
   const [activeArticleForEditing, setActiveArticleForEditing] = useState<Article | null>(null);
   const [showUATForm, setShowUATForm] = useState(false);
+  const [activePortal, setActivePortal] = useState<'home' | 'breaking-news' | 'aviation' | 'travel' | 'radar'>('home');
+  const [activeRadarSector, setActiveRadarSector] = useState<RadarSector>('Commercial Aviation');
 
   // Global search and details preview states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
   const [previewTopic, setPreviewTopic] = useState<Topic | null>(null);
+
+  // Handle URL routing for Breaking News and Aviation portals
+  const handleNavigate = (target: string) => {
+    if (target === 'Breaking News') {
+      window.history.pushState({}, '', '/breaking-news');
+      setActivePortal('breaking-news');
+    } else if (['Radar', 'Breaking Pulse', 'Commercial Aviation', 'Defense & Space', 'Horizon', 'Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(target)) {
+      const sector = (target === 'Radar' || target === 'Breaking Pulse') ? 'Breaking Pulse' : target;
+      const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+      window.history.pushState({}, '', `/radar/${sectorPath}`);
+      setActivePortal('radar');
+      setActiveRadarSector(sector as RadarSector);
+    } else if (target === 'Aviation') {
+      window.history.pushState({}, '', '/aviation');
+      setActivePortal('aviation');
+    } else if (target === 'Travel' || target.startsWith('travel/')) {
+      const path = target === 'Travel' ? '/travel' : `/${target}`;
+      window.history.pushState({}, '', path);
+      setActivePortal('travel');
+    } else if (target === 'Aircraft Sales') {
+      window.history.pushState({}, '', '/aircraft-sales');
+    } else if (target === 'Home' || target === 'RadarDesk' || target === 'RadarDesk HQ') {
+      window.history.pushState({}, '', '/');
+      setActivePortal('home');
+    }
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const path = window.location.pathname;
+      if (path === '/breaking-news' || path === '/radar/breaking-news') {
+        if (path === '/radar/breaking-news') {
+          window.history.replaceState({}, '', '/breaking-news');
+        }
+        setActivePortal('breaking-news');
+      } else if (path.startsWith('/radar/')) {
+        setActivePortal('radar');
+        if (path === '/radar/breaking-pulse') setActiveRadarSector('Breaking Pulse');
+        else if (path === '/radar/commercial-aviation') setActiveRadarSector('Commercial Aviation');
+        else if (path === '/radar/defense-space') setActiveRadarSector('Defense & Space');
+        else if (path === '/radar/horizon') setActiveRadarSector('Horizon');
+        else if (path === '/radar/active-incidents') setActiveRadarSector('Active Incidents');
+        else if (path === '/radar/market-flashpoints') setActiveRadarSector('Market Flashpoints');
+        else if (path === '/radar/live-vectors') setActiveRadarSector('Live Vectors');
+        else if (path === '/radar/the-wire') setActiveRadarSector('The Wire');
+        else setActiveRadarSector('Commercial Aviation');
+      } else if (path === '/aviation' || path.startsWith('/aviation/')) {
+        setActivePortal('aviation');
+      } else if (path === '/travel' || path.startsWith('/travel/')) {
+        setActivePortal('travel');
+      } else {
+        setActivePortal('home');
+      }
+    };
+
+    // Initial check
+    handleUrlChange();
+
+    // Listen for back/forward buttons
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
+  }, []);
 
   // Keyboard shortcut listener to focus on '/' keypress
   useEffect(() => {
@@ -159,7 +229,13 @@ export default function App() {
     };
 
     try {
-      let resUsers: any[], resTopics: any[], resArticles: any[], resConfig: any, resAnalytics: any, resTopicLogs: any[], resUat: any[];
+      let resUsers: User[];
+      let resTopics: Topic[];
+      let resArticles: Article[];
+      let resConfig: WorkflowConfig;
+      let resAnalytics: any;
+      let resTopicLogs: any[];
+      let resUat: any[];
 
       if (isStandalone()) {
         const [
@@ -168,18 +244,30 @@ export default function App() {
           { data: articlesData },
           { data: configData },
           { data: analyticsData },
+          { data: logsData },
           { data: uatData }
         ] = await Promise.all([
           supabase.from('users').select('*'),
           supabase.from('topics').select('*'),
-          supabase.from('articles').select('*'),
+          supabase.from('articles').select('*').order('created_at', { ascending: false }),
           supabase.from('workflow_config').select('config').eq('id', 1).single(),
           supabase.from('web_analytics').select('*').eq('id', 1).single(),
-          supabase.from('uat_feedback').select('*').order('created_at', { ascending: false })
+          supabase.from('topics').select('id, moderation_history'),
+          supabase.from('uat_feedback').select('*')
         ]);
 
-        resUsers = usersData || [];
-        resTopics = topicsData || [];
+        resUsers = (usersData || []).map(u => ({ ...u, approved: u.approved ?? true }));
+        resTopics = (topicsData || []).map(t => ({
+          ...t,
+          submitterId: t.submitter_id,
+          submitterName: t.submitter_name,
+          claimedById: t.claimed_by_id,
+          claimedByName: t.claimed_by_name,
+          claimedAt: t.claimed_at,
+          durationMinutes: t.duration_minutes,
+          releasedCount: t.released_count,
+          moderationHistory: t.moderation_history
+        }));
         resArticles = (articlesData || []).map(a => ({
           ...a,
           writerId: a.writer_id,
@@ -191,31 +279,33 @@ export default function App() {
           createdAt: a.created_at,
           submittedAt: a.submitted_at,
           updatedAt: a.updated_at,
-          aiValidation: a.ai_validation
+          aiValidation: a.ai_validation,
+          headerImage: a.header_image,
+          excerpt: a.excerpt
         }));
         resConfig = (configData as any)?.config || DEFAULT_CONFIG;
-        resAnalytics = analyticsData;
-        resTopicLogs = (topicsData || []).flatMap((t: any) => t.moderation_history || []).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        resAnalytics = analyticsData || { pageViews: 0, submissionsCount: 0, approvals_count: 0, escalations_count: 0, avg_time_seconds: 0, active_users: 0 };
+        resTopicLogs = (logsData || []).flatMap((t: any) => t.moderation_history || []);
         resUat = uatData || [];
       } else {
         [resUsers, resTopics, resArticles, resConfig, resAnalytics, resTopicLogs, resUat] = await Promise.all([
           fetchJson('/api/users', users || []),
           fetchJson('/api/topics', topics || []),
           fetchJson('/api/articles', articles || []),
-          fetchJson('/api/config', config),
-          fetchJson('/api/analytics', analytics),
-          fetchJson('/api/topics/moderation-history', topicHistoryLogs || []),
-          fetchJson('/api/uat/feedback', uatFeedback || []),
+          fetchJson('/api/workflow-config', DEFAULT_CONFIG),
+          fetchJson('/api/analytics', { pageViews: 0 }),
+          fetchJson('/api/topics/moderation-history', []),
+          fetchJson('/api/uat/feedback', [])
         ]);
       }
 
-      if (resUsers) setUsers(resUsers);
-      if (resTopics) setTopics(resTopics);
-      if (resArticles) setArticles(resArticles);
-      if (resConfig) setConfig(resConfig);
-      if (resAnalytics) setAnalytics(resAnalytics);
-      if (resTopicLogs) setTopicHistoryLogs(resTopicLogs);
-      if (resUat) setUatFeedback(resUat);
+      setUsers(resUsers);
+      setTopics(resTopics);
+      setArticles(resArticles || []); // Ensure it's never undefined
+      setConfig(resConfig);
+      setAnalytics(resAnalytics);
+      setTopicHistoryLogs(resTopicLogs);
+      setUatFeedback(resUat);
 
       // Load user session from localStorage
       const savedUserStr = localStorage.getItem('radar_logged_user');
@@ -932,18 +1022,161 @@ export default function App() {
       );
     }
 
+    if (activePortal === 'travel') {
+      return (
+        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
+          <TravelPortal
+            articles={articles}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'travel') {
+      return (
+        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
+          <TravelPortal
+            articles={articles}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'aviation') {
+      return (
+        <SharedLayout activeCategory="Aviation" articles={articles} onNavigate={handleNavigate}>
+          <AviationPortal
+            articles={articles}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'radar') {
+      return (
+        <SharedLayout activeCategory="Radar" articles={articles} onNavigate={handleNavigate}>
+          <RadarPortal
+            articles={articles}
+            initialSector={activeRadarSector}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'breaking-news') {
+      return (
+        <SharedLayout activeCategory="Breaking News" articles={articles} onNavigate={handleNavigate}>
+          <BreakingNews
+            articles={articles}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
     return (
-      <PortalLanding
-        topics={topics}
+      <SharedLayout
+        activeCategory="Home"
         articles={articles}
-        config={config}
-        onGetStarted={() => setShowAuthScreen(true)}
-        onSignIn={() => setShowAuthScreen(true)}
-      />
+        onNavigate={handleNavigate}
+      >
+        <PortalLanding
+          topics={topics}
+          articles={articles}
+          config={config}
+          onGetStarted={() => setShowAuthScreen(true)}
+          onSignIn={() => setShowAuthScreen(true)}
+          onNavigate={handleNavigate}
+        />
+      </SharedLayout>
     );
   }
 
   if (viewMode === 'landing') {
+    if (activePortal === 'breaking-news') {
+      return (
+        <SharedLayout activeCategory="Breaking News" articles={articles} onNavigate={handleNavigate}>
+          <BreakingNews
+            articles={articles}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'travel') {
+      return (
+        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
+          <TravelPortal
+            articles={articles}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'aviation') {
+      return (
+        <SharedLayout activeCategory="Aviation" articles={articles} onNavigate={handleNavigate}>
+          <AviationPortal
+            articles={articles}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
+    if (activePortal === 'radar') {
+      return (
+        <SharedLayout activeCategory="Radar" articles={articles} onNavigate={handleNavigate}>
+          <RadarPortal
+            articles={articles}
+            initialSector={activeRadarSector}
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setActivePortal('home');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            onNavigate={handleNavigate}
+          />
+        </SharedLayout>
+      );
+    }
+
     return (
       <PortalLanding
         topics={topics}
@@ -953,6 +1186,30 @@ export default function App() {
         onSignIn={() => {
           setViewMode('app');
           addToast("RadarDesk Session Initiated: Active profile assigned.", "success");
+        }}
+        onNavigate={(target) => {
+          if (target === 'Breaking News') {
+            window.history.pushState({}, '', '/breaking-news');
+            setActivePortal('breaking-news');
+          } else if (['Radar', 'Breaking Pulse', 'Commercial Aviation', 'Defense & Space', 'Horizon', 'Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(target)) {
+            const sector = (target === 'Radar' || target === 'Breaking Pulse') ? 'Breaking Pulse' : target;
+            const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+            window.history.pushState({}, '', `/radar/${sectorPath}`);
+            setActivePortal('radar');
+            setActiveRadarSector(sector as RadarSector);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          } else if (target === 'Aviation') {
+            window.history.pushState({}, '', '/aviation');
+            setActivePortal('aviation');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          } else if (target === 'Travel') {
+            window.history.pushState({}, '', '/travel');
+            setActivePortal('travel');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          } else if (target === 'Aircraft Sales') {
+            window.history.pushState({}, '', '/aircraft-sales');
+            // TODO: implement aircraft sales portal or redirect
+          }
         }}
       />
     );

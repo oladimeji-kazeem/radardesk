@@ -5,8 +5,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!;
+const supabaseUrl = 'https://qiciaqxucmvwwfvodqzz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpY2lhcXh1Y212d3dmdm9kcXp6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzU1NjgwOSwiZXhwIjoyMDkzMTMyODA5fQ.U3LvHaELLtBfLDsr3Eet1nwJCscuo0KK6v5h3sk6eQY';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
@@ -58,11 +58,14 @@ async function seed() {
         review_cycles: a.reviewCycles,
         created_at: a.createdAt,
         submitted_at: a.submittedAt,
-        updated_at: a.updatedAt,
-        revisions: a.revisions,
-        ai_validation: a.aiValidation,
-        comments: a.comments,
-        history: a.history
+        updated_at: a.updatedAt || a.createdAt || new Date().toISOString(),
+        revisions: a.revisions || [],
+        ai_validation: a.aiValidation || null,
+        comments: a.comments || [],
+        history: a.history || [],
+        category: a.category,
+        header_image: a.headerImage,
+        excerpt: a.excerpt
     }));
     const { error: errorArticles } = await supabase.from('articles').upsert(articlesToSeed);
     if (errorArticles) console.error('Error seeding articles:', errorArticles);

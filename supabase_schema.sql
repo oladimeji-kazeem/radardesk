@@ -58,7 +58,10 @@ CREATE TABLE IF NOT EXISTS articles (
   revisions JSONB DEFAULT '[]'::jsonb,
   ai_validation JSONB,
   comments JSONB DEFAULT '[]'::jsonb,
-  history JSONB DEFAULT '[]'::jsonb
+  history JSONB DEFAULT '[]'::jsonb,
+  category TEXT,
+  header_image TEXT,
+  excerpt TEXT
 );
 
 -- Enable RLS

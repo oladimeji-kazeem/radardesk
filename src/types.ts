@@ -72,6 +72,9 @@ export interface Article {
   aiValidation: AIPreValidation | null;
   comments: Comment[];
   history: AuditLog[];
+  category?: string; // Standardize category for portal filtering
+  headerImage?: string;
+  excerpt?: string;
 }
 
 export interface Comment {

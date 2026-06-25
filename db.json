@@ -164,84 +164,231 @@
   "articles": [
     {
       "id": "a-1",
-      "title": "Sustainable Backpacking Across the Scottish Highlands",
-      "content": "## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe. However, with the resurgence of wilderness tourism, environmental degradation has accelerated. Crucially, travelers must adhere to the \"Leave No Trace\" principles.\n\n### Essential Guidelines\n- Camp on durable surfaces like gravel or dry grass.\n- Dispose of waste carefully; pack out all garbage.\n- Respect wildlife and observe nesting birds from a distance.\n\n### References\n- Scottish Outdoor Access Code (https://www.outdooraccess-scotland.scot/)\n- NatureScot Conservation Data (https://www.nature.scot/)",
-      "status": "Submitted",
+      "title": "Boeing 777X Receives Key FAA ETOPS Approval for Initial Testing",
+      "content": "The Federal Aviation Administration has granted limited ETOPS certification for the 777X test fleet...",
+      "status": "Published",
       "writerId": "u-1",
       "writerName": "Alisha Vance",
-      "editorId": "u-2",
-      "editorName": "Marcus Sterling",
-      "topicId": null,
-      "score": 82,
-      "reviewCycles": 0,
-      "createdAt": "2026-05-24T19:59:51.708Z",
-      "submittedAt": "2026-05-25T09:59:51.708Z",
-      "updatedAt": "2026-05-25T09:59:51.708Z",
-      "revisions": [
-        {
-          "version": 1,
-          "title": "Sustainable Backpacking Across the Scottish Highlands",
-          "content": "## Scaling the Peaks Ethically\n\nThe Scottish Highlands offer some of the most dramatic landscapes in Northern Europe...",
-          "updatedAt": "2026-05-24T19:59:51.708Z",
-          "score": 82
-        }
-      ],
-      "aiValidation": {
-        "score": 82,
-        "grammar": "Excellent readability with only 2 minor punctuation errors noted.",
-        "readability": "Grade 8 level, highly accessible guidelines.",
-        "sourcesFound": true,
-        "sourcesList": [
-          "https://www.outdooraccess-scotland.scot/",
-          "https://www.nature.scot/"
-        ],
-        "factualInconsistencies": [],
-        "styleGuideViolations": [
-          "Avoid capitalized Peaks in section headers unless styled as a title."
-        ],
-        "headlineSuggestions": [
-          "How to Back Pack Across the Scottish Highlands Sustainably",
-          "LLeave No Trace: A Conservationist Guide to the Scottish Highlands"
-        ],
-        "isDuplicate": false,
-        "duplicateScore": 12,
-        "semanticSimilarityToPrevious": 0
-      },
-      "comments": [
-        {
-          "id": "c-1",
-          "authorName": "Marcus Sterling",
-          "authorRole": "Editor",
-          "text": "Excellent guide. Please double check if we need permits to wild camp near Loch Lomond.",
-          "createdAt": "2026-05-25T10:59:51.708Z"
-        }
-      ],
-      "history": [
-        {
-          "id": "l-1",
-          "action": "Draft Created",
-          "actorName": "Alisha Vance",
-          "actorRole": "Writer",
-          "timestamp": "2026-05-24T19:59:51.708Z",
-          "details": "Created initial draft."
-        },
-        {
-          "id": "l-2",
-          "action": "Pre-Validation Passed",
-          "actorName": "Automated AI Gatekeeper",
-          "actorRole": "Admin",
-          "timestamp": "2026-05-25T09:59:51.708Z",
-          "details": "AI Quality Score 82. Threshold is 70."
-        },
-        {
-          "id": "l-3",
-          "action": "Submitted",
-          "actorName": "Alisha Vance",
-          "actorRole": "Writer",
-          "timestamp": "2026-05-25T09:59:51.708Z",
-          "details": "Article submitted to Duty Editor."
-        }
-      ]
+      "category": "Aviation",
+      "createdAt": "2026-06-23T22:15:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1544016768-982d1554f0b9?q=80&w=1200",
+      "excerpt": "FAA grants critical ETOPS window for 777X testing, moving the program closer to 2026 certification."
+    },
+    {
+      "id": "a-2",
+      "title": "Qantas Confirms Massive SAF Supply Deal with North American Bio-Refineries",
+      "content": "Qantas Airways has signed a multi-year deal for 500 million liters of Sustainable Aviation Fuel annually...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Strategy",
+      "createdAt": "2026-06-23T23:05:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1570710891163-6d3b5c47248b?q=80&w=1200",
+      "excerpt": "Qantas secures half a billion liters of SAF, pinning its carbon goals on the North American bio-corridor."
+    },
+    {
+      "id": "a-3",
+      "title": "Lufthansa-ITA Merger: EU Commissioners Drop Key Concession Requirements",
+      "content": "In a surprise move, EU antitrust regulators have softened their stance on the Lufthansa acquisition...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Market",
+      "createdAt": "2026-06-23T21:45:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200",
+      "excerpt": "EU regulators soften stance on ITA merger, paving the way for a German-Italian aviation powerhouse."
+    },
+    {
+      "id": "a-4",
+      "title": "NASA X-59 Quiet Supersonic Jet Achieves First Stable Supersonic Cruise",
+      "content": "The X-59 QueSST experimental aircraft has successfully demonstrated its 'supersonic thump' technology...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Aviation",
+      "createdAt": "2026-06-23T23:30:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1464037862646-647f3ca77ddc?q=80&w=1200",
+      "excerpt": "The age of quiet supersonic travel is here: NASA X-59 cruises at Mach 1.4 without the window-breaking boom."
+    },
+    {
+      "id": "a-5",
+      "title": "Airbus Commits to Zero-E Hydrogen Hub at Singapore Changi",
+      "content": "Airbus and Changi Airport Group have signed a MoU to develop a world-first hydrogen distribution network...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Travel",
+      "createdAt": "2026-06-23T20:20:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1521566652839-697aa473761a?q=80&w=1200",
+      "excerpt": "Changi Airport to go hydrogen: Airbus partners with Singapore to build the infrastructure for the next generation of flight."
+    },
+    {
+      "id": "a-6",
+      "title": "Middle East Crisis: Airspace Closures Extended Over Levant Region",
+      "content": "Civil aviation authorities have announced a further 48-hour closure of several key corridors...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Strategy",
+      "createdAt": "2026-06-24T00:10:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1504133448783-bb350c81c0b4?q=80&w=1200",
+      "excerpt": "Global routing chaos as airspace closures over the Levant are extended, forcing massive reroutes."
+    },
+    {
+      "id": "a-7",
+      "title": "United Airlines Orders 20 Overture Supersonic Jets from Boom Supersonic",
+      "content": "United has moved from options to firm orders for its first supersonic passenger fleet...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Aviation",
+      "createdAt": "2026-06-23T19:00:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1200",
+      "excerpt": "The sonic boom returns to commercial aviation as United firms its order for 20 Boom Overture jets."
+    },
+    {
+      "id": "a-8",
+      "title": "Shell to Exit Aviation Fuel Business in South East Asia",
+      "content": "In a major strategic pivot, Shell has announced it will divest its airport refueling assets...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Market",
+      "createdAt": "2026-06-23T18:30:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1587560699334-cc4ff634909a?q=80&w=1200",
+      "excerpt": "Energy giant Shell begins massive divestment from SE Asian aviation fueling hubs."
+    },
+    {
+      "id": "a-9",
+      "title": "Delta Airlines Predicts Record-Breaking Summer Capacity for 2026",
+      "content": "CEO Ed Bastian states that the airline is anticipating a 12% increase in passenger load factors...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Travel",
+      "createdAt": "2026-06-23T17:45:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1559139225-3327d8066bb8?q=80&w=1200",
+      "excerpt": "Delta prepares for the busiest summer in history, projecting double-digit growth."
+    },
+    {
+      "id": "a-10",
+      "title": "Breaking: Emirates Announces Order for 50 Additional Boeing 777X Aircraft",
+      "content": "Emirates has surprised the industry with a massive order for 50 more Boeing 777X jets, signaling strong confidence in the program's recovery...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Aviation",
+      "createdAt": "2026-06-24T10:00:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1544016768-982d1554f0b9?q=80&w=1200",
+      "excerpt": "Emirates doubles down on the 777X with a 50-unit order at the Dubai Airshow."
+    },
+    {
+      "id": "a-11",
+      "title": "Defense: UK Ministry of Defence Awards GCAP Fighter Jet Contract to BAE Systems",
+      "content": "The UK MOD has finalized a multi-billion pound agreement for the development of the next-generation fighter jet...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Defense & Space",
+      "createdAt": "2026-06-24T09:30:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1564619744415-397a6067f920?q=80&w=1200",
+      "excerpt": "BAE Systems to lead the GCAP program as the UK moves toward sixth-generation air combat capabilities."
+    },
+    {
+      "id": "a-12",
+      "title": "Horizon: Archer Aviation's Midnight eVTOL Completes Transition Flight",
+      "content": "In a major milestone for urban air mobility, Archer's Midnight aircraft has successfully transitioned from vertical takeoff to wing-borne flight...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Horizon",
+      "createdAt": "2026-06-24T11:15:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=1200",
+      "excerpt": "Midnight eVTOL achieves full transition, paving the way for commercial service in 2026."
+    },
+    {
+      "id": "a-13",
+      "title": "Pulse: Severe Turbulence Incident Over North Atlantic Injures 12",
+      "content": "Flight AF012 encountered severe clear-air turbulence while crossing the Atlantic, forcing an emergency landing in Shannon...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Active Incidents",
+      "createdAt": "2026-06-24T13:45:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1516939884455-1445c8652f83?q=80&w=1200",
+      "excerpt": "Air France flight diverts Shannon after turbulence event; medical services on standby."
+    },
+    {
+      "id": "a-14",
+      "title": "Market: Rolls-Royce Shares Surge on Record Engine Performance Data",
+      "content": "Rolls-Royce has reported better-than-expected time-on-wing performance for its Trent XWB engine series...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Market Flashpoints",
+      "createdAt": "2026-06-24T12:00:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1542296332-2e4473faf563?q=80&w=1200",
+      "excerpt": "Trent XWB performance drives confidence in Rolls-Royce turnaround strategy."
+    },
+    {
+      "id": "a-15",
+      "title": "Live: Jet Fuel Prices in Singapore Reach 2-Year Lows",
+      "content": "A sudden surplus in refining capacity across North Asia has pushed jet fuel spot prices down by 15%...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Live Vectors",
+      "createdAt": "2026-06-24T14:10:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=1200",
+      "excerpt": "Asian jet fuel crack spreads narrow as regional supply hits record highs."
+    },
+    {
+      "id": "a-16",
+      "title": "The Wire: Unconfirmed Reports of Massive Airspace Violation in Arctic Circle",
+      "content": "Radar stations in Northern Norway have picked up several unidentified fast-moving targets exceeding Mach 4...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "The Wire",
+      "createdAt": "2026-06-24T14:25:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=1200",
+      "excerpt": "Arctic radar stations on high alert following supersonic intrusions."
+    },
+    {
+      "id": "a-17",
+      "title": "Commercial: Turkish Airlines Finalizes Deal for 200 Airbus A321neo Units",
+      "content": "Turkish Airlines has confirmed its intent to become one of the world's largest operators of the A321neo...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Commercial Aviation",
+      "createdAt": "2026-06-24T08:15:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?q=80&w=1200",
+      "excerpt": "Turkish Airlines expands fleet with massive narrowbody order to support Istanbul hub growth."
+    },
+    {
+      "id": "a-18",
+      "title": "Breaking: Japan's MRJ Project Officially Revived with New Hydrogen Focus",
+      "content": "Mitsubishi has announced it will restart its regional jet program under a new 'Green Wings' initiative...",
+      "status": "Published",
+      "writerId": "u-1",
+      "writerName": "Alisha Vance",
+      "category": "Breaking News",
+      "createdAt": "2026-06-24T07:45:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1540962351504-03099e0a75c3?q=80&w=1200",
+      "excerpt": "Mitsubishi Heavy Industries pivots to hydrogen-electric power for the reborn regional jet."
+    },
+    {
+      "id": "a-19",
+      "title": "Strategy: Delta/LATAM JV Gains Full Approval from Brazilian CADE",
+      "content": "The Brazilian antitrust authority has cleared the joint venture between Delta and LATAM without conditions...",
+      "status": "Published",
+      "writerId": "u-5",
+      "writerName": "Liam Brooks",
+      "category": "Strategy",
+      "createdAt": "2026-06-24T13:00:00.000Z",
+      "headerImage": "https://images.unsplash.com/photo-1504133448783-bb350c81c0b4?q=80&w=1200",
+      "excerpt": "Delta and LATAM move closer to solidifying their dominant position in the Americas."
     }
   ],
   "config": {

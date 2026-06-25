@@ -81,8 +81,16 @@ async function getWorkflowConfig(): Promise<WorkflowConfig> {
 function saveDB() {
   // Logic moved to direct supabase calls
 }
-function loadDB() {
-  // Logic moved to startup sequence
+function loadLocalDB() {
+  try {
+    const dbPath = path.join(process.cwd(), 'db.json');
+    if (fs.existsSync(dbPath)) {
+      return JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    }
+  } catch (err) {
+    console.error('Failed to load local db.json fallback:', err);
+  }
+  return { users: [], topics: [], articles: [], config: DEFAULT_CONFIG, analytics: {} };
 }
 
 // Lazy load Gemini AI SDK client
@@ -204,9 +212,16 @@ async function startServer() {
 
   // USERS
   app.get('/api/users', async (req, res) => {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.from('users').select('*');
-    res.json(data || []);
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) throw error;
+      res.json(data || []);
+    } catch (err) {
+      console.warn('Supabase users fetch failed, falling back to local:', (err as any).message);
+      const db = loadLocalDB();
+      res.json(db.users || []);
+    }
   });
 
   app.post('/api/users', async (req, res) => {
@@ -297,9 +312,16 @@ async function startServer() {
 
   // TOPIC POOL
   app.get('/api/topics', async (req, res) => {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.from('topics').select('*');
-    res.json(data || []);
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.from('topics').select('*');
+      if (error) throw error;
+      res.json(data || []);
+    } catch (err) {
+      console.warn('Supabase topics fetch failed, falling back to local:', (err as any).message);
+      const db = loadLocalDB();
+      res.json(db.topics || []);
+    }
   });
 
   app.get('/api/topics/moderation-history', async (req, res) => {
@@ -486,23 +508,32 @@ async function startServer() {
 
   // ARTICLES
   app.get('/api/articles', async (req, res) => {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
-    // Camelize keys
-    const camelized = (data as any[])?.map(a => ({
-      ...a,
-      writerId: a.writer_id,
-      writerName: a.writer_name,
-      editorId: a.editor_id,
-      editorName: a.editor_name,
-      topicId: a.topic_id,
-      reviewCycles: a.review_cycles,
-      createdAt: a.created_at,
-      submittedAt: a.submitted_at,
-      updatedAt: a.updated_at,
-      aiValidation: a.ai_validation
-    }));
-    res.json(camelized || []);
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      // Camelize keys
+      const camelized = (data as any[])?.map(a => ({
+        ...a,
+        writerId: a.writer_id,
+        writerName: a.writer_name,
+        editorId: a.editor_id,
+        editorName: a.editor_name,
+        topicId: a.topic_id,
+        reviewCycles: a.review_cycles,
+        createdAt: a.created_at,
+        submittedAt: a.submitted_at,
+        updatedAt: a.updated_at,
+        aiValidation: a.ai_validation,
+        headerImage: a.header_image,
+        excerpt: a.excerpt
+      }));
+      res.json(camelized || []);
+    } catch (err) {
+      console.warn('Supabase articles fetch failed, falling back to local:', (err as any).message);
+      const db = loadLocalDB();
+      res.json(db.articles || []);
+    }
   });
 
   app.get('/api/articles/:id', async (req, res) => {
@@ -524,7 +555,9 @@ async function startServer() {
       createdAt: art.created_at,
       submittedAt: art.submitted_at,
       updatedAt: art.updated_at,
-      aiValidation: art.ai_validation
+      aiValidation: art.ai_validation,
+      headerImage: art.header_image,
+      excerpt: art.excerpt
     };
     res.json(camelized);
   });
