@@ -68,9 +68,9 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                             <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-6 group-hover:bg-[#20a6eb]/10 transition-colors">
                                 <Icon className="w-7 h-7 text-[#20a6eb]" />
                             </div>
-                            <h3 className="text-xl font-black tracking-tight mb-2 uppercase">{mod.label}</h3>
+                            <h3 className="text-xl font-black tracking-tight mb-2">{mod.label}</h3>
                             <p className="text-xs text-gray-400 font-medium leading-relaxed mb-6 italic">{mod.desc}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-black text-[#20a6eb] tracking-widest uppercase">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-[#20a6eb] tracking-wider">
                                 Access Module <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                             </div>
                         </motion.div>
@@ -82,10 +82,10 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#20a6eb] opacity-20 blur-[100px]" />
                 <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
                     <div className="space-y-6 max-w-xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#20a6eb]/20 border border-[#20a6eb]/20 text-[10px] font-black tracking-widest text-[#20a6eb] uppercase">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#20a6eb]/20 border border-[#20a6eb]/20 text-[10px] font-black tracking-wider text-[#20a6eb]">
                             <Zap className="w-3 h-3 fill-current" /> Live Pulse
                         </div>
-                        <h2 className="text-4xl font-black tracking-tighter leading-none italic uppercase">
+                        <h2 className="text-4xl font-black tracking-tighter leading-none italic">
                             Global Connectivity <span className="text-[#20a6eb]">Index</span>
                         </h2>
                         <p className="text-sm text-white/50 font-medium italic border-l-2 border-white/10 pl-6">
@@ -95,11 +95,11 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                     <div className="grid grid-cols-2 gap-4 w-full lg:w-auto">
                         <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
                             <div className="text-4xl font-black italic">+8.4%</div>
-                            <div className="text-[10px] text-white/40 font-black tracking-widest uppercase mt-2">Yield Trend</div>
+                            <div className="text-[10px] text-white/40 font-black tracking-wider mt-2">Yield Trend</div>
                         </div>
                         <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
                             <div className="text-4xl font-black italic">420ms</div>
-                            <div className="text-[10px] text-white/40 font-black tracking-widest uppercase mt-2">Latency</div>
+                            <div className="text-[10px] text-white/40 font-black tracking-wider mt-2">Latency</div>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <button className="bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase border-0 cursor-pointer shadow-lg hover:bg-[#20a6eb] transition-all">
+                <button className="bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black tracking-wider border-0 cursor-pointer shadow-lg hover:bg-[#20a6eb] transition-all">
                     Execute Query
                 </button>
             </div>
@@ -140,8 +140,9 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         <div className="p-8 space-y-6">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-1">
-                                    <h4 className="text-2xl font-black tracking-tighter uppercase">{airline.name}</h4>
-                                    <div className="text-[10px] font-black text-[#20a6eb] tracking-widest italic">{airline.code} • Global Operator</div>
+                                    <h4 className="text-2xl font-black tracking-tighter">{airline.name}</h4>
+                                    <div className="text-[10px] font-black text-[#e86420] tracking-wider mb-2">Capacity Rank</div>
+                                    <div className="text-[10px] font-black text-[#20a6eb] tracking-wider italic">{airline.code} • Global Operator</div>
                                 </div>
                                 <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-xl font-black text-[#20a6eb] shadow-inner group-hover:bg-[#20a6eb] group-hover:text-white transition-all">
                                     {airline.score}
@@ -150,16 +151,16 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-gray-50 rounded-2xl p-4">
-                                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Fleet Total</div>
+                                    <div className="text-[8px] font-black text-gray-400 tracking-wider mb-1">Fleet Total</div>
                                     <div className="text-lg font-black italic">{airline.fleet} <span className="text-[8px] not-italic text-gray-400">Fixed</span></div>
                                 </div>
                                 <div className="bg-gray-50 rounded-2xl p-4">
-                                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Active Routes</div>
+                                    <div className="text-[8px] font-black text-gray-400 tracking-wider mb-1">Active Routes</div>
                                     <div className="text-lg font-black italic">{airline.routes} <span className="text-[8px] not-italic text-gray-400">Zones</span></div>
                                 </div>
                             </div>
 
-                            <button className="w-full py-4 rounded-xl border border-dashed border-gray-200 text-[9px] font-black tracking-widest uppercase text-gray-400 group-hover:border-[#20a6eb] group-hover:text-[#20a6eb] transition-all">
+                            <button className="w-full py-4 rounded-xl border border-dashed border-gray-200 text-[9px] font-black tracking-wider text-gray-400 group-hover:border-[#20a6eb] group-hover:text-[#20a6eb] transition-all">
                                 View Intelligence Profile
                             </button>
                         </div>
@@ -175,10 +176,10 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                 <div className="absolute top-0 right-0 w-32 h-full bg-[#e86420]/5 pointer-events-none" />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                     <div className="lg:col-span-8 space-y-6">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[#e86420] tracking-widest uppercase">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[#e86420] tracking-wider">
                             <MapPin className="w-3 h-3" /> HUB CONNECTIVITY INDEX
                         </div>
-                        <h2 className="text-4xl font-black tracking-tighter leading-none italic uppercase">
+                        <h2 className="text-4xl font-black tracking-tighter leading-none italic">
                             Singapore <span className="text-[#e86420]">Changi</span> (SIN)
                         </h2>
                         <p className="text-sm font-medium text-gray-400 italic">
@@ -187,23 +188,23 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         <div className="flex gap-6">
                             <div className="space-y-1">
                                 <div className="text-2xl font-black italic">#1</div>
-                                <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Global Rank</div>
+                                <div className="text-[9px] font-black text-gray-300 tracking-wider">Global Rank</div>
                             </div>
                             <div className="w-[1px] bg-gray-100" />
                             <div className="space-y-1">
                                 <div className="text-2xl font-black italic">104M</div>
-                                <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Capacity</div>
+                                <div className="text-[9px] font-black text-white/40 tracking-wider mb-1">Capacity</div>
                             </div>
                         </div>
                     </div>
                     <div className="lg:col-span-4 bg-gray-50 rounded-[2.5rem] p-6 border border-gray-100 text-center space-y-4">
-                        <div className="text-[9px] font-black tracking-widest text-[#e86420] uppercase">Infrastructure Stats</div>
+                        <div className="text-[9px] font-black tracking-wider text-[#e86420]">Infrastructure Stats</div>
                         <div className="space-y-2">
                             {['Terminals: 5', 'Runways: 3', 'GDS Gates: 242'].map(s => (
                                 <div key={s} className="text-xs font-bold text-gray-600 border-b border-gray-200 pb-2 last:border-0">{s}</div>
                             ))}
                         </div>
-                        <button className="w-full py-3 bg-[#e86420] text-white rounded-xl text-[10px] font-black tracking-widest uppercase border-0 cursor-pointer shadow-lg shadow-[#e86420]/20">
+                        <button className="w-full py-3 bg-[#e86420] text-white rounded-xl text-[10px] font-black tracking-wider border-0 cursor-pointer shadow-lg shadow-[#e86420]/20">
                             Access Infrastructure Logs
                         </button>
                     </div>
@@ -223,10 +224,10 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                                 {apt.code}
                             </div>
                             <div className="text-right">
-                                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{apt.city}</span>
+                                <span className="text-[10px] font-black text-gray-300 tracking-wider">{apt.city}</span>
                             </div>
                         </div>
-                        <h4 className="text-sm font-black tracking-tight mb-4 uppercase">{apt.name}</h4>
+                        <h4 className="text-sm font-black tracking-tight mb-4">{apt.name}</h4>
                         <div className="space-y-2">
                             <div className="flex justify-between text-[10px] font-bold text-gray-400">
                                 <span>Signal Load</span>
@@ -255,7 +256,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         <input
                             type="text"
                             placeholder="Origin City (e.g., London)"
-                            className="bg-transparent border-0 outline-none font-black uppercase text-xl placeholder:text-gray-300 w-full"
+                            className="bg-transparent border-0 outline-none font-black text-xl placeholder:text-gray-300 w-full"
                             value={routePair.from}
                             onChange={(e) => setRoutePair({ ...routePair, from: e.target.value })}
                         />
@@ -268,7 +269,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         <input
                             type="text"
                             placeholder="Destination (e.g., Toronto)"
-                            className="bg-transparent border-0 outline-none font-black uppercase text-xl placeholder:text-gray-300 w-full"
+                            className="bg-transparent border-0 outline-none font-black text-xl placeholder:text-gray-300 w-full"
                             value={routePair.to}
                             onChange={(e) => setRoutePair({ ...routePair, to: e.target.value })}
                         />
@@ -283,28 +284,28 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                     >
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="space-y-6">
-                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Operating Analysts</h5>
+                                <h5 className="text-[10px] font-black text-gray-400 tracking-wider">Operating Analysts</h5>
                                 <div className="space-y-3">
                                     {['British Airways', 'Air Canada', 'WestJet'].map(airline => (
                                         <div key={airline} className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center group cursor-pointer hover:border-[#20a6eb]/50 transition-all">
-                                            <span className="text-sm font-black uppercase tracking-tight">{airline}</span>
+                                            <span className="text-sm font-black tracking-tight">{airline}</span>
                                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#20a6eb]" />
                                         </div>
                                     ))}
                                 </div>
                             </div>
                             <div className="space-y-6">
-                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Weekly Frequency</h5>
+                                <h5 className="text-[10px] font-black text-gray-400 tracking-wider">Weekly Frequency</h5>
                                 <div className="bg-white p-8 rounded-2xl border border-gray-100 text-center space-y-2">
                                     <div className="text-5xl font-black italic">42x</div>
                                     <div className="text-[10px] font-bold text-emerald-400">+4% Vs Previous Cycle</div>
                                 </div>
                             </div>
                             <div className="space-y-6">
-                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Future Outlook</h5>
+                                <h5 className="text-[10px] font-black text-gray-400 tracking-wider">Future Outlook</h5>
                                 <div className="bg-white p-8 rounded-2xl border border-gray-100 space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Demand</span>
+                                        <span className="text-[10px] font-black tracking-wider">Demand</span>
                                         <span className="text-xs font-black text-[#e86420]">BULLISH</span>
                                     </div>
                                     <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
@@ -318,7 +319,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                 ) : (
                     <div className="text-center py-20 bg-gray-50/50 rounded-[2rem] border border-dashed border-gray-200">
                         <Globe className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                        <h5 className="text-sm font-black text-gray-400 uppercase tracking-widest">Awaiting Route Intersection Data</h5>
+                        <h5 className="text-sm font-black text-gray-400 tracking-wider">Awaiting Route Intersection Data</h5>
                         <p className="text-[10px] text-gray-300 font-medium italic mt-2">Enter any city pair to start frequency analysis.</p>
                     </div>
                 )}
@@ -334,7 +335,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => handlePageChange('overview')}
-                            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all border-0 cursor-pointer whitespace-nowrap ${activePage === 'overview'
+                            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-wider transition-all border-0 cursor-pointer whitespace-nowrap ${activePage === 'overview'
                                 ? 'bg-[#1a1a1a] text-white shadow-lg'
                                 : 'bg-black/5 text-[#1a1a1a]/40 hover:bg-black/10 hover:text-[#1a1a1a]'
                                 }`}
@@ -348,7 +349,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                                 <button
                                     key={mod.id}
                                     onClick={() => handlePageChange(mod.id as IntelligencePage)}
-                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all border-0 cursor-pointer whitespace-nowrap ${isActive
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-wider transition-all border-0 cursor-pointer whitespace-nowrap ${isActive
                                         ? 'bg-[#20a6eb] text-white shadow-lg shadow-[#20a6eb]/20'
                                         : 'bg-black/5 text-[#1a1a1a]/40 hover:bg-black/10 hover:text-[#1a1a1a]'
                                         }`}
@@ -368,7 +369,7 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-1.5 h-8 bg-gradient-to-b from-[#20a6eb] to-[#e86420] rounded-full" />
-                                <h1 className="text-5xl font-black tracking-tighter text-[#1a1a1a] leading-none uppercase">
+                                <h1 className="text-5xl font-black tracking-tighter text-[#1a1a1a] leading-none">
                                     Air <span className="text-[#20a6eb]">Intelligence</span>
                                 </h1>
                             </div>
@@ -378,11 +379,11 @@ export default function AirIntelligencePortal({ articles, onBack, onNavigate }: 
                         </div>
                         <div className="flex bg-white p-2 rounded-2xl border border-gray-100 shadow-sm shrink-0">
                             <div className="px-6 py-2 border-r border-gray-100 text-center">
-                                <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Nodes</div>
+                                <div className="text-[9px] font-black text-white/40 tracking-wider mb-1">Rank</div>
                                 <div className="text-xl font-black italic">4,202</div>
                             </div>
                             <div className="px-6 py-2 text-center">
-                                <div className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-1">Uptime</div>
+                                <div className="text-[9px] font-black text-gray-300 tracking-wider mb-1">Uptime</div>
                                 <div className="text-xl font-black italic text-emerald-500">99.98%</div>
                             </div>
                         </div>

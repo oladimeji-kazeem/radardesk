@@ -315,7 +315,7 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                 return (
                     <div className="space-y-4">
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-4 tracking-widest">Congestion Index</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-4 tracking-wider">Congestion Index</div>
                             <Sparkline data={[65, 78, 62, 85, 90, 82, 75]} color="#20a6eb" />
                             <div className="flex justify-between items-center mt-4">
                                 <span className="text-[10px] text-[#1a1a1a]/60">JFK T4</span>
@@ -323,7 +323,7 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                             </div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-emerald-600 mb-2 tracking-widest">Gate Efficiency</div>
+                            <div className="text-[8px] font-black text-emerald-600 mb-2 tracking-wider">Gate Efficiency</div>
                             <div className="text-xl font-black italic text-[#1a1a1a]">94.2% <span className="text-[10px] text-[#1a1a1a]/30 not-italic ml-2">Global Avg</span></div>
                         </div>
                     </div>
@@ -332,16 +332,16 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                 return (
                     <div className="space-y-4">
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-[#e86420] mb-4 tracking-widest">Yield Volatility</div>
+                            <div className="text-[8px] font-black text-[#e86420] mb-4 tracking-wider">Yield Volatility</div>
                             <Sparkline data={[2.1, 2.4, 2.2, 2.8, 2.1, 2.3, 2.4]} color="#e86420" />
                             <div className="text-xl font-black italic text-[#1a1a1a] mt-4">2.4c <span className="text-[8px] text-[#1a1a1a]/30 ml-2">Per Point</span></div>
                         </div>
                         <div className="space-y-2">
-                            <div className="text-[7px] font-black text-[#1a1a1a]/30 tracking-[0.2em]">Active status Matches</div>
+                            <div className="text-[7px] font-black text-[#1a1a1a]/30 tracking-wider">Active Status Matches</div>
                             {['United', 'Marriott', 'Delta'].map(m => (
                                 <div key={m} className="flex justify-between items-center text-[10px] bg-gray-50 p-2 rounded-lg border border-gray-100">
                                     <span className="text-[#1a1a1a]/60 font-bold">{m}</span>
-                                    <span className="font-bold text-emerald-600">OPEN</span>
+                                    <span className="font-bold text-emerald-600">Open</span>
                                 </div>
                             ))}
                         </div>
@@ -351,16 +351,16 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                 return (
                     <div className="space-y-4">
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-4 tracking-widest">GDS System Load</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-4 tracking-wider">GDS System Load</div>
                             <MiniBarChart data={[
                                 { label: 'Sabre', value: 85 },
                                 { label: 'Amadeus', value: 92 },
                                 { label: 'Travelport', value: 78 }
                             ]} />
-                            <div className="text-lg font-black italic text-[#1a1a1a] mt-4">99.998% <span className="text-[8px] text-[#1a1a1a]/30 uppercase ml-2">Uptime</span></div>
+                            <div className="text-lg font-black italic text-[#1a1a1a] mt-4">99.998% <span className="text-[8px] text-[#1a1a1a]/30 ml-2">Uptime</span></div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-emerald-600 mb-2 tracking-widest">Biometric Adoption</div>
+                            <div className="text-[8px] font-black text-emerald-600 mb-2 tracking-wider">Biometric Adoption</div>
                             <div className="text-xl font-black italic text-[#1a1a1a]">+42% <span className="text-[10px] text-[#1a1a1a]/30 not-italic ml-2">YoY</span></div>
                         </div>
                     </div>
@@ -369,14 +369,14 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                 return (
                     <div className="space-y-4">
                         <div className="bg-gray-100/50 p-4 rounded-2xl border border-gray-100 text-center">
-                            <div className="text-[8px] font-black text-amber-600 mb-2 tracking-widest">Avg Quality Score</div>
+                            <div className="text-[8px] font-black text-amber-600 mb-2 tracking-wider">Avg Quality Score</div>
                             <div className="text-3xl font-black text-[#1a1a1a] italic">4.82</div>
                             <div className="flex justify-center gap-1 mt-1">
                                 {[1, 2, 3, 4, 5].map(s => <Star key={s} className={`w-2.5 h-2.5 ${s <= 4 ? 'fill-amber-400 text-amber-400' : 'text-[#1a1a1a]/10'}`} />)}
                             </div>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <div className="text-[7px] text-[#1a1a1a]/40 mb-2 tracking-widest">Trending Product</div>
+                            <div className="text-[7px] text-[#1a1a1a]/40 mb-2 tracking-wider">Trending Product</div>
                             <div className="text-[10px] font-bold text-[#20a6eb] tracking-tight">Japan Airlines A35K F</div>
                         </div>
                     </div>
@@ -385,12 +385,12 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                 return (
                     <div className="space-y-4">
                         <div className="bg-gradient-to-br from-[#20a6eb]/5 to-[#e86420]/5 p-4 rounded-2xl border border-[#20a6eb]/10">
-                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-widest">Hot Deal Alert</div>
+                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-wider">Hot Deal Alert</div>
                             <div className="text-sm font-black text-[#1a1a1a]">LHR → JFK Under $350</div>
                             <div className="text-[10px] text-[#1a1a1a]/40 mt-1 italic">Expiring in 2h 45m</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest">Average Deal Yield</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Average Deal Yield</div>
                             <div className="text-xl font-black italic text-[#1a1a1a]">-34% <span className="text-[10px] text-emerald-600 not-italic ml-2">Vs Market</span></div>
                         </div>
                     </div>
@@ -400,11 +400,11 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                     <div className="space-y-6">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <div className="text-[7px] font-black text-[#1a1a1a]/30 tracking-[0.3em]">Traffic Indice</div>
+                                <div className="text-[7px] font-black text-[#1a1a1a]/30 tracking-wider">Traffic Indice</div>
                                 <div className="text-4xl font-black italic text-[#1a1a1a] tracking-tighter">842</div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] font-bold text-[#20a6eb] tracking-widest">Live Terminals</div>
+                                <div className="text-[10px] font-bold text-[#20a6eb] tracking-wider">Live Terminals</div>
                                 <div className="flex items-center justify-end gap-1.5 mt-1 text-[8px] font-black text-emerald-600">
                                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping shadow-[0_0_8px_#10b981]" /> Global Active
                                 </div>
@@ -444,7 +444,7 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                             <div className="space-y-4">
                                 <button
                                     onClick={onBack}
-                                    className="flex items-center gap-2 text-[10px] font-black tracking-widest text-[#1a1a1a]/40 hover:text-[#20a6eb] transition-all group border-0 bg-transparent cursor-pointer"
+                                    className="flex items-center gap-2 text-[10px] font-black tracking-wider text-[#1a1a1a]/40 hover:text-[#20a6eb] transition-all group border-0 bg-transparent cursor-pointer"
                                 >
                                     <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" /> Back to Intelligence Desk
                                 </button>
@@ -457,9 +457,9 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                                             Travel <span className="text-[#20a6eb]">Hub</span>
                                         </h1>
                                         <div className="flex items-center gap-3 mt-1">
-                                            <span className="text-[10px] font-black tracking-[0.3em] text-[#1a1a1a]/30">Sector Operations Center</span>
+                                            <span className="text-[10px] font-black tracking-wider text-[#1a1a1a]/30">Sector Operations Center</span>
                                             <span className="w-1 h-1 bg-gray-200 rounded-full" />
-                                            <span className="text-[10px] font-bold text-[#20a6eb] tracking-widest">Global Live</span>
+                                            <span className="text-[10px] font-bold text-[#20a6eb] tracking-wider">Global Live</span>
                                         </div>
                                     </div>
                                 </div>
@@ -478,7 +478,7 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                                     <button
                                         key={tab.id}
                                         onClick={() => navigateToSubPage(tab.id as TravelSubPage)}
-                                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black tracking-widest transition-all border-0 cursor-pointer ${activeSubPage === tab.id
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black tracking-wider transition-all border-0 cursor-pointer ${activeSubPage === tab.id
                                             ? 'bg-[#20a6eb] text-white shadow-lg shadow-[#20a6eb]/20'
                                             : 'text-[#1a1a1a]/40 hover:text-[#1a1a1a] hover:bg-gray-50'
                                             }`}
@@ -671,10 +671,10 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                                                     <div className="w-10 h-10 rounded-xl bg-[#20a6eb]/20 flex items-center justify-center">
                                                         <Activity className="w-5 h-5 text-[#20a6eb]" />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-[#20a6eb] uppercase tracking-[0.2em]">Neural Trajectory</span>
+                                                    <span className="text-[10px] font-black text-[#20a6eb] tracking-wider">Neural Trajectory</span>
                                                 </div>
-                                                <h3 className="text-xl font-black text-[#1a1a1a] mb-1 tracking-tighter uppercase">Predictive Yield</h3>
-                                                <p className="text-[10px] text-[#1a1a1a]/40 font-bold uppercase tracking-widest mb-6">48H Confidence Forecast</p>
+                                                <h3 className="text-xl font-black text-[#1a1a1a] mb-1 tracking-tighter">Predictive Yield</h3>
+                                                <p className="text-[10px] text-[#1a1a1a]/40 font-bold tracking-wider mb-6">48H Confidence Forecast</p>
 
                                                 <div className="h-32 w-full mb-6 relative">
                                                     <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
@@ -708,11 +708,11 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
 
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="bg-white/50 backdrop-blur-sm border border-[#20a6eb]/10 rounded-2xl p-3">
-                                                        <div className="text-[8px] font-black text-black/30 tracking-widest uppercase mb-1">Confidence</div>
+                                                        <div className="text-[8px] font-black text-black/30 tracking-wider mb-1">Confidence</div>
                                                         <div className="text-lg font-black text-[#20a6eb]">92.4%</div>
                                                     </div>
                                                     <div className="bg-white/50 backdrop-blur-sm border border-[#20a6eb]/10 rounded-2xl p-3">
-                                                        <div className="text-[8px] font-black text-black/30 tracking-widest uppercase mb-1">Market Heat</div>
+                                                        <div className="text-[8px] font-black text-black/30 tracking-wider mb-1">Market Heat</div>
                                                         <div className="text-lg font-black text-[#e86420]">SCORCHING</div>
                                                     </div>
                                                 </div>

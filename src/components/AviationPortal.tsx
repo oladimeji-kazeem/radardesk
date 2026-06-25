@@ -104,7 +104,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                     <div className="space-y-6">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-4">
                             <div className="flex justify-between items-center">
-                                <div className="text-[8px] font-black text-[#20a6eb] tracking-widest uppercase">Global Activity</div>
+                                <div className="text-[8px] font-black text-[#20a6eb] tracking-wider">Global Activity</div>
                                 <div className="flex gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                     <span className="text-[7px] text-emerald-400 font-black">LIVE</span>
@@ -115,21 +115,21 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                                     <div key={i} className="flex-1 bg-[#20a6eb]/20 rounded-t-sm" style={{ height: `${h}%` }} />
                                 ))}
                             </div>
-                            <div className="text-[7px] text-white/30 uppercase tracking-[0.2em] text-center">Spectral Traffic Load: 94.2%</div>
+                            <div className="text-[7px] text-white/30 tracking-wider text-center">Spectral Traffic Load: 94.2%</div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-                                <div className="text-[7px] text-white/40 mb-1 uppercase">Delay Heatmap</div>
+                                <div className="text-[7px] text-white/40 mb-1">Delay Heatmap</div>
                                 <div className="text-xs font-black text-[#e86420]">SCORCHING</div>
                             </div>
                             <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-                                <div className="text-[7px] text-white/40 mb-1 uppercase">Congestion</div>
+                                <div className="text-[7px] text-white/40 mb-1">Congestion</div>
                                 <div className="text-xs font-black text-emerald-400">NOMINAL</div>
                             </div>
                         </div>
                         <div className="bg-[#e86420]/10 p-3 rounded-xl border border-[#e86420]/20 flex items-center gap-3">
                             <AlertCircle className="w-4 h-4 text-[#e86420]" />
-                            <div className="text-[8px] font-black text-[#e86420] uppercase">Weather Disruption in North Atlantic Sector</div>
+                            <div className="text-[8px] font-black text-[#e86420]">Weather Disruption in North Atlantic Sector</div>
                         </div>
                     </div>
                 );
@@ -137,7 +137,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                 return (
                     <div className="space-y-4">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest uppercase">Performance Index</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Performance Index</div>
                             <div className="space-y-2">
                                 {['Qatar Airways', 'Emirates', 'Delta'].map(airline => (
                                     <div key={airline} className="flex justify-between items-center text-[10px] font-bold">
@@ -153,11 +153,11 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                 return (
                     <div className="space-y-4">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest uppercase">Active Fleet Telemetry</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Active Fleet Telemetry</div>
                             <div className="text-2xl font-black text-white italic">12,402 <span className="text-[10px] not-italic text-white/30 font-bold">Units Airborn</span></div>
                         </div>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-widest">Fleet Modernization</div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Fleet Modernization</div>
                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-[10px] text-white/60">New Gen Assets</span>
                                 <span className="text-[10px] font-bold text-emerald-400">72%</span>
@@ -172,7 +172,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                 return (
                     <div className="space-y-4">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-widest uppercase">Congestion Alerts</div>
+                            <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-wider">Congestion Alerts</div>
                             <div className="space-y-2">
                                 {['LHR', 'DXB', 'SIN'].map(code => (
                                     <div key={code} className="flex justify-between items-center text-[10px] font-bold">
@@ -188,7 +188,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                 return (
                     <div className="space-y-4">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-emerald-400 mb-2 tracking-widest">Supply Chain Health</div>
+                            <div className="text-[8px] font-black text-emerald-400 mb-2 tracking-wider">Supply Chain Health</div>
                             <div className="flex gap-1">
                                 {[1, 2, 3, 4, 5, 6, 7].map(lvl => (
                                     <div key={lvl} className={`h-4 flex-1 rounded-sm ${lvl < 6 ? 'bg-emerald-500' : 'bg-white/10'}`} />
@@ -197,7 +197,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                             <div className="text-[7px] text-white/30 mt-2 tracking-tight">Optimal Capacity Reached</div>
                         </div>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <div className="text-[8px] font-black text-white/40 mb-2 tracking-widest">Backlog Delivery Forecast</div>
+                            <div className="text-[8px] font-black text-white/40 mb-2 tracking-wider">Backlog Delivery Forecast</div>
                             <div className="text-sm font-bold text-[#20a6eb]">Estimated: Q4 2028 Recovery</div>
                         </div>
                     </div>
@@ -207,11 +207,11 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                     <div className="space-y-6">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <div className="text-[7px] font-black text-white/30 tracking-[0.3em]">Volume Indice</div>
+                                <div className="text-[7px] font-black text-white/30 tracking-wider">Volume Indice</div>
                                 <div className="text-4xl font-black italic text-white tracking-tighter">256</div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] font-bold text-[#20a6eb] tracking-widest">Intel Nodes</div>
+                                <div className="text-[10px] font-bold text-[#20a6eb] tracking-wider">Intel Nodes</div>
                                 <div className="flex items-center justify-end gap-1.5 mt-1 text-[8px] font-black text-emerald-400">
                                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" /> Stable
                                 </div>
@@ -247,7 +247,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                                 <button
                                     key={page.id}
                                     onClick={() => handleSubNavClick(page.id)}
-                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all border-0 cursor-pointer whitespace-nowrap ${isActive
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black tracking-wider transition-all border-0 cursor-pointer whitespace-nowrap ${isActive
                                         ? 'bg-[#20a6eb] text-white shadow-lg shadow-[#20a6eb]/20'
                                         : 'bg-black/5 text-[#1a1a1a]/40 hover:bg-black/10 hover:text-[#1a1a1a]'
                                         }`}
@@ -320,7 +320,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                             )) : (
                                 <div className="h-[400px] flex flex-col items-center justify-center text-[#1a1a1a]/20 bg-black/5 rounded-[3rem] border border-dashed border-black/10">
                                     <Shield className="w-16 h-16 mb-4 opacity-10" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">No Active Intelligence Nodes Detected</p>
+                                    <p className="text-[10px] font-black tracking-wider">No Active Intelligence Nodes Detected</p>
                                     <span className="text-[9px] font-medium mt-2 italic">Refining signal search parameters...</span>
                                 </div>
                             )}
@@ -332,7 +332,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                                 <button
                                     onClick={() => { setCurrentPage(prev => Math.max(1, prev - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                     disabled={currentPage === 1}
-                                    className="px-6 py-2 rounded-xl hover:bg-black/5 disabled:opacity-20 transition-all border-0 bg-transparent cursor-pointer text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                                    className="px-6 py-2 rounded-xl hover:bg-black/5 disabled:opacity-20 transition-all border-0 bg-transparent cursor-pointer text-[10px] font-black tracking-wider flex items-center gap-2"
                                 >
                                     <ChevronLeft className="w-4 h-4" /> Prev
                                 </button>
@@ -342,7 +342,7 @@ export default function AviationPortal({ articles, onBack, initialSubPage = 'das
                                 <button
                                     onClick={() => { setCurrentPage(prev => Math.min(totalPages, prev + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                     disabled={currentPage === totalPages}
-                                    className="px-6 py-2 rounded-xl hover:bg-black/5 disabled:opacity-20 transition-all border-0 bg-transparent cursor-pointer text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                                    className="px-6 py-2 rounded-xl hover:bg-black/5 disabled:opacity-20 transition-all border-0 bg-transparent cursor-pointer text-[10px] font-black tracking-wider flex items-center gap-2"
                                 >
                                     Next <ChevronRight className="w-4 h-4" />
                                 </button>

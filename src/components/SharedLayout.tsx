@@ -194,13 +194,13 @@ export function MobileMenuDrawer({
                                     className={`w-full text-left p-4 rounded-2xl flex items-center justify-between group transition-all border-0 bg-transparent cursor-pointer ${activeCategory === cat ? 'bg-[#20a6eb]/10 text-[#20a6eb]' : 'hover:bg-gray-50 text-[#1a1a1a]/70 hover:text-[#1a1a1a]'
                                         }`}
                                 >
-                                    <span className="text-lg font-black tracking-tight uppercase">{cat}</span>
+                                    <span className="text-lg font-black tracking-tight">{cat}</span>
                                     <ChevronRight className={`w-5 h-5 transition-transform ${activeCategory === cat ? 'translate-x-0' : '-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} />
                                 </motion.button>
                             ))}
 
                             <div className="pt-8 mt-8 border-t border-gray-100 space-y-4">
-                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-4">Terminal Access</div>
+                                <div className="text-[10px] font-black text-gray-400 tracking-wider px-4">Terminal Access</div>
                                 <button
                                     onClick={() => { onSignIn(); onClose(); }}
                                     className="w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-gray-50 transition-all border-0 bg-transparent cursor-pointer"
@@ -209,7 +209,7 @@ export function MobileMenuDrawer({
                                         <User className="w-5 h-5" />
                                     </div>
                                     <div className="flex flex-col text-left">
-                                        <span className="text-sm font-black uppercase">Sign In</span>
+                                        <span className="text-sm font-black">Sign In</span>
                                         <span className="text-[10px] text-gray-400">Access your dashboard</span>
                                     </div>
                                 </button>
@@ -221,7 +221,7 @@ export function MobileMenuDrawer({
                                         <Activity className="w-5 h-5" />
                                     </div>
                                     <div className="flex flex-col text-left">
-                                        <span className="text-sm font-black uppercase">Join Radar Desk</span>
+                                        <span className="text-sm font-black">Join Radar Desk</span>
                                         <span className="text-[10px] text-white/60 font-bold">Standard Operations</span>
                                     </div>
                                 </button>
@@ -254,7 +254,7 @@ export function NewsTicker({ recentNews, onNavigate }: NewsTickerProps) {
     return (
         <div className="bg-white border-y border-black/5 py-2.5 overflow-hidden relative z-30">
             <div className="max-w-7xl mx-auto px-6 flex items-center">
-                <div className="flex items-center gap-2 bg-[#1a1a1a] text-white px-3 py-1 rounded-lg text-[10px] font-black tracking-widest shrink-0 mr-8 shadow-lg border border-white/10 uppercase">
+                <div className="flex items-center gap-2 bg-[#1a1a1a] text-white px-3 py-1 rounded-lg text-[10px] font-black tracking-widest shrink-0 mr-8 shadow-lg border border-white/10">
                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
                     Live Terminal
                 </div>
@@ -267,7 +267,7 @@ export function NewsTicker({ recentNews, onNavigate }: NewsTickerProps) {
                                 className="group cursor-pointer transition-all hover:text-[#20a6eb] flex items-center gap-4"
                             >
                                 <span className="flex items-center gap-2">
-                                    <span className="text-[9px] font-black text-[#20a6eb] uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">[{art.category || 'RADAR'}]</span>
+                                    <span className="text-[9px] font-black text-[#20a6eb] tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">[{art.category || 'Radar'}]</span>
                                     <span className="text-[9px] font-mono text-black/20">{new Date(art.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </span>
                                 <span className="italic">{art.title}</span>

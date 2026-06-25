@@ -504,14 +504,14 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                             </div>
                             <button
                                 onClick={onGetStarted}
-                                className="w-full mt-10 firebase-gradient text-white py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] border-0 cursor-pointer firebase-glow-blue shadow-lg"
+                                className="w-full mt-10 firebase-gradient text-white py-4 rounded-2xl text-xs font-black tracking-wider transition-all hover:scale-[1.02] border-0 cursor-pointer firebase-glow-blue shadow-lg"
                             >
                                 Access Radar Desk
                             </button>
                         </div>
 
                         <div className="bg-white/50 border border-black/5 p-8 rounded-3xl backdrop-blur-sm shadow-sm">
-                            <h3 className="text-sm font-black tracking-widest text-[#1a1a1a] mb-6 border-b border-black/5 pb-3 flex items-center gap-2">
+                            <h3 className="text-sm font-black tracking-wider text-[#1a1a1a] mb-6 border-b border-black/5 pb-3 flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-[#e86420]" /> Newsletter
                             </h3>
                             <p className="text-[12px] text-black/40 mb-6 font-medium leading-relaxed italic">Direct aviation intelligence, curated for professionals.</p>
@@ -521,7 +521,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                     placeholder="name@company.com"
                                     className="bg-white border border-black/5 px-4 py-3.5 rounded-xl text-xs text-[#1a1a1a] outline-none focus:border-[#20a6eb] transition-all placeholder:text-black/10"
                                 />
-                                <button className="bg-[#1a1a1a] text-white py-3.5 rounded-xl text-xs font-black tracking-widest hover:bg-[#20a6eb] transition-all border-0 cursor-pointer shadow-xl">
+                                <button className="bg-[#1a1a1a] text-white py-3.5 rounded-xl text-xs font-black tracking-wider hover:bg-[#20a6eb] transition-all border-0 cursor-pointer shadow-xl">
                                     Subscribe
                                 </button>
                             </div>
@@ -545,18 +545,18 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                         <div className="w-10 h-10 rounded-xl bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
                                             <Activity className="w-5 h-5 text-[#20a6eb]" />
                                         </div>
-                                        <span className="text-[10px] font-black text-[#20a6eb] uppercase tracking-[0.3em]">Operational Intelligence</span>
+                                        <span className="text-[10px] font-black text-[#20a6eb] tracking-wider">Operational Intelligence</span>
                                     </div>
-                                    <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none">Radar Intelligence</h2>
+                                    <h2 className="text-2xl md:text-3xl font-black tracking-tighter leading-none">Radar Intelligence</h2>
                                     <p className="text-[#1a1a1a]/50 text-sm font-medium tracking-wide max-w-xl italic">Real-time global aviation analytics, tracking fleet efficiency, carbon metrics, and market volatility.</p>
                                 </div>
                                 <div className="flex gap-4">
                                     <div className="bg-white border border-black/5 px-6 py-3 rounded-2xl shadow-sm">
-                                        <div className="text-[9px] font-black text-black/20 tracking-[0.2em] mb-1">Global Flights (24h)</div>
+                                        <div className="text-[9px] font-black text-black/20 tracking-wider mb-1">Global Flights (24h)</div>
                                         <div className="text-xl font-black text-[#20a6eb]">104,284 <span className="text-[10px] text-emerald-500 font-bold ml-1">↑ 4.2%</span></div>
                                     </div>
                                     <div className="bg-white border border-black/5 px-6 py-3 rounded-2xl shadow-sm">
-                                        <div className="text-[9px] font-black text-black/20 tracking-[0.2em] mb-1">Active Airframes</div>
+                                        <div className="text-[9px] font-black text-black/20 tracking-wider mb-1">Active Airframes</div>
                                         <div className="text-xl font-black text-[#e86420]">22,109 <span className="text-[10px] text-black/20 font-bold ml-1">LIVE</span></div>
                                     </div>
                                 </div>
@@ -570,7 +570,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                 >
                                     <div className="flex items-center justify-between mb-8">
                                         <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 tracking-widest">CO2 Emissions</div>
+                                            <div className="text-[10px] font-black text-black/20 tracking-wider">CO2 Emissions</div>
                                             <div className="text-base font-black text-[#1a1a1a]">Carbon Intensity</div>
                                         </div>
                                         <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
@@ -581,7 +581,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                         <Sparkline data={[45, 52, 49, 60, 58, 65, 70, 62, 68, 75, 72, 80]} color="#20a6eb" />
                                     </div>
                                     <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 tracking-widest">Metric: tCO2/RPK</div>
+                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: tCO2/RPK</div>
                                         <div className="text-[10px] font-black text-[#e86420] flex items-center gap-2">
                                             <span className="w-2 h-2 bg-[#e86420] rounded-full animate-pulse shadow-[0_0_8px_#e86420]" /> PEAK: 0.082
                                         </div>
@@ -595,7 +595,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                 >
                                     <div className="flex items-center justify-between mb-8">
                                         <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 tracking-widest">Global Fleet</div>
+                                            <div className="text-[10px] font-black text-black/20 tracking-wider">Global Fleet</div>
                                             <div className="text-base font-black text-[#1a1a1a]">Platform Usage</div>
                                         </div>
                                         <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
@@ -613,7 +613,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                         ]} />
                                     </div>
                                     <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 uppercase tracking-widest">Top airframe: Airbus A320</div>
+                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Top airframe: Airbus A320</div>
                                         <div className="text-[10px] font-black text-[#20a6eb]">Active growth</div>
                                     </div>
                                 </motion.div>
@@ -625,7 +625,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                 >
                                     <div className="flex items-center justify-between mb-8">
                                         <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 uppercase tracking-widest">Market Volatility</div>
+                                            <div className="text-[10px] font-black text-black/20 tracking-wider">Market Volatility</div>
                                             <div className="text-base font-black text-[#1a1a1a]">Route Yields</div>
                                         </div>
                                         <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
@@ -637,7 +637,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                         <div className="absolute inset-0 bg-gradient-to-t from-[#20a6eb]/5 to-transparent opacity-50" />
                                     </div>
                                     <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 uppercase tracking-widest">Metric: Yield Index</div>
+                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: Yield Index</div>
                                         <div className="text-[10px] font-black text-emerald-500">Stable index</div>
                                     </div>
                                 </motion.div>
@@ -655,7 +655,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                 onClick={() => onNavigate?.('travel/deals')}
                                 className="text-xs font-black tracking-[0.2em] text-[#e86420] hover:translate-x-2 transition-all flex items-center gap-2 group border-0 bg-transparent cursor-pointer"
                             >
-                                VIEW ALL LIVE DEALS <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                View all live deals <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
 
@@ -674,7 +674,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                     <div className={`absolute top-0 right-0 w-24 h-24 bg-${deal.color}-500/5 blur-3xl`} />
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="space-y-1">
-                                            <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded border ${deal.urgency === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                            <span className={`text-[8px] font-black tracking-wider px-2 py-0.5 rounded border ${deal.urgency === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
                                                 {deal.urgency} Priority
                                             </span>
                                             <h3 className="text-xl font-black text-[#1a1a1a] italic">{deal.route}</h3>
@@ -721,7 +721,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                             (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1471922694854-ff1b63b20054?q=80&w=640";
                                         }}
                                     />
-                                    <div className="absolute top-5 left-5 firebase-gradient px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-lg">
+                                    <div className="absolute top-5 left-5 firebase-gradient px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-white shadow-lg">
                                         Flight Review
                                     </div>
                                 </div>
@@ -737,7 +737,7 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                     <p className="text-[11px] text-[#1a1a1a]/50 line-clamp-2 leading-relaxed font-medium italic mb-4">
                                         Dive into our comprehensive review of the latest aviation experiences, from long-haul luxury to regional transit gems...
                                     </p>
-                                    <div className="flex items-center gap-3 text-[10px] font-black text-black/20 uppercase tracking-[0.2em]">
+                                    <div className="flex items-center gap-3 text-[10px] font-black text-black/20 tracking-wider">
                                         <span className="bg-[#20a6eb]/10 text-[#20a6eb] px-2 py-0.5 rounded-full border border-[#20a6eb]/10">★ {8.5 + (i * 0.1)} Rating</span>
                                         <span>• May {21 + i}, 2026</span>
                                     </div>
@@ -753,10 +753,10 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                         </div>
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-center justify-between border-b border-black/5 pb-6">
-                                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+                                <h2 className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-3">
                                     <span className="w-1.5 h-6 bg-rose-500 rounded-full" /> Intelligence Loop
                                 </h2>
-                                <a href="#" className="text-[10px] font-black uppercase tracking-widest text-[#1a1a1a]/40 hover:text-[#1a1a1a] transition-all flex items-center gap-2 group">
+                                <a href="#" className="text-[10px] font-black tracking-wider text-[#1a1a1a]/40 hover:text-[#1a1a1a] transition-all flex items-center gap-2 group">
                                     Archive <ChevronRight className="w-3.5 h-3.5 text-rose-500 group-hover:translate-x-1 transition-transform" />
                                 </a>
                             </div>
@@ -777,14 +777,14 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                             />
                                         </div>
                                         <div className="space-y-3 flex-1 min-w-0">
-                                            <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/5 px-2.5 py-1 rounded-full border border-rose-500/10">Incident Report</span>
+                                            <span className="text-[9px] font-black text-rose-500 tracking-wider bg-rose-500/5 px-2.5 py-1 rounded-full border border-rose-500/10">Incident Report</span>
                                             <h3 className="text-sm md:text-[15px] font-extrabold leading-tight group-hover:text-rose-500 transition-colors text-[#1a1a1a]/80 line-clamp-2">
                                                 {item.title}
                                             </h3>
                                             <p className="text-[10px] text-[#1a1a1a]/40 line-clamp-2 leading-relaxed font-medium italic">
                                                 Investigation underway following standard protocol to ensure passenger safety and operational integrity...
                                             </p>
-                                            <div className="pt-3 flex items-center gap-5 text-[8px] font-black text-[#1a1a1a]/20 uppercase tracking-widest border-t border-black/5">
+                                            <div className="pt-3 flex items-center gap-5 text-[8px] font-black text-[#1a1a1a]/20 tracking-wider border-t border-black/5">
                                                 <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#20a6eb]" /> {i + 2}h Ago</span>
                                                 <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-rose-500" /> {item.loc}</span>
                                             </div>
@@ -828,13 +828,13 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
                                 </div>
 
                                 <div className="absolute bottom-0 left-0 p-8 w-full">
-                                    <span className="text-[9px] font-black tracking-[0.3em] text-[#20a6eb] bg-white px-3 py-1 rounded-full mb-4 inline-block shadow-lg">Radar Exclusive</span>
+                                    <span className="text-[9px] font-black tracking-wider text-[#20a6eb] bg-white px-3 py-1 rounded-full mb-4 inline-block shadow-lg">Radar Exclusive</span>
                                     <h3 className="text-lg md:text-xl font-black text-white leading-tight tracking-tighter drop-shadow-lg">
                                         {video.title}
                                     </h3>
                                 </div>
 
-                                <div className="absolute top-5 right-5 text-[10px] font-black text-white/60 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 tracking-widest">
+                                <div className="absolute top-5 right-5 text-[10px] font-black text-white/60 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 tracking-wider">
                                     {8 + i}:12
                                 </div>
                             </motion.div>

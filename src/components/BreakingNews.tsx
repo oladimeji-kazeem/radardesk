@@ -115,7 +115,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                 <button
                                     key={filter}
                                     onClick={() => setActiveFilter(filter as any)}
-                                    className={`px-8 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all border-0 cursor-pointer ${activeFilter === filter
+                                    className={`px-8 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-wider transition-all border-0 cursor-pointer ${activeFilter === filter
                                         ? 'bg-[#1a1a1a] text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] scale-105'
                                         : 'hover:bg-black/5 text-[#1a1a1a]/40 hover:text-[#1a1a1a]'
                                         }`}
@@ -148,16 +148,16 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
 
                                         {/* Status Overlays */}
                                         <div className="absolute top-10 left-10 flex gap-3">
-                                            <span className="bg-red-500 text-white px-5 py-2 rounded-full text-[10px] font-black tracking-widest shadow-2xl animate-pulse">
-                                                Flash Intel
+                                            <span className="bg-red-500 text-white px-5 py-2 rounded-full text-[10px] font-black shadow-2xl animate-pulse">
+                                                Flash intel
                                             </span>
-                                            <span className="bg-white/10 backdrop-blur-md text-white px-5 py-2 rounded-full text-[10px] font-black tracking-widest border border-white/20">
+                                            <span className="bg-white/10 backdrop-blur-md text-white px-5 py-2 rounded-full text-[10px] font-black border border-white/20">
                                                 {featuredStory.category}
                                             </span>
                                         </div>
 
                                         <div className="absolute bottom-12 left-12 right-12">
-                                            <div className="flex items-center gap-3 text-[10px] font-black text-[#20a6eb] tracking-widest mb-4">
+                                            <div className="flex items-center gap-3 text-[10px] font-black text-[#20a6eb] tracking-wider mb-4">
                                                 <Clock className="w-4 h-4" /> {new Date(featuredStory.createdAt).toLocaleTimeString()} UTC
                                             </div>
                                             <h2 className="text-3xl md:text-4xl font-black text-white leading-[0.95] tracking-tighter italic mb-6">

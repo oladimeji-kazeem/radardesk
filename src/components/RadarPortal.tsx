@@ -236,10 +236,10 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                 <div>
                                     <h1 className="text-5xl font-black tracking-tighter leading-none italic">{activeSector}</h1>
                                     <div className="flex items-center gap-3 mt-2">
-                                        <p className={`text-[10px] font-black tracking-[0.3em] ${config.accent} opacity-80 uppercase`}>{config.subtitle}</p>
+                                        <p className={`text-[10px] font-black tracking-wider ${config.accent} opacity-80`}>{config.subtitle}</p>
                                         <span className="w-1 h-1 bg-black/10 rounded-full" />
                                         <span className="text-[9px] font-black text-emerald-600 tracking-widest flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> LIVE STREAM ACTIVE
+                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Live Stream Active
                                         </span>
                                     </div>
                                 </div>
@@ -254,8 +254,8 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                         {streams.map((stream, sIdx) => (
                             <div key={stream.category} className="space-y-6">
                                 <div className="flex items-center justify-between border-b-2 border-black/5 pb-4">
-                                    <h3 className="text-[11px] font-black tracking-[0.2em] uppercase">{stream.category}</h3>
-                                    <span className={`text-[9px] font-black tracking-widest ${config.accent}`}>TRACK: Σ-{sIdx + 1}</span>
+                                    <h3 className="text-[11px] font-black tracking-wider">{stream.category}</h3>
+                                    <span className={`text-[9px] font-black tracking-wider ${config.accent}`}>Track: Σ-{sIdx + 1}</span>
                                 </div>
                                 <div className="space-y-4">
                                     {stream.items.map((item, iIdx) => (
@@ -301,10 +301,8 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                             <div className={`absolute top-0 right-0 w-32 h-32 ${config.accent} opacity-5 blur-[60px]`} />
 
                             <div className="flex items-center justify-between border-b border-black/5 pb-4 relative z-10">
-                                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase flex items-center gap-2 text-black/40">
-                                    <Activity className="w-4 h-4" /> SECTOR ANALYTICS
-                                </h3>
-                                <span className={`text-[8px] font-black ${config.accent} tracking-widest bg-black/5 px-2 py-0.5 rounded uppercase`}>Real-Time</span>
+                                <Activity className="w-4 h-4" /> Sector Analytics
+                                <span className={`text-[8px] font-black ${config.accent} tracking-wider bg-black/5 px-2 py-0.5 rounded`}>Real-Time</span>
                             </div>
 
                             <div className="grid grid-cols-1 gap-6 relative z-10">
@@ -319,13 +317,13 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                         <div className="flex items-center justify-between text-black/20">
                                             <div className="flex items-center gap-2">
                                                 <t.icon className="w-3.5 h-3.5" />
-                                                <span className="text-[8px] font-black tracking-widest uppercase">{t.title}</span>
+                                                <span className="text-[8px] font-black tracking-wider">{t.title}</span>
                                             </div>
                                             {t.trend === 'up' ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" /> : <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />}
                                         </div>
                                         <div className="flex items-baseline gap-3">
                                             <div className="text-3xl font-black text-[#1a1a1a] italic leading-none">{t.value}</div>
-                                            <div className="text-[8px] font-bold text-black/20 uppercase tracking-tight italic">{t.label}</div>
+                                            <div className="text-[8px] font-bold text-black/20 tracking-tight italic">{t.label}</div>
                                         </div>
                                         <div className="h-1 w-full bg-black/5 rounded-full overflow-hidden">
                                             <div className={`h-full ${config.color} w-[65%] opacity-30`} />
@@ -334,15 +332,15 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                 ))}
                             </div>
 
-                            <button className={`w-full py-4 ${config.color} text-white rounded-2xl text-[9px] font-black tracking-[0.2em] hover:scale-[1.02] transition-all border-0 cursor-pointer shadow-lg uppercase relative z-10`}>
-                                REQUEST SECTOR DEEP-DIVE
+                            <button className={`w-full py-4 ${config.color} text-white rounded-2xl text-[9px] font-black tracking-wider hover:scale-[1.02] transition-all border-0 cursor-pointer shadow-lg relative z-10`}>
+                                Request Sector Deep-Dive
                             </button>
                         </div>
 
                         {/* Recent Alerts Module */}
                         <div className="bg-black/5 p-8 rounded-[2.5rem] border border-black/5 space-y-6">
-                            <h3 className="text-[10px] font-black tracking-[0.2em] uppercase flex items-center gap-2 text-black/30 text-center justify-center">
-                                <Bell className="w-4 h-4" /> RECENT DISPATCHES
+                            <h3 className="text-[10px] font-black flex items-center gap-2 text-black/30 text-center justify-center">
+                                <Bell className="w-4 h-4" /> Recent Dispatches
                             </h3>
                             <div className="space-y-4">
                                 {sectorArticles.slice(0, 3).map((art, idx) => (
@@ -350,7 +348,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                         <div className="text-[8px] font-black text-black/20 font-mono mt-0.5">{new Date(art.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                         <div className="space-y-1">
                                             <h5 className="text-[11px] font-bold text-black/60 group-hover:text-[#20a6eb] transition-colors leading-tight italic line-clamp-2">{art.title}</h5>
-                                            <div className="text-[8px] font-black tracking-widest text-black/20 uppercase">SEC: {art.category}</div>
+                                            <div className="text-[8px] font-black tracking-wider text-black/20">Sec: {art.category}</div>
                                         </div>
                                     </div>
                                 ))}
