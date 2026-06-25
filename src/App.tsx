@@ -100,52 +100,48 @@ export default function App() {
   const handleNavigate = (target: string) => {
     if (target === 'Breaking News') {
       window.history.pushState({}, '', '/breaking-news');
-      setActivePortal('breaking-news');
     } else if (['Radar', 'Breaking Pulse', 'Commercial Aviation', 'Defense & Space', 'Horizon', 'Active Incidents', 'Market Flashpoints', 'Live Vectors', 'The Wire'].includes(target)) {
       const sector = (target === 'Radar' || target === 'Breaking Pulse') ? 'Breaking Pulse' : target;
       const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
       window.history.pushState({}, '', `/radar/${sectorPath}`);
-      setActivePortal('radar');
-      setActiveRadarSector(sector as RadarSector);
     } else if (target === 'Aviation') {
       window.history.pushState({}, '', '/aviation');
-      setActivePortal('aviation');
     } else if (target === 'Travel' || target.startsWith('travel/')) {
-      const path = target === 'Travel' ? '/travel' : `/${target}`;
+      const path = target === 'Travel' ? '/travel' : (target.startsWith('/') ? target : `/${target}`);
       window.history.pushState({}, '', path);
-      setActivePortal('travel');
     } else if (target === 'Aircraft Sales') {
       window.history.pushState({}, '', '/aircraft-sales');
-    } else if (target === 'Home' || target === 'RadarDesk' || target === 'RadarDesk HQ') {
+    } else {
       window.history.pushState({}, '', '/');
-      setActivePortal('home');
     }
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   useEffect(() => {
     const handleUrlChange = () => {
-      const path = window.location.pathname;
-      if (path === '/breaking-news' || path === '/radar/breaking-news') {
-        if (path === '/radar/breaking-news') {
-          window.history.replaceState({}, '', '/breaking-news');
-        }
+      const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+
+      if (path === '/breaking-news') {
         setActivePortal('breaking-news');
-      } else if (path.startsWith('/radar/')) {
+      } else if (path.startsWith('/radar')) {
         setActivePortal('radar');
-        if (path === '/radar/breaking-pulse') setActiveRadarSector('Breaking Pulse');
-        else if (path === '/radar/commercial-aviation') setActiveRadarSector('Commercial Aviation');
-        else if (path === '/radar/defense-space') setActiveRadarSector('Defense & Space');
-        else if (path === '/radar/horizon') setActiveRadarSector('Horizon');
-        else if (path === '/radar/active-incidents') setActiveRadarSector('Active Incidents');
-        else if (path === '/radar/market-flashpoints') setActiveRadarSector('Market Flashpoints');
-        else if (path === '/radar/live-vectors') setActiveRadarSector('Live Vectors');
-        else if (path === '/radar/the-wire') setActiveRadarSector('The Wire');
-        else setActiveRadarSector('Commercial Aviation');
-      } else if (path === '/aviation' || path.startsWith('/aviation/')) {
+        const sector = path.split('/')[2];
+        if (sector === 'breaking-pulse') setActiveRadarSector('Breaking Pulse');
+        else if (sector === 'commercial-aviation') setActiveRadarSector('Commercial Aviation');
+        else if (sector === 'defense-space') setActiveRadarSector('Defense & Space');
+        else if (sector === 'horizon') setActiveRadarSector('Horizon');
+        else if (sector === 'active-incidents') setActiveRadarSector('Active Incidents');
+        else if (sector === 'market-flashpoints') setActiveRadarSector('Market Flashpoints');
+        else if (sector === 'live-vectors') setActiveRadarSector('Live Vectors');
+        else if (sector === 'the-wire') setActiveRadarSector('The Wire');
+        else if (!sector) setActiveRadarSector('Breaking Pulse');
+      } else if (path === '/aviation') {
         setActivePortal('aviation');
       } else if (path === '/travel' || path.startsWith('/travel/')) {
         setActivePortal('travel');
+      } else if (path === '/aircraft-sales') {
+        // Handle aircraft sales if needed, or fallback
+        setActivePortal('home');
       } else {
         setActivePortal('home');
       }
@@ -1028,25 +1024,7 @@ export default function App() {
           <TravelPortal
             articles={articles}
             onBack={() => {
-              window.history.pushState({}, '', '/');
-              setActivePortal('home');
-              window.dispatchEvent(new PopStateEvent('popstate'));
-            }}
-            onNavigate={handleNavigate}
-          />
-        </SharedLayout>
-      );
-    }
-
-    if (activePortal === 'travel') {
-      return (
-        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
-          <TravelPortal
-            articles={articles}
-            onBack={() => {
-              window.history.pushState({}, '', '/');
-              setActivePortal('home');
-              window.dispatchEvent(new PopStateEvent('popstate'));
+              handleNavigate('/');
             }}
             onNavigate={handleNavigate}
           />
