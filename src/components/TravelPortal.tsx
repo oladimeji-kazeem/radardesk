@@ -18,13 +18,16 @@ import {
     ChevronLeft,
     ChevronRight,
     Search,
+    Clock,
+    LayoutGrid,
+    Tag,
+    AlertTriangle,
+    Activity,
     Bell,
     Settings,
     MoreHorizontal,
-    LayoutGrid,
-    Clock,
-    Tag,
-    ChevronDown
+    ChevronDown,
+    Share2
 } from 'lucide-react';
 import { TopUtilityBar, MainHeader, NewsTicker } from './SharedLayout';
 import { Article } from '../types';
@@ -541,6 +544,7 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
 
                             {/* Two-column grid feed */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
                                 <AnimatePresence mode="wait">
                                     {paginatedArticles.map((article, idx) => (
                                         <motion.div
@@ -651,6 +655,71 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                                     <div className="relative z-10">
                                         {renderSectorWidget()}
                                     </div>
+
+                                    {/* Widget: Predictive Intelligence (Neural Fare Trajectory) */}
+                                    {activeSubPage === 'deals' && (
+                                        <div className="bg-[#20a6eb]/5 border border-[#20a6eb]/10 rounded-[2.5rem] p-8 relative overflow-hidden group mt-8">
+                                            <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none">
+                                                <svg width="100%" height="100%" className="absolute inset-0">
+                                                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#20a6eb" strokeWidth="0.5" />
+                                                    </pattern>
+                                                    <rect width="100%" height="100%" fill="url(#grid)" />
+                                                </svg>
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-10 h-10 rounded-xl bg-[#20a6eb]/20 flex items-center justify-center">
+                                                        <Activity className="w-5 h-5 text-[#20a6eb]" />
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-[#20a6eb] uppercase tracking-[0.2em]">Neural Trajectory</span>
+                                                </div>
+                                                <h3 className="text-xl font-black text-[#1a1a1a] mb-1 tracking-tighter uppercase">Predictive Yield</h3>
+                                                <p className="text-[10px] text-[#1a1a1a]/40 font-bold uppercase tracking-widest mb-6">48H Confidence Forecast</p>
+
+                                                <div className="h-32 w-full mb-6 relative">
+                                                    <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
+                                                        <defs>
+                                                            <linearGradient id="neuralGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                <stop offset="0%" stopColor="#20a6eb" stopOpacity="0.2" />
+                                                                <stop offset="50%" stopColor="#20a6eb" stopOpacity="1" />
+                                                                <stop offset="100%" stopColor="#e86420" stopOpacity="0.8" />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <motion.path
+                                                            initial={{ pathLength: 0, opacity: 0 }}
+                                                            animate={{ pathLength: 1, opacity: 1 }}
+                                                            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                                                            d="M0,60 Q50,20 100,50 T200,10"
+                                                            fill="none"
+                                                            stroke="url(#neuralGradient)"
+                                                            strokeWidth="3"
+                                                            strokeLinecap="round"
+                                                        />
+                                                        <motion.circle
+                                                            animate={{ cx: [0, 200], cy: [60, 10] }}
+                                                            transition={{ duration: 4, repeat: Infinity }}
+                                                            r="4"
+                                                            fill="#e86420"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute bottom-0 left-0 text-[8px] font-black text-black/20">NOW</div>
+                                                    <div className="absolute bottom-0 right-0 text-[8px] font-black text-black/20">+48H</div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-white/50 backdrop-blur-sm border border-[#20a6eb]/10 rounded-2xl p-3">
+                                                        <div className="text-[8px] font-black text-black/30 tracking-widest uppercase mb-1">Confidence</div>
+                                                        <div className="text-lg font-black text-[#20a6eb]">92.4%</div>
+                                                    </div>
+                                                    <div className="bg-white/50 backdrop-blur-sm border border-[#20a6eb]/10 rounded-2xl p-3">
+                                                        <div className="text-[8px] font-black text-black/30 tracking-widest uppercase mb-1">Market Heat</div>
+                                                        <div className="text-lg font-black text-[#e86420]">SCORCHING</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <button className="w-full py-4 bg-[#1a1a1a] text-white rounded-xl text-[9px] font-black tracking-widest hover:bg-[#20a6eb] transition-all border-0 cursor-pointer shadow-xl">
                                         Request Deep Dive Report
