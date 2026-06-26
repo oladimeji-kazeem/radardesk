@@ -105,6 +105,35 @@ export default function AviationPortal({
 
     // Sector Specific Widget Content
     const renderSectorWidget = () => {
+        const sectorKey = activeSubPage === 'dashboard' ? 'aviation_dashboard' : activeSubPage;
+        const currentStats = (sectorStats || []).filter((s: any) => s.sector === sectorKey);
+
+        if (currentStats.length > 0) {
+            return (
+                <div className="space-y-4">
+                    {currentStats.slice(0, 2).map((stat: any, idx: number) => (
+                        <div key={stat.id || idx} className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div className="text-[8px] font-black text-[#20a6eb] tracking-wider uppercase">{stat.metricName}</div>
+                                <div className="flex gap-1">
+                                    <span className={`w-1.5 h-1.5 rounded-full bg-${stat.trend === 'up' ? 'emerald-500' : 'rose-500'} animate-pulse`} />
+                                    <span className={`text-[7px] text-${stat.trend === 'up' ? 'emerald-400' : 'rose-400'} font-black uppercase text-xs tracking-widest`}>{stat.pulseStatus || 'LIVE'}</span>
+                                </div>
+                            </div>
+                            <div className="text-2xl font-black text-white italic">{stat.metricValue}{stat.metricUnit} <span className="text-[10px] not-italic text-white/30 font-bold ml-2">Current</span></div>
+                            {stat.chartData && (
+                                <div className="flex items-end gap-1 h-12">
+                                    {stat.chartData.map((h: number, i: number) => (
+                                        <div key={i} className="flex-1 bg-[#20a6eb]/20 rounded-t-sm" style={{ height: `${h}%` }} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
         switch (activeSubPage) {
             case 'dashboard':
                 return (

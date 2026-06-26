@@ -38,10 +38,11 @@ interface RadarPortalProps {
     onNavigate: (cat: string) => void;
     initialSector: RadarSector;
     onBack: () => void;
+    sectorStats?: any[];
 }
 
 
-export default function RadarPortal({ articles, onNavigate, initialSector = 'Route', onBack }: RadarPortalProps) {
+export default function RadarPortal({ articles, onNavigate, initialSector = 'Route', onBack, sectorStats = [] }: RadarPortalProps) {
     const [activeSector, setActiveSector] = useState<RadarSector>(initialSector);
 
 
@@ -139,6 +140,22 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
             ]
         }
     };
+
+    const getDynamicTelemetry = () => {
+        const currentStats = (sectorStats || []).filter((s: any) => s.sector.toLowerCase() === activeSector.toLowerCase());
+        if (currentStats.length > 0) {
+            return currentStats.map((s: any, idx: number) => ({
+                title: s.metricName,
+                value: s.metricValue,
+                trend: s.trend,
+                label: s.pulseStatus || 'Operational',
+                icon: idx % 3 === 0 ? Globe : idx % 3 === 1 ? Activity : Radio
+            }));
+        }
+        return sectorConfig[activeSector].telemetry;
+    };
+
+    const activeTelemetry = getDynamicTelemetry();
 
     const subSectors = [
         { id: 'Route', label: 'Route', icon: Globe },
@@ -306,7 +323,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                             </div>
 
                             <div className="grid grid-cols-1 gap-6 relative z-10">
-                                {config.telemetry.map((t, idx) => (
+                                {activeTelemetry.map((t, idx) => (
                                     <motion.div
                                         key={t.title}
                                         initial={{ opacity: 0, y: 20 }}
@@ -317,13 +334,13 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                         <div className="flex items-center justify-between text-black/20">
                                             <div className="flex items-center gap-2">
                                                 <t.icon className="w-3.5 h-3.5" />
-                                                <span className="text-[8px] font-black tracking-wider">{t.title}</span>
+                                                <span className="text-[8px] font-black tracking-wider uppercase">{t.title}</span>
                                             </div>
                                             {t.trend === 'up' ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" /> : <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />}
                                         </div>
                                         <div className="flex items-baseline gap-3">
                                             <div className="text-3xl font-black text-[#1a1a1a] italic leading-none">{t.value}</div>
-                                            <div className="text-[8px] font-bold text-black/20 tracking-tight italic">{t.label}</div>
+                                            <div className="text-[8px] font-bold text-black/20 tracking-tight italic uppercase">{t.label}</div>
                                         </div>
                                         <div className="h-1 w-full bg-black/5 rounded-full overflow-hidden">
                                             <div className={`h-full ${config.color} w-[65%] opacity-30`} />

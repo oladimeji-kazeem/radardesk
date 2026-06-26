@@ -242,9 +242,15 @@ export default function PortalLanding({
     const [trendingOffset, setTrendingOffset] = useState(0);
     const [heroIndex, setHeroIndex] = useState(0);
 
-    const heroContents = [
+    const dynamicHeroContent = portalContent.filter(c => c.contentType === 'hero' && c.active);
+    const heroContents = dynamicHeroContent.length > 0 ? dynamicHeroContent.map(c => ({
+        title: c.title,
+        category: c.sector || 'Editorial Spotlight',
+        image: c.thumbUrl || c.resourceUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
+        content: c.description
+    })) : [
         {
-            title: 'Breaking: New Aviation Standards Set for 2026 Flight Operations',
+            title: 'RadarDesk Operational Intelligence: Live Global Terminals',
             category: 'Aviation Spotlight',
             image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
             content: 'The aviation industry is bracing for standard changes that will redefine safety and efficiency across all continental flight paths...'
@@ -254,12 +260,6 @@ export default function PortalLanding({
             category: 'Innovation Watch',
             image: 'https://images.unsplash.com/photo-1540962351504-03099e0a75c3?q=80&w=1200',
             content: 'Exploring how next-generation propulsion systems are paving the way for a carbon-neutral sky within the next decade...'
-        },
-        {
-            title: 'Global Logistics Hubs: The Rising Power of Transit Cities',
-            category: 'Global Trade',
-            image: 'https://images.unsplash.com/photo-1506765515384-028b60a970df?q=80&w=1200',
-            content: 'Strategic transit hubs are seeing unprecedented growth as maritime and air freight corridors merge in the new logistics era...'
         }
     ];
 
@@ -287,7 +287,7 @@ export default function PortalLanding({
         { id: '4', origin: 'CDG', destination: 'HND', price: '$745', expiration: '12h 45m', sector: 'Far East' },
     ];
 
-    const videos = portalContent.filter(c => c.contentType === 'video');
+    const videos = portalContent.filter(c => c.contentType === 'video' && c.active);
     const displayVideos = videos.length > 0 ? videos : [
         { id: 'v1', title: 'The Future of Sustainable Aviation: Hydrogen Propulsion', description: 'Deep dive into next-gen propulsion systems.', thumbnailUrl: 'https://images.unsplash.com/photo-1544015759-137fdf556bf1?q=80&w=800', resourceUrl: '#' },
         { id: 'v2', title: 'Global Route Optimization: AI in Fleet Management', description: 'How machine learning is reducing fuel burn.', thumbnailUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=800', resourceUrl: '#' },
@@ -603,84 +603,43 @@ export default function PortalLanding({
                             </div>
 
                             <ScrollContainer showArrows={true} autoScroll={true} interval={9000}>
-                                {/* Chart card 1: Emissions */}
-                                <motion.div
-                                    whileHover={{ y: -5 }}
-                                    className="w-[85vw] md:w-[380px] shrink-0 snap-center bg-white border border-black/5 p-8 rounded-[2.5rem] relative group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
-                                >
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 tracking-wider">CO2 Emissions</div>
-                                            <div className="text-base font-black text-[#1a1a1a]">Carbon Intensity</div>
+                                {displayIntel.map((intel, idx) => (
+                                    <motion.div
+                                        key={intel.id || idx}
+                                        whileHover={{ y: -5 }}
+                                        className="w-[85vw] md:w-[380px] shrink-0 snap-center bg-white border border-black/5 p-8 rounded-[2.5rem] relative group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
+                                    >
+                                        <div className="flex items-center justify-between mb-8">
+                                            <div className="space-y-1">
+                                                <div className="text-[10px] font-black text-black/20 tracking-wider">Sector Intelligence</div>
+                                                <div className="text-base font-black text-[#1a1a1a]">{intel.metricName}</div>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
+                                                {idx % 3 === 0 ? <Wind className="w-6 h-6 text-[#20a6eb]" /> :
+                                                    idx % 3 === 1 ? <Package className="w-6 h-6 text-[#20a6eb]" /> :
+                                                        <BarChart3 className="w-6 h-6 text-[#20a6eb]" />}
+                                            </div>
                                         </div>
-                                        <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
-                                            <Wind className="w-6 h-6 text-[#20a6eb]" />
+                                        <div className="mt-4 mb-6">
+                                            {idx % 2 === 0 ? (
+                                                <Sparkline data={intel.chartData || [45, 52, 49, 60, 58, 65, 70, 62]} color="#20a6eb" />
+                                            ) : (
+                                                <MiniBarChart data={(intel.chartData || [85, 78, 45, 52, 12, 30]).map((v: number, i: number) => ({
+                                                    label: `P${i}`,
+                                                    value: v,
+                                                    color: v > 50 ? '#20a6eb' : 'rgba(32, 166, 235, 0.2)'
+                                                }))} />
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="mt-4 mb-6">
-                                        <Sparkline data={[45, 52, 49, 60, 58, 65, 70, 62, 68, 75, 72, 80]} color="#20a6eb" />
-                                    </div>
-                                    <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: tCO2/RPK</div>
-                                        <div className="text-[10px] font-black text-[#e86420] flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-[#e86420] rounded-full animate-pulse shadow-[0_0_8px_#e86420]" /> PEAK: 0.082
+                                        <div className="flex items-center justify-between pt-6 border-t border-black/5">
+                                            <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: {intel.metricValue}{intel.metricUnit}</div>
+                                            <div className="text-[10px] font-black text-[#e86420] flex items-center gap-2">
+                                                <span className={`w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_#e86420] ${intel.trend === 'up' ? 'bg-emerald-500' : 'bg-[#e86420]'}`} />
+                                                STATUS: {intel.pulseStatus || 'Nominal'}
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-
-                                {/* Chart card 2: Fleet Distribution */}
-                                <motion.div
-                                    whileHover={{ y: -5 }}
-                                    className="w-[85vw] md:w-[380px] shrink-0 snap-center bg-white border border-black/5 p-8 rounded-[2.5rem] relative group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
-                                >
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 tracking-wider">Global Fleet</div>
-                                            <div className="text-base font-black text-[#1a1a1a]">Platform Usage</div>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
-                                            <Package className="w-6 h-6 text-[#20a6eb]" />
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 mb-6">
-                                        <MiniBarChart data={[
-                                            { label: 'A320', value: 85 },
-                                            { label: 'B737', value: 78 },
-                                            { label: 'A350', value: 45 },
-                                            { label: 'B787', value: 52 },
-                                            { label: 'C919', value: 12, color: 'rgba(232, 100, 32, 0.1)' },
-                                            { label: 'E190', value: 30 }
-                                        ]} />
-                                    </div>
-                                    <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Top airframe: Airbus A320</div>
-                                        <div className="text-[10px] font-black text-[#20a6eb]">Active growth</div>
-                                    </div>
-                                </motion.div>
-
-                                {/* Chart card 3: Market Share */}
-                                <motion.div
-                                    whileHover={{ y: -5 }}
-                                    className="w-[85vw] md:w-[380px] shrink-0 snap-center bg-white border border-black/5 p-8 rounded-[2.5rem] relative group overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
-                                >
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div className="space-y-1">
-                                            <div className="text-[10px] font-black text-black/20 tracking-wider">Market Volatility</div>
-                                            <div className="text-base font-black text-[#1a1a1a]">Route Yields</div>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-full bg-[#20a6eb]/5 border border-[#20a6eb]/10 flex items-center justify-center">
-                                            <BarChart3 className="w-6 h-6 text-[#20a6eb]" />
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 mb-6 relative">
-                                        <Sparkline data={[80, 75, 82, 88, 84, 90, 85, 78, 80, 82, 85, 88]} color="#20a6eb" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#20a6eb]/5 to-transparent opacity-50" />
-                                    </div>
-                                    <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                                        <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: Yield Index</div>
-                                        <div className="text-[10px] font-black text-emerald-500">Stable index</div>
-                                    </div>
-                                </motion.div>
+                                    </motion.div>
+                                ))}
                             </ScrollContainer>
                         </div>
                     </div>
@@ -700,40 +659,36 @@ export default function PortalLanding({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {[
-                                { route: 'LHR → JFK', price: '$342', carrier: 'British Airways', category: 'Premium Economy', urgency: 'Critical', color: 'rose' },
-                                { route: 'SFO → TYO', price: '$1,920', carrier: 'JAL', category: 'Business Class', urgency: 'High', color: 'amber' },
-                                { route: 'NYC → PAR', price: '$289', carrier: 'French Bee', category: 'Economy', urgency: 'Normal', color: 'blue' }
-                            ].map((deal, i) => (
+                            {deals.slice(0, 3).map((deal, i) => (
                                 <motion.div
-                                    key={i}
+                                    key={deal.id || i}
                                     whileHover={{ y: -10 }}
                                     onClick={() => onNavigate?.('travel/deals')}
                                     className="bg-white border border-black/5 p-8 rounded-[2.5rem] relative group overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer"
                                 >
-                                    <div className={`absolute top-0 right-0 w-24 h-24 bg-${deal.color}-500/5 blur-3xl`} />
+                                    <div className={`absolute top-0 right-0 w-24 h-24 bg-${i % 2 === 0 ? 'blue' : 'amber'}-500/5 blur-3xl`} />
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="space-y-1">
-                                            <span className={`text-[8px] font-black tracking-wider px-2 py-0.5 rounded border ${deal.urgency === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                                                {deal.urgency} Priority
+                                            <span className={`text-[8px] font-black tracking-wider px-2 py-0.5 rounded border ${deal.status === 'Critical' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                                {deal.status || 'Active'}
                                             </span>
-                                            <h3 className="text-xl font-black text-[#1a1a1a] italic">{deal.route}</h3>
+                                            <h3 className="text-xl font-black text-[#1a1a1a] italic">{deal.origin} → {deal.destination}</h3>
                                         </div>
                                         <div className="text-2xl font-black text-[#e86420]">{deal.price}</div>
                                     </div>
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between text-[10px] font-bold text-[#1a1a1a]/40">
-                                            <span>Carrier: <span className="text-[#1a1a1a]">{deal.carrier}</span></span>
-                                            <span>Class: <span className="text-[#1a1a1a]">{deal.category}</span></span>
+                                            <span>Sector: <span className="text-[#1a1a1a]">{deal.sector}</span></span>
+                                            <span>Expires: <span className="text-[#1a1a1a]">{deal.expiration || 'Limited Time'}</span></span>
                                         </div>
                                         <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: '85%' }}
-                                                className={`h-full bg-${deal.color}-500`}
+                                                className={`h-full bg-${i % 2 === 0 ? 'blue' : 'amber'}-500`}
                                             />
                                         </div>
-                                        <p className="text-[10px] text-[#1a1a1a]/40 italic line-clamp-1">Intelligence detected significant pricing drop 14m ago.</p>
+                                        <p className="text-[10px] text-[#1a1a1a]/40 italic line-clamp-1">Live market deal detected for {deal.sector}.</p>
                                     </div>
                                 </motion.div>
                             ))}

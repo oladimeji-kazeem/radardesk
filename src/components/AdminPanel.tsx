@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, WorkflowConfig, UserRole, EmailSettings, AuthSettings, RolePrivilege, Article } from '../types';
+import { User, WorkflowConfig, UserRole, EmailSettings, AuthSettings, RolePrivilege, Article, PortalContent, PortalDeal, SectorStat } from '../types';
 import {
   Settings,
   Users,
@@ -23,10 +23,12 @@ import {
   Key,
   Lock,
   Clock,
-  Globe,
-  CheckSquare,
   MessageSquare,
-  Star
+  Star,
+  Globe,
+  FileEdit,
+  Activity,
+  CheckSquare
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -43,6 +45,12 @@ interface AdminPanelProps {
   onResetDatabase: () => Promise<void>;
   onRefresh?: () => void;
   uatFeedback?: any[];
+  portalContent: PortalContent[];
+  portalDeals: PortalDeal[];
+  sectorStats: SectorStat[];
+  onUpdatePortalContent: (id: string | null, data: any, isDelete?: boolean) => Promise<void>;
+  onUpdatePortalDeal: (id: string | null, data: any, isDelete?: boolean) => Promise<void>;
+  onUpdateSectorStat: (id: string | null, data: any, isDelete?: boolean) => Promise<void>;
 }
 
 const ALL_SYSTEM_PRIVILEGES = [
@@ -70,10 +78,16 @@ export default function AdminPanel({
   onDeleteUser,
   onResetDatabase,
   onRefresh,
-  uatFeedback = []
+  uatFeedback = [],
+  portalContent,
+  portalDeals,
+  sectorStats,
+  onUpdatePortalContent,
+  onUpdatePortalDeal,
+  onUpdateSectorStat
 }: AdminPanelProps) {
-  // Tabs: users | privileges | settings | rules | topicsHistory | publishedHistory | uat | danger
-  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'publishedHistory' | 'uat' | 'danger'>('users');
+  // Tabs: users | privileges | settings | rules | topicsHistory | publishedHistory | uat | danger | website
+  const [activeSubTab, setActiveSubTab] = useState<'users' | 'privileges' | 'settings' | 'rules' | 'topicsHistory' | 'publishedHistory' | 'uat' | 'danger' | 'website'>('users');
   const [elevatingUserId, setElevatingUserId] = useState<string | null>(null);
 
   const publishedArticles = articles ? articles.filter(art => art.status === 'Published') : [];
@@ -100,6 +114,36 @@ export default function AdminPanel({
 
   // User registration approvals state
   const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
+
+  // Website CMS states
+  const [websiteSubTab, setWebsiteSubTab] = useState<'content' | 'stats' | 'deals'>('content');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [isCmsSubmitting, setIsCmsSubmitting] = useState(false);
+
+  // Form states for PortalContent
+  const [contentTitle, setContentTitle] = useState('');
+  const [contentDesc, setContentDesc] = useState('');
+  const [contentType, setContentType] = useState('hero');
+  const [contentResUrl, setContentResUrl] = useState('');
+  const [contentThumbUrl, setContentThumbUrl] = useState('');
+  const [contentSector, setContentSector] = useState('');
+  const [contentActive, setContentActive] = useState(true);
+
+  // Form states for SectorStat
+  const [statSector, setStatSector] = useState('Commercial Aviation');
+  const [statMetric, setStatMetric] = useState('');
+  const [statValue, setStatValue] = useState('');
+  const [statUnit, setStatUnit] = useState('');
+  const [statTrend, setStatTrend] = useState<'up' | 'down' | 'stable'>('stable');
+  const [statPulse, setStatPulse] = useState<'Critical' | 'Nominal' | 'Active' | 'Steady' | 'Strategic'>('Nominal');
+
+  // Form states for PortalDeal
+  const [dealOrigin, setDealOrigin] = useState('');
+  const [dealDest, setDealDest] = useState('');
+  const [dealPrice, setDealPrice] = useState('');
+  const [dealSector, setDealSector] = useState('Travel');
+  const [dealStatus, setDealStatus] = useState('Active');
+  const [dealCurrency, setDealCurrency] = useState('USD');
 
   const handleApproveUser = async (userId: string) => {
     setApprovingUserId(userId);
@@ -442,6 +486,16 @@ export default function AdminPanel({
         >
           <MessageSquare className="w-4 h-4 text-blue-500" />
           <span>UAT Testing Logs</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('website')}
+          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${activeSubTab === 'website' ? 'bg-[#202020] text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          id="subtab-website"
+        >
+          <Globe className="w-4 h-4 text-emerald-500" />
+          <span>Website Management</span>
         </button>
       </div>
 
@@ -1288,10 +1342,588 @@ export default function AdminPanel({
         </div>
       )}
 
-      {/* Tab content 6: SYSTEM DESTRUCTIVE COMMANDS & DIAGNOSTICS */}
-      {activeSubTab === 'danger' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-danger-section">
+      {activeSubTab === 'website' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-website-section">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-4">
+            <div>
+              <h3 className="font-extrabold text-[#363636] text-sm flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-[#20a6eb]" />
+                <span>Site-Wide Content & Intelligence Registers</span>
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Manage hero sections, live market pulse metrics, and global travel deals across the platform.</p>
+            </div >
+          </div >
 
+          {/* Sub-navigation for Website CMS */}
+          < div className="flex bg-slate-50 p-1 rounded-xl w-fit border border-slate-200" >
+            <button
+              onClick={() => setWebsiteSubTab('content')}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all cursor-pointer ${websiteSubTab === 'content' ? 'bg-white text-slate-900 shadow-sm border border-slate-150' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Hero & Assets
+            </button>
+            <button
+              onClick={() => setWebsiteSubTab('stats')}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all cursor-pointer ${websiteSubTab === 'stats' ? 'bg-white text-slate-900 shadow-sm border border-slate-150' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Market Metrics
+            </button>
+            <button
+              onClick={() => setWebsiteSubTab('deals')}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all cursor-pointer ${websiteSubTab === 'deals' ? 'bg-white text-slate-900 shadow-sm border border-slate-150' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Global Deals
+            </button>
+          </div >
+
+          {/* CONTENT SECTION */}
+          {
+            websiteSubTab === 'content' && (
+              <div className="space-y-6 animate-fadeIn">
+                {/* Form for content */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                  <div className="flex justify-between items-center bg-transparent border-0">
+                    <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-2">
+                      {editingItemId ? <Settings className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      <span>{editingItemId ? 'Update Asset Register' : 'Register New Visual Asset'}</span>
+                    </h4>
+                    {editingItemId && (
+                      <button
+                        onClick={() => {
+                          setEditingItemId(null);
+                          setContentTitle('');
+                          setContentDesc('');
+                          setContentResUrl('');
+                          setContentThumbUrl('');
+                        }}
+                        className="text-[10px] font-bold text-rose-500 hover:underline bg-transparent border-0 cursor-pointer"
+                      >
+                        Clear / Cancel
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Asset Title / Headline</label>
+                      <input
+                        type="text"
+                        value={contentTitle}
+                        onChange={(e) => setContentTitle(e.target.value)}
+                        placeholder="e.g. Flight 2024: New Horizon"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Content Type</label>
+                      <select
+                        value={contentType}
+                        onChange={(e) => setContentType(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      >
+                        <option value="hero">Homepage Hero</option>
+                        <option value="video">Promotional Video</option>
+                        <option value="newsletter">Newsletter Promo</option>
+                        <option value="cta">Call-to-Action Block</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Target Sector (Optional)</label>
+                      <input
+                        type="text"
+                        value={contentSector}
+                        onChange={(e) => setContentSector(e.target.value)}
+                        placeholder="e.g. Travel, Aviation"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">Description Brief</label>
+                    <textarea
+                      value={contentDesc}
+                      onChange={(e) => setContentDesc(e.target.value)}
+                      placeholder="Short summary for tooltips or captions..."
+                      rows={2}
+                      className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Resource URL (Video/Link)</label>
+                      <input
+                        type="text"
+                        value={contentResUrl}
+                        onChange={(e) => setContentResUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase text-left group flex items-center gap-1.5">
+                        <span>Image / Thumbnail URL</span>
+                        {contentThumbUrl && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={contentThumbUrl}
+                          onChange={(e) => setContentThumbUrl(e.target.value)}
+                          placeholder="https://images.unsplash.com/..."
+                          className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-mono"
+                        />
+                        {contentThumbUrl && (
+                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-slate-200">
+                            <img src={contentThumbUrl} alt="preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={contentActive}
+                        onChange={(e) => setContentActive(e.target.checked)}
+                        className="rounded border-slate-300 text-[#20a6eb]"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600">Active State (Visible on Front-End)</span>
+                    </label>
+                    <button
+                      onClick={async () => {
+                        if (!contentTitle) return onAddToast('Missing title parameter.', 'warning');
+                        setIsCmsSubmitting(true);
+                        try {
+                          const payload = {
+                            title: contentTitle,
+                            description: contentDesc,
+                            content_type: contentType,
+                            resource_url: contentResUrl,
+                            thumbnail_url: contentThumbUrl,
+                            sector: contentSector || null,
+                            active: contentActive
+                          };
+                          await onUpdatePortalContent(editingItemId, payload);
+                          setEditingItemId(null);
+                          setContentTitle('');
+                          setContentDesc('');
+                          setContentResUrl('');
+                          setContentThumbUrl('');
+                        } finally {
+                          setIsCmsSubmitting(false);
+                        }
+                      }}
+                      disabled={isCmsSubmitting}
+                      className="px-6 py-2.5 bg-[#20a6eb] hover:bg-[#1a8bc4] text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-100 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isCmsSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      <span>{editingItemId ? 'Commit Changes' : 'Deploy Asset'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Asset List Table */}
+                <div className="border border-slate-150 rounded-2xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-150 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        <th className="p-4">Visual Asset</th>
+                        <th className="p-4">Type</th>
+                        <th className="p-4">Sector</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {portalContent.length === 0 ? (
+                        <tr><td colSpan={5} className="p-8 text-center italic text-slate-400">No content assets found. Create your first hero or video block above.</td></tr>
+                      ) : (
+                        portalContent.map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 flex items-center gap-3">
+                              <div className="w-12 h-8 rounded bg-slate-200 overflow-hidden shrink-0 border border-slate-150">
+                                {item.thumbnailUrl ? (
+                                  <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <Globe className="w-4 h-4 m-auto text-slate-400" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-slate-800">{item.title}</p>
+                                <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{item.description}</p>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-black uppercase text-slate-600">{item.contentType}</span>
+                            </td>
+                            <td className="p-4 font-mono text-[10px] text-slate-500">{item.sector || 'Global'}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${item.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                {item.active ? 'Active' : 'Offline'}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingItemId(item.id);
+                                    setContentTitle(item.title);
+                                    setContentDesc(item.description);
+                                    setContentType(item.contentType);
+                                    setContentResUrl(item.resourceUrl);
+                                    setContentThumbUrl(item.thumbnailUrl);
+                                    setContentSector(item.sector || '');
+                                    setContentActive(item.active);
+                                    onAddToast('Content loaded into editor.', 'info');
+                                  }}
+                                  className="p-1.5 hover:bg-sky-50 text-sky-600 rounded bg-transparent border-0 cursor-pointer"
+                                >
+                                  <FileEdit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm('Irreversible Action: Permanently drop this visual asset from the system registers?')) {
+                                      onUpdatePortalContent(item.id, null, true);
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-rose-50 text-rose-500 rounded bg-transparent border-0 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {/* STATS SECTION */}
+          {
+            websiteSubTab === 'stats' && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                  <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-rose-500" />
+                    <span>Update Intelligence Metrics</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Sector Assignment</label>
+                      <select
+                        value={statSector}
+                        onChange={(e) => setStatSector(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-bold"
+                      >
+                        <option value="Commercial Aviation">Commercial Aviation</option>
+                        <option value="Defense & Space">Defense & Space</option>
+                        <option value="Aviation">General Aviation</option>
+                        <option value="Travel">Travel & Tourism</option>
+                        <option value="Air Intelligence">Air Intelligence</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Metric Name</label>
+                      <input
+                        type="text"
+                        value={statMetric}
+                        onChange={(e) => setStatMetric(e.target.value)}
+                        placeholder="e.g. Load Factor, On-Time %"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Metric Value</label>
+                      <input
+                        type="text"
+                        value={statValue}
+                        onChange={(e) => setStatValue(e.target.value)}
+                        placeholder="e.g. 84.5"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Trend Vector</label>
+                      <select
+                        value={statTrend}
+                        onChange={(e) => setStatTrend(e.target.value as any)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      >
+                        <option value="up">Trending Up (Growth)</option>
+                        <option value="down">Trending Down (Contraction)</option>
+                        <option value="stable">Stable (Nominal)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Pulse Status</label>
+                      <select
+                        value={statPulse}
+                        onChange={(e) => setStatPulse(e.target.value as any)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      >
+                        <option value="Nominal">Nominal</option>
+                        <option value="Active">Active</option>
+                        <option value="Steady">Steady</option>
+                        <option value="Strategic">Strategic</option>
+                        <option value="Critical">Critical Alert</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        onClick={async () => {
+                          if (!statMetric || !statValue) return onAddToast('Missing metric definitions.', 'warning');
+                          setIsCmsSubmitting(true);
+                          try {
+                            const payload = {
+                              sector: statSector,
+                              metric_name: statMetric,
+                              metric_value: statValue,
+                              metric_unit: statUnit || null,
+                              trend: statTrend,
+                              pulse_status: statPulse,
+                              updated_at: new Date().toISOString()
+                            };
+                            await onUpdateSectorStat(editingItemId, payload);
+                            setEditingItemId(null);
+                            setStatMetric('');
+                            setStatValue('');
+                          } finally {
+                            setIsCmsSubmitting(false);
+                          }
+                        }}
+                        className="w-full px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-rose-100 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      >
+                        {isCmsSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        <span>{editingItemId ? 'Update Metric' : 'Register Metric'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {sectorStats.map(stat => (
+                    <div key={stat.id} className="bg-white border border-slate-150 rounded-2xl p-4 flex justify-between items-center hover:border-rose-200 transition-all shadow-3xs group">
+                      <div className="text-left space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${stat.trend === 'up' ? 'bg-emerald-500' : stat.trend === 'down' ? 'bg-rose-500' : 'bg-slate-400'}`} />
+                          <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-wider font-mono truncate">{stat.sector}</h5>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-black text-slate-800">{stat.metricValue}</span>
+                          <span className="text-[11px] font-bold text-slate-500 truncate">{stat.metricName}</span>
+                        </div>
+                        <span className={`inline-block text-[8px] font-black uppercase px-2 py-0.5 rounded-md border ${stat.pulseStatus === 'Critical' ? 'bg-red-50 text-red-600 border-red-100' :
+                          stat.pulseStatus === 'Active' ? 'bg-sky-50 text-sky-600 border-sky-100' :
+                            'bg-slate-100 text-slate-600 border-slate-200'
+                          }`}>
+                          {stat.pulseStatus} Pulse
+                        </span>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setEditingItemId(stat.id);
+                            setStatSector(stat.sector);
+                            setStatMetric(stat.metricName);
+                            setStatValue(stat.metricValue);
+                            setStatUnit(stat.metricUnit || '');
+                            setStatTrend(stat.trend);
+                            setStatPulse(stat.pulseStatus);
+                            onAddToast('Metric loaded into editor.', 'info');
+                          }}
+                          className="p-1.5 hover:bg-slate-100 text-slate-600 rounded bg-transparent border-0 cursor-pointer"
+                        >
+                          <FileEdit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Delete this intelligence metric permanent record?')) {
+                              onUpdateSectorStat(stat.id, null, true);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded bg-transparent border-0 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+
+          {/* DEALS SECTION */}
+          {
+            websiteSubTab === 'deals' && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                  <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-500" />
+                    <span>Configure Current Flight Deals</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Origin Sector</label>
+                      <input
+                        type="text"
+                        value={dealOrigin}
+                        onChange={(e) => setDealOrigin(e.target.value)}
+                        placeholder="e.g. LHR, London"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Destination Target</label>
+                      <input
+                        type="text"
+                        value={dealDest}
+                        onChange={(e) => setDealDest(e.target.value)}
+                        placeholder="e.g. JFK, New York"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Market Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 inset-y-0 flex items-center text-slate-400 font-bold">$</span>
+                        <input
+                          type="text"
+                          value={dealPrice}
+                          onChange={(e) => setDealPrice(e.target.value)}
+                          placeholder="299"
+                          className="w-full bg-white border border-slate-200 rounded-xl p-2.5 pl-6 text-xs outline-none font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-black uppercase">Deal Sector</label>
+                      <select
+                        value={dealSector}
+                        onChange={(e) => setDealSector(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
+                      >
+                        <option value="Travel">Standard Travel</option>
+                        <option value="Commercial Aviation">Commercial</option>
+                        <option value="Premium">Premium Pulse</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={async () => {
+                        if (!dealOrigin || !dealDest || !dealPrice) return onAddToast('Missing flight deal vectors.', 'warning');
+                        setIsCmsSubmitting(true);
+                        try {
+                          const payload = {
+                            origin: dealOrigin,
+                            destination: dealDest,
+                            price: dealPrice,
+                            sector: dealSector,
+                            status: dealStatus,
+                            currency: dealCurrency,
+                            created_at: new Date().toISOString()
+                          };
+                          await onUpdatePortalDeal(editingItemId, payload);
+                          setEditingItemId(null);
+                          setDealOrigin('');
+                          setDealDest('');
+                          setDealPrice('');
+                        } finally {
+                          setIsCmsSubmitting(false);
+                        }
+                      }}
+                      className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-xl text-xs font-black uppercase shadow-lg shadow-amber-100 flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{editingItemId ? 'Update Deal' : 'Deploy Deal'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border border-slate-150 rounded-2xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-150 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        <th className="p-4">Route Vectors</th>
+                        <th className="p-4 text-center">Unit Price</th>
+                        <th className="p-4">Sector</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {portalDeals.length === 0 ? (
+                        <tr><td colSpan={4} className="p-8 text-center italic text-slate-400">No active flight deals registered.</td></tr>
+                      ) : (
+                        portalDeals.map(deal => (
+                          <tr key={deal.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4">
+                              <p className="font-extrabold text-slate-800">
+                                {deal.origin} <span className="text-slate-400 px-1">→</span> {deal.destination}
+                              </p>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-mono">
+                                ${deal.price}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-black uppercase text-slate-600">{deal.sector}</span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingItemId(deal.id);
+                                    setDealOrigin(deal.origin);
+                                    setDealDest(deal.destination);
+                                    setDealPrice(deal.price);
+                                    setDealSector(deal.sector);
+                                    onAddToast('Deal loaded into editor.', 'info');
+                                  }}
+                                  className="p-1.5 hover:bg-sky-50 text-sky-600 rounded bg-transparent border-0 cursor-pointer"
+                                >
+                                  <FileEdit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm('Delete this commercial deal permanently?')) {
+                                      onUpdatePortalDeal(deal.id, null, true);
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-rose-50 text-rose-500 rounded bg-transparent border-0 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+        </div>
+      )}
+
+      {/* Tab content 9: SYSTEM INTEGRITY */}
+      {activeSubTab === 'integrity' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6" id="panel-integrity-section">
           <div className="border-b border-[#faf9f0] pb-4">
             <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
               <Database className="w-4 h-4 text-rose-500" />
@@ -1369,10 +2001,8 @@ export default function AdminPanel({
               </div>
             </div>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

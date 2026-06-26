@@ -111,7 +111,14 @@ function MiniBarChart({ data }: { data: { label: string, value: number, color?: 
     );
 }
 
-export default function TravelPortal({ articles, onBack, onNavigate }: TravelPortalProps) {
+export default function TravelPortal({
+    articles,
+    onBack,
+    onNavigate,
+    sectorStats = [],
+    portalDeals = [],
+    portalContent = []
+}: TravelPortalProps) {
     const [activeSubPage, setActiveSubPage] = useState<TravelSubPage>('overview');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
@@ -313,6 +320,29 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
     const paginatedArticles = filteredArticles.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const renderSectorWidget = () => {
+        const currentStats = (sectorStats || []).filter((s: any) => s.sector === activeSubPage);
+
+        if (currentStats.length > 0) {
+            return (
+                <div className="space-y-4">
+                    {currentStats.slice(0, 2).map((stat: any, idx: number) => (
+                        <div key={stat.id || idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-4 tracking-wider uppercase">{stat.metricName}</div>
+                            {idx % 2 === 0 ? (
+                                <Sparkline data={stat.chartData || [65, 78, 62, 85, 90, 82, 75]} color="#20a6eb" />
+                            ) : (
+                                <div className="text-xl font-black italic text-[#1a1a1a]">{stat.metricValue}{stat.metricUnit} <span className="text-[10px] text-[#1a1a1a]/30 not-italic ml-2">Current</span></div>
+                            )}
+                            <div className="flex justify-between items-center mt-4">
+                                <span className="text-[10px] text-[#1a1a1a]/60">{stat.pulseStatus || 'Operational'}</span>
+                                <span className={`text-[10px] font-bold ${stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>{stat.trend === 'up' ? 'Trending Up' : 'Volatile'}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
         switch (activeSubPage) {
             case 'airports':
                 return (
@@ -385,16 +415,17 @@ export default function TravelPortal({ articles, onBack, onNavigate }: TravelPor
                     </div>
                 );
             case 'deals':
+                const topDeal = (portalDeals || [])[0];
                 return (
                     <div className="space-y-4">
                         <div className="bg-gradient-to-br from-[#20a6eb]/5 to-[#e86420]/5 p-4 rounded-2xl border border-[#20a6eb]/10">
                             <div className="text-[8px] font-black text-[#e86420] mb-2 tracking-wider">Hot Deal Alert</div>
-                            <div className="text-sm font-black text-[#1a1a1a]">LHR → JFK Under $350</div>
-                            <div className="text-[10px] text-[#1a1a1a]/40 mt-1 italic">Expiring in 2h 45m</div>
+                            <div className="text-sm font-black text-[#1a1a1a]">{topDeal ? `${topDeal.origin} → ${topDeal.destination}` : 'LHR → JFK Under $350'}</div>
+                            <div className="text-[10px] text-[#1a1a1a]/40 mt-1 italic">Expiring in {topDeal ? topDeal.expiration : '2h 45m'}</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Average Deal Yield</div>
-                            <div className="text-xl font-black italic text-[#1a1a1a]">-34% <span className="text-[10px] text-emerald-600 not-italic ml-2">Vs Market</span></div>
+                            <div className="text-[8px] font-black text-[#20a6eb] mb-2 tracking-wider">Current Price</div>
+                            <div className="text-xl font-black italic text-[#1a1a1a]">{topDeal ? topDeal.price : '-34%'} <span className="text-[10px] text-emerald-600 not-italic ml-2">{topDeal ? 'Live' : 'Vs Market'}</span></div>
                         </div>
                     </div>
                 );

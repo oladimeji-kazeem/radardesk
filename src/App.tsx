@@ -1058,6 +1058,99 @@ export default function App() {
     }
   };
 
+  const handleUpdatePortalContent = async (id: string | null, data: any, isDelete = false) => {
+    try {
+      if (isStandalone()) {
+        if (isDelete && id) {
+          const { error } = await supabase.from('portal_content').delete().eq('id', id);
+          if (error) throw error;
+        } else if (id) {
+          const { error } = await supabase.from('portal_content').update(data).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('portal_content').insert(data);
+          if (error) throw error;
+        }
+        await syncData(true);
+      } else {
+        const method = isDelete ? 'DELETE' : (id ? 'PUT' : 'POST');
+        const url = id ? `/api/portal-content/${id}` : '/api/portal-content';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: isDelete ? undefined : JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Backend rejection.');
+        await syncData(true);
+      }
+      addToast(isDelete ? 'Content record purged from registers.' : 'Portal content updated successfully.', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Portal content update failed.', 'error');
+    }
+  };
+
+  const handleUpdatePortalDeal = async (id: string | null, data: any, isDelete = false) => {
+    try {
+      if (isStandalone()) {
+        if (isDelete && id) {
+          const { error } = await supabase.from('portal_deals').delete().eq('id', id);
+          if (error) throw error;
+        } else if (id) {
+          const { error } = await supabase.from('portal_deals').update(data).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('portal_deals').insert(data);
+          if (error) throw error;
+        }
+        await syncData(true);
+      } else {
+        const method = isDelete ? 'DELETE' : (id ? 'PUT' : 'POST');
+        const url = id ? `/api/portal-deals/${id}` : '/api/portal-deals';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: isDelete ? undefined : JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Backend rejection.');
+        await syncData(true);
+      }
+      addToast(isDelete ? 'Commercial deal removed from database.' : 'Market deal updated successfully.', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Deal update failed.', 'error');
+    }
+  };
+
+  const handleUpdateSectorStat = async (id: string | null, data: any, isDelete = false) => {
+    try {
+      if (isStandalone()) {
+        if (isDelete && id) {
+          const { error } = await supabase.from('sector_stats').delete().eq('id', id);
+          if (error) throw error;
+        } else if (id) {
+          const { error } = await supabase.from('sector_stats').update(data).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('sector_stats').insert(data);
+          if (error) throw error;
+        }
+        await syncData(true);
+      } else {
+        const method = isDelete ? 'DELETE' : (id ? 'PUT' : 'POST');
+        const url = id ? `/api/sector-stats/${id}` : '/api/sector-stats';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: isDelete ? undefined : JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Backend rejection.');
+        await syncData(true);
+      }
+      addToast(isDelete ? 'Sector metric record deleted.' : 'Intelligence metric updated.', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Metric update failed.', 'error');
+    }
+  };
+
   // Helper trigger for writing claimed topics
   const handleSelectTopicForArticle = (topic: Topic) => {
     setActiveTopicFromPool(topic);
@@ -1104,6 +1197,9 @@ export default function App() {
               handleNavigate('/');
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
+            portalDeals={portalDeals}
+            portalContent={portalContent}
           />
         </SharedLayout>
       );
@@ -1128,6 +1224,7 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1153,6 +1250,7 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1177,6 +1275,7 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1195,6 +1294,7 @@ export default function App() {
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1238,6 +1338,7 @@ export default function App() {
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1264,6 +1365,7 @@ export default function App() {
             onNavigate={handleNavigate}
             sectorStats={sectorStats}
             portalDeals={portalDeals}
+            portalContent={portalContent}
           />
         </SharedLayout>
       );
@@ -1288,6 +1390,7 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -1313,6 +1416,7 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
           />
         </SharedLayout>
       );
@@ -2021,6 +2125,12 @@ export default function App() {
                 onResetDatabase={handleResetDatabase}
                 onRefresh={() => syncData(true)}
                 uatFeedback={uatFeedback}
+                portalContent={portalContent}
+                portalDeals={portalDeals}
+                sectorStats={sectorStats}
+                onUpdatePortalContent={handleUpdatePortalContent}
+                onUpdatePortalDeal={handleUpdatePortalDeal}
+                onUpdateSectorStat={handleUpdateSectorStat}
               />
             )}
 
