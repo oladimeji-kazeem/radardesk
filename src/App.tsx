@@ -62,11 +62,11 @@ const DEFAULT_CONFIG: WorkflowConfig = {
   rejectionReasons: ['Factual Inaccuracy', 'Grammar/Style', 'Off-topic', 'Sexist/Biased Content', 'Plagiarism'],
   rolePrivileges: [
     { role: 'Writer', allowedActions: ['propose_topic', 'claim_topic', 'submit_article'] },
-    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article'] },
-    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'manage_system'] },
+    { role: 'Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'qa_audit', 'sign_off_qa'] },
+    { role: 'Senior Editor', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'qa_audit', 'sign_off_qa', 'manage_system'] },
     { role: 'Quality Checker', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'quality_audit'] },
     { role: 'Publisher', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'publish_live'] },
-    { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'quality_audit', 'publish_live', 'manage_system'] }
+    { role: 'Admin', allowedActions: ['propose_topic', 'claim_topic', 'submit_article', 'review_article', 'qa_audit', 'sign_off_qa', 'quality_audit', 'publish_live', 'manage_system'] }
   ]
 };
 
@@ -207,6 +207,34 @@ export default function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
+  const handleAuthTrigger = (mode: 'signin' | 'signup') => {
+    setViewMode('app');
+    setShowAuthScreen(true);
+    if (mode === 'signin') {
+      addToast("RadarDesk Session Initiated: Please authenticate.", "info");
+    } else {
+      addToast("RadarDesk Onboarding: Secure your identity.", "info");
+    }
+  };
+
+  const handleGlobalSearch = () => {
+    // Attempt to focus the search input if it exists in the DOM
+    const searchInput = document.querySelector('input[placeholder*="Search articles"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+      setSearchFocused(true);
+    } else {
+      // If no search input is visible (e.g. on landing), we could open a modal or focus the news ticker
+      addToast("Opening Global Radar Search Terminal...", "info");
+      // For now, let's just focus the main workspace search if available
+      setViewMode('app');
+      setTimeout(() => {
+        const workspaceSearch = document.querySelector('input[placeholder*="Search articles"]') as HTMLInputElement;
+        if (workspaceSearch) workspaceSearch.focus();
+      }, 100);
+    }
+  };
+
   const hasPermission = (action: string) => {
     if (!currentUser) return false;
     if (currentUser.role === 'Admin') return true; // Administrator overrides all checks
@@ -304,6 +332,9 @@ export default function App() {
         resAnalytics = analyticsData || { pageViews: 0, submissionsCount: 0, approvals_count: 0, escalations_count: 0, avg_time_seconds: 0, active_users: 0 };
         resTopicLogs = (logsData || []).flatMap((t: any) => t.moderation_history || []);
         resUat = uatData || [];
+        setSectorStats(statsData || []);
+        setPortalDeals(dealsData || []);
+        setPortalContent(contentData || []);
       } else {
         [resUsers, resTopics, resArticles, resConfig, resAnalytics, resTopicLogs, resUat] = await Promise.all([
           fetchJson('/api/users', users || []),
@@ -323,12 +354,6 @@ export default function App() {
       setAnalytics(resAnalytics);
       setTopicHistoryLogs(resTopicLogs);
       setUatFeedback(resUat);
-
-      if (isStandalone()) {
-        setSectorStats(statsData || []);
-        setPortalDeals(dealsData || []);
-        setPortalContent(contentData || []);
-      }
 
       // Load user session from localStorage
       const savedUserStr = localStorage.getItem('radar_logged_user');
@@ -928,6 +953,7 @@ export default function App() {
     action: string;
     comments: string;
     reasons?: string[];
+    checklist?: any;
   }) => {
     if (!currentUser) return;
     try {
@@ -936,10 +962,24 @@ export default function App() {
         if (!article) throw new Error('Article not found');
 
         const now = new Date().toISOString();
+
+        // Update review history
+        const newReviewHistory = [...(article.review_history || [])];
+        newReviewHistory.push({
+          id: `rev-${Date.now()}`,
+          editorId: currentUser.id,
+          editorName: currentUser.name,
+          decision: params.action,
+          comments: params.comments,
+          reasons: params.reasons,
+          checklist: params.checklist,
+          timestamp: now
+        });
+
         const newHistory = [...(article.history || [])];
         newHistory.push({
           id: `h-decision-${Date.now()}`,
-          action: params.action === 'Approve' ? 'Approved' : 'Rejected',
+          action: params.action === 'Approve' ? 'Approved' : params.action === 'Bin' ? 'Binned' : 'Rejected',
           actorName: currentUser.name,
           actorRole: currentUser.role,
           timestamp: now,
@@ -950,18 +990,21 @@ export default function App() {
         // Determine next status
         let targetStatus = 'Draft';
         if (params.action === 'Approve') {
-          if (currentUser.role === 'Editor') targetStatus = 'Approved';
-          else if (currentUser.role === 'Quality Checker') targetStatus = 'Verified';
-          else if (currentUser.role === 'Publisher') targetStatus = 'Live';
-          else targetStatus = 'Approved';
-        } else {
-          targetStatus = 'Rejected';
+          targetStatus = 'Approved';
+        } else if (params.action === 'Bin') {
+          targetStatus = 'Banned';
+        } else if (params.action === 'Reject' || params.action === 'Minor Revision') {
+          targetStatus = 'Draft';
+        } else if (params.action === 'Escalate') {
+          targetStatus = 'Escalated';
         }
 
         const { error } = await supabase.from('articles').update({
           status: targetStatus,
           updated_at: now,
           history: newHistory,
+          review_history: newReviewHistory,
+          review_count: (article.review_count || 0) + (['Approve', 'Reject', 'Minor Revision', 'Bin'].includes(params.action) ? 1 : 0),
           editor_id: currentUser.id,
           editor_name: currentUser.name
         }).eq('id', params.articleId);
@@ -1047,7 +1090,14 @@ export default function App() {
 
     if (activePortal === 'travel') {
       return (
-        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Travel"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <TravelPortal
             articles={articles}
             onBack={() => {
@@ -1061,7 +1111,14 @@ export default function App() {
 
     if (activePortal === 'aviation') {
       return (
-        <SharedLayout activeCategory="Aviation" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Aviation"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <AviationPortal
             articles={articles}
             onBack={() => {
@@ -1078,7 +1135,14 @@ export default function App() {
 
     if (activePortal === 'radar') {
       return (
-        <SharedLayout activeCategory="Radar" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Radar"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <RadarPortal
             articles={articles}
             initialSector={activeRadarSector}
@@ -1096,7 +1160,14 @@ export default function App() {
 
     if (activePortal === 'air-intelligence') {
       return (
-        <SharedLayout activeCategory="Air Intelligence" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Air Intelligence"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <AirIntelligencePortal
             articles={articles}
             onBack={() => {
@@ -1113,7 +1184,14 @@ export default function App() {
 
     if (activePortal === 'breaking-news') {
       return (
-        <SharedLayout activeCategory="Breaking News" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Breaking News"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
@@ -1127,13 +1205,16 @@ export default function App() {
         activeCategory="Home"
         articles={articles}
         onNavigate={handleNavigate}
+        onSignIn={() => handleAuthTrigger('signin')}
+        onGetStarted={() => handleAuthTrigger('signup')}
+        onSearch={handleGlobalSearch}
       >
         <PortalLanding
           topics={topics}
           articles={articles}
           config={config}
-          onGetStarted={() => setShowAuthScreen(true)}
-          onSignIn={() => setShowAuthScreen(true)}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSignIn={() => handleAuthTrigger('signin')}
           onNavigate={handleNavigate}
           sectorStats={sectorStats}
           portalDeals={portalDeals}
@@ -1146,7 +1227,14 @@ export default function App() {
   if (viewMode === 'landing') {
     if (activePortal === 'breaking-news') {
       return (
-        <SharedLayout activeCategory="Breaking News" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Breaking News"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
@@ -1157,7 +1245,14 @@ export default function App() {
 
     if (activePortal === 'travel') {
       return (
-        <SharedLayout activeCategory="Travel" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Travel"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <TravelPortal
             articles={articles}
             onBack={() => {
@@ -1176,7 +1271,14 @@ export default function App() {
 
     if (activePortal === 'aviation') {
       return (
-        <SharedLayout activeCategory="Aviation" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Aviation"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <AviationPortal
             articles={articles}
             onBack={() => {
@@ -1193,7 +1295,14 @@ export default function App() {
 
     if (activePortal === 'radar') {
       return (
-        <SharedLayout activeCategory="Radar" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Radar"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <RadarPortal
             articles={articles}
             initialSector={activeRadarSector}
@@ -1211,7 +1320,14 @@ export default function App() {
 
     if (activePortal === 'air-intelligence') {
       return (
-        <SharedLayout activeCategory="Air Intelligence" articles={articles} onNavigate={handleNavigate}>
+        <SharedLayout
+          activeCategory="Air Intelligence"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
           <AirIntelligencePortal
             articles={articles}
             onBack={() => {
@@ -1227,53 +1343,26 @@ export default function App() {
     }
 
     return (
-      <PortalLanding
-        topics={topics}
+      <SharedLayout
+        activeCategory="Home"
         articles={articles}
-        config={config}
-        onGetStarted={() => setViewMode('app')}
-        onSignIn={() => {
-          setViewMode('app');
-          addToast("RadarDesk Session Initiated: Active profile assigned.", "success");
-        }}
-        sectorStats={sectorStats}
-        portalDeals={portalDeals}
-        portalContent={portalContent}
-        onNavigate={(target) => {
-          if (target === 'Breaking News') {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            window.history.pushState({}, '', `${BASE_URL}/breaking-news`);
-            setActivePortal('breaking-news');
-          } else if (['Radar', 'Route', 'Fleet', 'Passenger', 'Cargo', 'Sustainability', 'Finance', 'Regulations', 'Tourism & Demand'].includes(target)) {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            const sector = target === 'Radar' ? 'Route' : target;
-            const sectorPath = sector.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
-            window.history.pushState({}, '', `${BASE_URL}/radar/${sectorPath}`);
-            setActivePortal('radar');
-            setActiveRadarSector(sector as RadarSector);
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          } else if (target === 'Aviation') {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            window.history.pushState({}, '', `${BASE_URL}/aviation`);
-            setActivePortal('aviation');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          } else if (target === 'Travel') {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            window.history.pushState({}, '', `${BASE_URL}/travel`);
-            setActivePortal('travel');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          } else if (target === 'Air Intelligence') {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            window.history.pushState({}, '', `${BASE_URL}/air-intelligence`);
-            setActivePortal('air-intelligence');
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          } else if (target === 'Aircraft Sales') {
-            const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            window.history.pushState({}, '', `${BASE_URL}/aircraft-sales`);
-            // TODO: implement aircraft sales portal or redirect
-          }
-        }}
-      />
+        onNavigate={handleNavigate}
+        onSignIn={() => handleAuthTrigger('signin')}
+        onGetStarted={() => handleAuthTrigger('signup')}
+        onSearch={handleGlobalSearch}
+      >
+        <PortalLanding
+          topics={topics}
+          articles={articles}
+          config={config}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onNavigate={handleNavigate}
+          sectorStats={sectorStats}
+          portalDeals={portalDeals}
+          portalContent={portalContent}
+        />
+      </SharedLayout>
     );
   }
 

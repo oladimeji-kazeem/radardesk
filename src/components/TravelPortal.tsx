@@ -35,6 +35,9 @@ interface TravelPortalProps {
     articles: Article[];
     onBack: () => void;
     onNavigate?: (cat: string) => void;
+    sectorStats?: any;
+    portalDeals?: any;
+    portalContent?: any;
 }
 
 type TravelSubPage = 'overview' | 'airports' | 'points-loyalty' | 'technology' | 'trip-reviews' | 'deals';

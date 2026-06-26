@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS articles (
   ai_validation JSONB,
   comments JSONB DEFAULT '[]'::jsonb,
   history JSONB DEFAULT '[]'::jsonb,
+  review_count INTEGER DEFAULT 0,
+  review_history JSONB DEFAULT '[]'::jsonb,
   category TEXT,
   header_image TEXT,
   excerpt TEXT

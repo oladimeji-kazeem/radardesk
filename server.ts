@@ -210,6 +210,114 @@ async function startServer() {
     res.json({ success: true });
   });
 
+  // AUTHENTICATION
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    const emailLower = email.trim().toLowerCase();
+
+    try {
+      const supabase = getSupabaseClient();
+      // 1. Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: emailLower,
+        password: password
+      });
+
+      if (authError) return res.status(401).json({ error: authError.message });
+
+      // 2. Fetch user profile
+      const { data: user, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', emailLower)
+        .single();
+
+      if (profileError || !user) {
+        return res.status(404).json({ error: 'Operator profile not found in directory.' });
+      }
+
+      if (user.approved === false) {
+        return res.status(403).json({ error: 'Review Pending: Your organization access has not been approved.' });
+      }
+
+      res.json({ success: true, user });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Authentication sequence failed.' });
+    }
+  });
+
+  app.post('/api/auth/register', async (req, res) => {
+    const { name, email, password, role } = req.body;
+    const emailLower = email.trim().toLowerCase();
+
+    if (!emailLower.endsWith('@travelradar.aero')) {
+      return res.status(403).json({ error: 'Enrollment Blocked: Registration restricted to official @travelradar.aero domains.' });
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+
+      // 1. Sign up with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: emailLower,
+        password: password,
+        options: { data: { full_name: name, role: role } }
+      });
+
+      if (authError) return res.status(400).json({ error: authError.message });
+
+      // 2. Create public.users profile
+      const { data: user, error: profileError } = await supabase.from('users').insert({
+        id: authData.user?.id,
+        name: name,
+        email: emailLower,
+        role: role,
+        password: password,
+        approved: true
+      }).select().single();
+
+      if (profileError) return res.status(500).json({ error: profileError.message });
+
+      res.status(201).json({ success: true, user });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Registration sequence interrupted.' });
+    }
+  });
+
+  app.post('/api/auth/reset-forgot', async (req, res) => {
+    const { email } = req.body;
+    // For this prototype/example, we'll simulate a 6-digit pin
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    res.json({ success: true, pin, message: 'Recovery pin generated (simulated callback).' });
+  });
+
+  app.post('/api/auth/reset-confirm', async (req, res) => {
+    const { email, pin, newPassword } = req.body;
+    const emailLower = email.trim().toLowerCase();
+
+    try {
+      const supabase = getSupabaseClient();
+
+      // Update password in Supabase Auth (Admin level)
+      // First we need the user ID
+      const { data: userProfile } = await supabase.from('users').select('id').eq('email', emailLower).single();
+      if (!userProfile) return res.status(404).json({ error: 'User not found.' });
+
+      const { error } = await supabase.auth.admin.updateUserById(userProfile.id, {
+        password: newPassword
+      });
+
+      if (error) return res.status(500).json({ error: error.message });
+
+      // Update password in public.users (legacy display field)
+      await supabase.from('users').update({ password: newPassword }).eq('id', userProfile.id);
+
+      res.json({ success: true, message: 'Security parameters upgraded successfully.' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to update credentials.' });
+    }
+  });
+
   // USERS
   app.get('/api/users', async (req, res) => {
     try {

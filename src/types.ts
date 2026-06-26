@@ -22,6 +22,7 @@ export type ArticleStatus =
   | 'Rejected'
   | 'Escalated'
   | 'Approved'
+  | 'Banned'
   | 'Published';
 
 export interface ArticleRevision {

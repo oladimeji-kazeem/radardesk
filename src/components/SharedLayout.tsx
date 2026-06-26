@@ -24,9 +24,10 @@ import { Article } from '../types';
 interface TopUtilityBarProps {
     onSignIn: () => void;
     onGetStarted: () => void;
+    onSearch?: () => void;
 }
 
-export function TopUtilityBar({ onSignIn, onGetStarted }: TopUtilityBarProps) {
+export function TopUtilityBar({ onSignIn, onGetStarted, onSearch }: TopUtilityBarProps) {
     return (
         <div className="hidden lg:block bg-[#363636] text-white py-2 px-6">
             <div className="max-w-7xl mx-auto flex justify-between items-center text-[10px] font-black tracking-[0.2em]">
@@ -37,9 +38,12 @@ export function TopUtilityBar({ onSignIn, onGetStarted }: TopUtilityBarProps) {
                     <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5"><Instagram className="w-4 h-4" /></a>
                 </div>
                 <div className="flex items-center gap-6">
-                    <span className="flex items-center gap-1.5 bg-white/10 border border-white/10 px-3 py-1 rounded-full cursor-pointer hover:bg-white/20 transition-all text-white/80 hover:text-white">
+                    <button
+                        onClick={onSearch}
+                        className="flex items-center gap-1.5 bg-white/10 border border-white/0 px-3 py-1 rounded-full cursor-pointer hover:bg-white/20 transition-all text-white/80 hover:text-white text-[10px] font-black tracking-[0.2em]"
+                    >
                         <Search className="w-3 h-3" /> Search
-                    </span>
+                    </button>
                     <div className="flex gap-4">
                         <button onClick={onSignIn} className="hover:text-[#20a6eb] transition-colors bg-transparent border-0 cursor-pointer text-[11px] font-bold text-white/80">Sign In</button>
                         <button onClick={onGetStarted} className="firebase-gradient px-4 py-1.5 rounded-full text-white hover:scale-105 transition-all bg-transparent border-0 cursor-pointer text-[11px] font-bold firebase-glow-blue">Join Radar</button>
@@ -289,6 +293,7 @@ interface SharedLayoutProps {
     onNavigate: (cat: string) => void;
     onSignIn?: () => void;
     onGetStarted?: () => void;
+    onSearch?: () => void;
     showTicker?: boolean;
 }
 
@@ -299,6 +304,7 @@ export function SharedLayout({
     onNavigate,
     onSignIn = () => { },
     onGetStarted = () => { },
+    onSearch = () => { },
     showTicker = true
 }: SharedLayoutProps) {
     const [scrolled, setScrolled] = React.useState(false);
@@ -314,7 +320,7 @@ export function SharedLayout({
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
-            <TopUtilityBar onSignIn={onSignIn} onGetStarted={onGetStarted} />
+            <TopUtilityBar onSignIn={onSignIn} onGetStarted={onGetStarted} onSearch={onSearch} />
             <MainHeader
                 scrolled={scrolled}
                 isMenuOpen={isMenuOpen}

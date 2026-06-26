@@ -59,6 +59,8 @@ async function seed() {
         created_at: a.createdAt,
         submitted_at: a.submittedAt,
         updated_at: a.updatedAt || a.createdAt || new Date().toISOString(),
+        review_count: a.reviewCount || 0,
+        review_history: a.reviewHistory || [],
         revisions: a.revisions || [],
         ai_validation: a.aiValidation || null,
         comments: a.comments || [],

@@ -10,7 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * instead of proxying through the Express server.
  */
 export const isStandalone = () => {
-    // If the origin is not localhost:3000 (standard dev/prod server) 
-    // or if explicitly set via env var, we assume standalone.
-    return window.location.hostname !== 'localhost' || import.meta.env.VITE_STANDALONE === 'true';
+    // Force standalone mode to true to ensure reliable direct communication 
+    // with Supabase, bypassing potentially misconfigured backend auth proxy.
+    return true;
 };
