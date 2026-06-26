@@ -117,3 +117,59 @@ CREATE TABLE IF NOT EXISTS uat_feedback (
 ALTER TABLE uat_feedback ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Permissive" ON uat_feedback;
 CREATE POLICY "Permissive" ON uat_feedback FOR ALL USING (true) WITH CHECK (true);
+
+-- 7. Sector Stats Table
+CREATE TABLE IF NOT EXISTS sector_stats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sector TEXT NOT NULL,
+  metric_name TEXT NOT NULL,
+  metric_value TEXT,
+  metric_unit TEXT,
+  trend TEXT CHECK (trend IN ('up', 'down', 'stable')),
+  pulse_status TEXT CHECK (pulse_status IN ('Critical', 'Nominal', 'Active', 'Steady', 'Strategic')),
+  chart_data JSONB DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  sub_page TEXT -- Optional for sub-page specific metrics
+);
+
+-- Enable RLS
+ALTER TABLE sector_stats ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permissive" ON sector_stats;
+CREATE POLICY "Permissive" ON sector_stats FOR ALL USING (true) WITH CHECK (true);
+
+-- 8. Portal Deals Table
+CREATE TABLE IF NOT EXISTS portal_deals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  origin TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  price TEXT NOT NULL,
+  expiration TIMESTAMPTZ,
+  sector TEXT NOT NULL,
+  status TEXT DEFAULT 'Active',
+  currency TEXT DEFAULT 'USD',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE portal_deals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permissive" ON portal_deals;
+CREATE POLICY "Permissive" ON portal_deals FOR ALL USING (true) WITH CHECK (true);
+
+-- 9. Portal Content Table
+CREATE TABLE IF NOT EXISTS portal_content (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_type TEXT NOT NULL, -- 'video', 'newsletter', 'cta', 'hero'
+  title TEXT NOT NULL,
+  description TEXT,
+  resource_url TEXT,
+  thumbnail_url TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  sector TEXT, -- Optional filter
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE portal_content ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permissive" ON portal_content;
+CREATE POLICY "Permissive" ON portal_content FOR ALL USING (true) WITH CHECK (true);

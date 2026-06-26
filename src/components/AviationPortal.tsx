@@ -27,9 +27,16 @@ interface AviationPortalProps {
     onBack: () => void;
     initialSubPage?: string;
     onNavigate?: (cat: string) => void;
+    sectorStats?: any[];
 }
 
-export default function AviationPortal({ articles, onBack, initialSubPage = 'dashboard', onNavigate }: AviationPortalProps) {
+export default function AviationPortal({
+    articles,
+    onBack,
+    initialSubPage = 'dashboard',
+    onNavigate,
+    sectorStats = []
+}: AviationPortalProps) {
     const [activeSubPage, setActiveSubPage] = useState(initialSubPage);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 8;

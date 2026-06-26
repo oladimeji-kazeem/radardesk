@@ -222,9 +222,22 @@ interface PortalLandingProps {
     onGetStarted: () => void;
     onSignIn: () => void;
     onNavigate?: (target: string) => void;
+    sectorStats?: any[];
+    portalDeals?: any[];
+    portalContent?: any[];
 }
 
-export default function PortalLanding({ topics, articles, config, onGetStarted, onSignIn, onNavigate }: PortalLandingProps) {
+export default function PortalLanding({
+    topics,
+    articles,
+    config,
+    onGetStarted,
+    onSignIn,
+    onNavigate,
+    sectorStats = [],
+    portalDeals = [],
+    portalContent = []
+}: PortalLandingProps) {
     const [activeCategory, setActiveCategory] = useState('All');
     const [trendingOffset, setTrendingOffset] = useState(0);
     const [heroIndex, setHeroIndex] = useState(0);
@@ -266,7 +279,28 @@ export default function PortalLanding({ topics, articles, config, onGetStarted, 
         return () => clearInterval(timer);
     }, []);
 
-    // Filter published articles
+    // Dynamic Data from Props
+    const deals = portalDeals.length > 0 ? portalDeals : [
+        { id: '1', origin: 'LHR', destination: 'JFK', price: '$492', expiration: '2d 14h', sector: 'Transatlantic' },
+        { id: '2', origin: 'DXB', destination: 'SIN', price: '$614', expiration: '1d 08h', sector: 'Pacific' },
+        { id: '3', origin: 'HKG', destination: 'SYD', price: '$528', expiration: '4d 21h', sector: 'Oceania' },
+        { id: '4', origin: 'CDG', destination: 'HND', price: '$745', expiration: '12h 45m', sector: 'Far East' },
+    ];
+
+    const videos = portalContent.filter(c => c.contentType === 'video');
+    const displayVideos = videos.length > 0 ? videos : [
+        { id: 'v1', title: 'The Future of Sustainable Aviation: Hydrogen Propulsion', description: 'Deep dive into next-gen propulsion systems.', thumbnailUrl: 'https://images.unsplash.com/photo-1544015759-137fdf556bf1?q=80&w=800', resourceUrl: '#' },
+        { id: 'v2', title: 'Global Route Optimization: AI in Fleet Management', description: 'How machine learning is reducing fuel burn.', thumbnailUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?q=80&w=800', resourceUrl: '#' },
+        { id: 'v3', title: 'Supersonic Return: The New Boom Overture Era', description: 'Revisiting the era of high-speed commercial travel.', thumbnailUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=800', resourceUrl: '#' },
+    ];
+
+    const landingIntel = sectorStats.filter(s => s.sector === 'landing_intel');
+    const displayIntel = landingIntel.length > 0 ? landingIntel : [
+        { id: 'i1', metricName: 'Active Sector Load', metricValue: '84.2', metricUnit: '%', trend: 'up', pulseStatus: 'Active', chartData: [45, 52, 48, 61, 55, 68, 72, 84] },
+        { id: 'i2', metricName: 'Yield Volatility', metricValue: '2.4', metricUnit: 'c', trend: 'down', pulseStatus: 'Nominal', chartData: [32, 28, 35, 30, 25, 22, 20, 24] },
+        { id: 'i3', metricName: 'Fleet Integrity', metricValue: '99.8', metricUnit: '%', trend: 'stable', pulseStatus: 'Steady', chartData: [98, 99, 99, 98, 100, 99, 99, 99] },
+    ];
+
     const publishedArticles = articles
         .filter(a => a.status === 'Published' || a.status === 'Approved')
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

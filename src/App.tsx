@@ -80,6 +80,9 @@ export default function App() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [topicHistoryLogs, setTopicHistoryLogs] = useState<any[]>([]);
   const [uatFeedback, setUatFeedback] = useState<any[]>([]);
+  const [sectorStats, setSectorStats] = useState<any[]>([]);
+  const [portalDeals, setPortalDeals] = useState<any[]>([]);
+  const [portalContent, setPortalContent] = useState<any[]>([]);
 
   // Navigation and active workflow tabs
   const [activeTab, setActiveTab] = useState<'dashboard' | 'topics' | 'writer' | 'editor' | 'quality-check' | 'publisher' | 'analytics' | 'performance' | 'admin' | 'docs' | 'uat'>('dashboard');
@@ -253,7 +256,10 @@ export default function App() {
           { data: configData },
           { data: analyticsData },
           { data: logsData },
-          { data: uatData }
+          { data: uatData },
+          { data: statsData },
+          { data: dealsData },
+          { data: contentData }
         ] = await Promise.all([
           supabase.from('users').select('*'),
           supabase.from('topics').select('*'),
@@ -261,7 +267,10 @@ export default function App() {
           supabase.from('workflow_config').select('config').eq('id', 1).single(),
           supabase.from('web_analytics').select('*').eq('id', 1).single(),
           supabase.from('topics').select('id, moderation_history'),
-          supabase.from('uat_feedback').select('*')
+          supabase.from('uat_feedback').select('*'),
+          supabase.from('sector_stats').select('*'),
+          supabase.from('portal_deals').select('*'),
+          supabase.from('portal_content').select('*').eq('active', true)
         ]);
 
         resUsers = (usersData || []).map(u => ({ ...u, approved: u.approved ?? true }));
@@ -314,6 +323,12 @@ export default function App() {
       setAnalytics(resAnalytics);
       setTopicHistoryLogs(resTopicLogs);
       setUatFeedback(resUat);
+
+      if (isStandalone()) {
+        setSectorStats(statsData || []);
+        setPortalDeals(dealsData || []);
+        setPortalContent(contentData || []);
+      }
 
       // Load user session from localStorage
       const savedUserStr = localStorage.getItem('radar_logged_user');
@@ -1120,6 +1135,9 @@ export default function App() {
           onGetStarted={() => setShowAuthScreen(true)}
           onSignIn={() => setShowAuthScreen(true)}
           onNavigate={handleNavigate}
+          sectorStats={sectorStats}
+          portalDeals={portalDeals}
+          portalContent={portalContent}
         />
       </SharedLayout>
     );
@@ -1149,6 +1167,8 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
+            sectorStats={sectorStats}
+            portalDeals={portalDeals}
           />
         </SharedLayout>
       );
@@ -1216,6 +1236,9 @@ export default function App() {
           setViewMode('app');
           addToast("RadarDesk Session Initiated: Active profile assigned.", "success");
         }}
+        sectorStats={sectorStats}
+        portalDeals={portalDeals}
+        portalContent={portalContent}
         onNavigate={(target) => {
           if (target === 'Breaking News') {
             const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');

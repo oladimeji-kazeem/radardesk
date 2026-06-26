@@ -172,3 +172,41 @@ export interface WebAnalytics {
   avgTimeSeconds: number;
   activeUsers: number;
 }
+
+export interface SectorStat {
+  id: string;
+  sector: string;
+  metricName: string;
+  metricValue: string;
+  metricUnit?: string;
+  trend: 'up' | 'down' | 'stable';
+  pulseStatus: 'Critical' | 'Nominal' | 'Active' | 'Steady' | 'Strategic';
+  chartData: number[];
+  updatedAt: string;
+  subPage?: string;
+}
+
+export interface PortalDeal {
+  id: string;
+  origin: string;
+  destination: string;
+  price: string;
+  expiration: string;
+  sector: string;
+  status: string;
+  currency: string;
+  createdAt: string;
+}
+
+export interface PortalContent {
+  id: string;
+  contentType: string; // 'video', 'newsletter', 'cta', 'hero'
+  title: string;
+  description: string;
+  resourceUrl: string;
+  thumbnailUrl: string;
+  metadata: Record<string, any>;
+  sector?: string;
+  active: boolean;
+  createdAt: string;
+}
