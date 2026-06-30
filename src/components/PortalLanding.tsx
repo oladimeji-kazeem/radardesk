@@ -330,16 +330,7 @@ export default function PortalLanding({
         a.category?.toLowerCase() === 'airports'
     );
 
-    const displayTravelArticles = landingTravelArticles.length > 0
-        ? landingTravelArticles.slice(0, 6)
-        : [
-            { id: 'tr-mock1', title: 'Testing the New Dreamliner Suites: Is it worth the upgrade?', category: 'Flight Review', rating: '8.5', date: 'May 21, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
-            { id: 'tr-mock2', title: 'Exploring Singapore Changi: The Worlds Best Transit Hub?', category: 'Airport Review', rating: '8.6', date: 'May 22, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
-            { id: 'tr-mock3', title: 'Economy Class Showdown: Best Value trans-atlantic flights ranked', category: 'Flight Review', rating: '8.7', date: 'May 23, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
-            { id: 'tr-mock4', title: 'Inside the New Ultra-Long-Haul First Class Cabins', category: 'Flight Review', rating: '8.8', date: 'May 24, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
-            { id: 'tr-mock5', title: 'Luxury in the Sky: Emirates First Class Experience', category: 'Flight Review', rating: '8.9', date: 'May 25, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
-            { id: 'tr-mock6', title: 'The Future of Sustainable Travel: A Journey on Biofuel', category: 'Flight Review', rating: '9.0', date: 'May 26, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true }
-        ];
+    const displayTravelArticles = landingTravelArticles;
 
     const categories = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Newsletters', 'Aircraft Sales'];
 
@@ -490,41 +481,9 @@ export default function PortalLanding({
                                         </div>
                                     </motion.div>
                                 )) : (
-                                    [1, 2, 3, 4, 5, 6].map((_, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            onClick={() => onNavigate?.('/article/mock-secondary-' + i)}
-                                            className="w-full snap-start flex gap-8 p-4 firebase-card-effect rounded-[2.5rem] cursor-pointer group mb-2 h-[155px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 border border-black/5 bg-white/80 backdrop-blur-md"
-                                        >
-                                            <div className="w-36 md:w-48 shrink-0 aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-black/5">
-                                                <img
-                                                    src={i % 2 === 0 ? "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=600&q=80"}
-                                                    alt="News"
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 grayscale-[0.2] group-hover:grayscale-0"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col justify-center py-1 flex-1 min-w-0">
-                                                <span className="text-[9px] font-black text-[#20a6eb] tracking-[0.2em] mb-1.5 block opacity-80">Corporate Analysis</span>
-                                                <h3 className="text-sm md:text-[13px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-1 text-[#1a1a1a] mb-1.5 tracking-tight">
-                                                    {i === 0 ? 'Airline Revenue Systems Saw 12% Growth in Q1' :
-                                                        i === 1 ? 'Why Fuel Efficiency is the #1 Priority for Emerging Carriers' :
-                                                            i === 2 ? 'Global Logistics: The Role of Sustainable SAF' :
-                                                                i === 3 ? 'Future Flight: The Rise of eVTOL in Urban Mobility' :
-                                                                    i === 4 ? 'Strategic Alliances: Reshaping the Transatlantic Market' :
-                                                                        'Next-Gen Propulsion Engine Design'}
-                                                </h3>
-                                                <p className="text-[10px] text-[#1a1a1a]/60 line-clamp-2 mb-3 font-medium leading-relaxed italic">
-                                                    Exploring the latest shifts in global aviation strategy, market performance markers, and technical breakthroughs...
-                                                </p>
-                                                <div className="mt-auto flex items-center gap-4 text-[8px] font-bold text-black/30 uppercase tracking-[0.15em] border-t border-black/5 pt-2.5">
-                                                    <span className="flex items-center gap-1.5"><User className="w-3 h-3 text-[#20a6eb]" /> Analysis Team</span>
-                                                    <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-[#20a6eb]" /> May 2026</span>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))
+                                    <div className="w-full flex items-center justify-center p-8 bg-white/50 border border-black/5 rounded-[2.5rem] h-[155px]">
+                                        <p className="text-[10px] font-black tracking-[0.2em] text-[#1a1a1a]/30 uppercase">Awaiting Intelligence Briefs</p>
+                                    </div>
                                 )}
                             </VerticalScrollContainer>
                         </div>
@@ -565,29 +524,17 @@ export default function PortalLanding({
                                         exit={{ opacity: 0, x: -20 }}
                                         className="space-y-8"
                                     >
-                                        {(trendingStories.length > 0 ? trendingStories : [1, 2, 3, 4, 5])
+                                        {trendingStories.length > 0 ? trendingStories
                                             .slice(trendingOffset, trendingOffset + 3)
                                             .map((art, idx) => {
-                                                const originalIdx = (trendingOffset + idx) % 5;
-                                                const title = typeof art === 'object' ? art.title :
-                                                    originalIdx === 0 ? 'The Most Luxurious First Class Cabins of 2026' :
-                                                        originalIdx === 1 ? 'Top 10 Safe Havens for Long Haul Layovers' :
-                                                            originalIdx === 2 ? 'Boeing vs Airbus: The Strategic Rivalry intensifies' :
-                                                                originalIdx === 3 ? 'Budget Travel is Changing: New Low-Cost Entrants Explained' :
-                                                                    'Aviation Sustainability: Beyond Carbon Offsetting';
-
-                                                const date = typeof art === 'object' ? new Date(art.createdAt).toLocaleDateString() : 'May 22, 2026';
+                                                const originalIdx = (trendingOffset + idx) % Math.max(1, trendingStories.length);
+                                                const title = art.title;
+                                                const date = new Date(art.createdAt).toLocaleDateString();
 
                                                 return (
                                                     <div
                                                         key={originalIdx}
-                                                        onClick={() => {
-                                                            if (typeof art === 'object') {
-                                                                onNavigate?.('/article/' + art.id);
-                                                            } else {
-                                                                onNavigate?.('/article/mock-trending-' + originalIdx);
-                                                            }
-                                                        }}
+                                                        onClick={() => onNavigate?.('/article/' + art.id)}
                                                         className="flex gap-5 group cursor-pointer border-b border-black/5 pb-6 last:border-0 last:pb-0"
                                                     >
                                                         <span className="text-4xl font-black text-black/5 group-hover:text-[#20a6eb]/40 transition-colors leading-none italic">{originalIdx + 1}</span>
@@ -596,11 +543,15 @@ export default function PortalLanding({
                                                             <h4 className="text-sm font-black leading-snug group-hover:text-[#20a6eb] transition-all line-clamp-2 text-[#1a1a1a]/80 group-hover:text-[#1a1a1a]">
                                                                 {title}
                                                             </h4>
-                                                            <p className="text-[10px] text-black/30 font-black tracking-widest">{date} • Aviation</p>
+                                                            <p className="text-[10px] text-black/30 font-black tracking-widest">{date} • {art.category || 'Aviation'}</p>
                                                         </div>
                                                     </div>
                                                 );
-                                            })
+                                            }) : (
+                                            <div className="w-full flex items-center justify-center p-8 border border-black/5 rounded-[2.5rem]">
+                                                <p className="text-[10px] font-black tracking-[0.2em] text-[#1a1a1a]/30 uppercase text-center">NO TRENDING STORIES</p>
+                                            </div>
+                                        )
                                         }
                                     </motion.div>
                                 </AnimatePresence>
@@ -765,17 +716,11 @@ export default function PortalLanding({
                         subtitle="Exploration Archive"
                         autoScroll={true}
                     >
-                        {displayTravelArticles.map((art, i) => (
+                        {displayTravelArticles.length > 0 ? displayTravelArticles.map((art, i) => (
                             <motion.div
                                 key={art.id}
                                 whileHover={{ y: -10 }}
-                                onClick={() => {
-                                    if (!(art as any).isMock) {
-                                        onNavigate?.('/article/' + art.id);
-                                    } else {
-                                        onNavigate?.('travel');
-                                    }
-                                }}
+                                onClick={() => onNavigate?.('/article/' + art.id)}
                                 className="w-[85vw] md:w-[380px] shrink-0 snap-center group cursor-pointer firebase-card-effect p-4 rounded-[3rem]"
                             >
                                 <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl border border-black/5">
@@ -803,7 +748,11 @@ export default function PortalLanding({
                                     </div>
                                 </div>
                             </motion.div>
-                        ))}
+                        )) : (
+                            <div className="w-[85vw] md:w-[380px] shrink-0 snap-center firebase-card-effect p-8 rounded-[3rem] flex items-center justify-center min-h-[250px] border border-black/5 bg-white/50">
+                                <p className="text-[10px] font-black tracking-[0.2em] text-[#1a1a1a]/30 uppercase text-center">NO REVIEWS PUBLISHED YET</p>
+                            </div>
+                        )}
 
                     </ScrollContainer>
 

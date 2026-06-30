@@ -10,7 +10,11 @@ import {
     Share2,
     Calendar,
     Layers,
-    Award
+    Award,
+    Twitter,
+    Facebook,
+    Linkedin,
+    Smartphone
 } from 'lucide-react';
 import { Article } from '../types';
 
@@ -117,6 +121,17 @@ export default function ArticleReader({
         }
     };
 
+    const handleSocialShare = (platform: string) => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(article.title);
+        switch (platform) {
+            case 'twitter': window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400'); break;
+            case 'facebook': window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400'); break;
+            case 'linkedin': window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=600,height=400'); break;
+            case 'whatsapp': window.open(`https://api.whatsapp.com/send?text=${text} ${url}`, '_blank'); break;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#f8fafb] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 pb-24">
             {/* Article Navigation Bar */}
@@ -154,7 +169,7 @@ export default function ArticleReader({
                             </span>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl font-black text-[#1a1a1a] leading-[1.05] tracking-tighter italic">
+                        <h1 className="text-2xl md:text-3xl font-black text-[#1a1a1a] leading-tight tracking-tighter italic">
                             {article.title}
                         </h1>
 
@@ -181,6 +196,23 @@ export default function ArticleReader({
                                 <Eye className="w-3.5 h-3.5 text-black/20" />
                                 <span>Live verified</span>
                             </div>
+                        </div>
+
+                        {/* Social Sharing Actions */}
+                        <div className="flex items-center gap-3 pt-4 border-t border-black/5">
+                            <span className="text-[10px] font-black text-black/30 tracking-wider mr-2">SHARE STORY</span>
+                            <button onClick={() => handleSocialShare('twitter')} className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 flex items-center justify-center transition-colors border-0 cursor-pointer text-[#1DA1F2]">
+                                <Twitter className="w-4 h-4 fill-current" />
+                            </button>
+                            <button onClick={() => handleSocialShare('facebook')} className="w-8 h-8 rounded-full bg-[#4267B2]/10 hover:bg-[#4267B2]/20 flex items-center justify-center transition-colors border-0 cursor-pointer text-[#4267B2]">
+                                <Facebook className="w-4 h-4 fill-current" />
+                            </button>
+                            <button onClick={() => handleSocialShare('linkedin')} className="w-8 h-8 rounded-full bg-[#0077B5]/10 hover:bg-[#0077B5]/20 flex items-center justify-center transition-colors border-0 cursor-pointer text-[#0077B5]">
+                                <Linkedin className="w-4 h-4 fill-current" />
+                            </button>
+                            <button onClick={() => handleSocialShare('whatsapp')} className="w-8 h-8 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 flex items-center justify-center transition-colors border-0 cursor-pointer text-[#25D366]">
+                                <Smartphone className="w-4 h-4 fill-current" />
+                            </button>
                         </div>
                     </div>
 
