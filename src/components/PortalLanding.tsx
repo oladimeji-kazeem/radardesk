@@ -176,8 +176,8 @@ function Sparkline({ data, height = 60, color = "#20a6eb" }: { data: number[], h
                         cx={points[i].x}
                         cy={points[i].y}
                         r="4"
-                        fill="#e86420"
-                        className="firebase-glow-orange"
+                        fill="#20a6eb"
+                        className="firebase-glow-blue"
                         initial={{ scale: 0 }}
                         animate={{ scale: [1, 1.5, 1] }}
                         transition={{ repeat: Infinity, duration: 2 }}
@@ -206,7 +206,7 @@ function MiniBarChart({ data }: { data: { label: string, value: number, color?: 
                             style={{ backgroundColor: d.color || '#20a6eb' }}
                         />
                         {d.value === max && (
-                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#e86420] rounded-full shadow-[0_0_8px_#e86420]" />
+                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#20a6eb] rounded-full shadow-[0_0_8px_#20a6eb]" />
                         )}
                     </motion.div>
                 </div>
@@ -247,21 +247,25 @@ export default function PortalLanding({
         title: c.title,
         category: c.sector || 'Editorial Spotlight',
         image: c.thumbUrl || c.resourceUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
-        content: c.description
+        content: c.description,
+        url: c.resourceUrl
     })) : [
         {
             title: 'RadarDesk Operational Intelligence: Live Global Terminals',
             category: 'Aviation Spotlight',
             image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
-            content: 'The aviation industry is bracing for standard changes that will redefine safety and efficiency across all continental flight paths...'
+            content: 'The aviation industry is bracing for standard changes that will redefine safety and efficiency across all continental flight paths...',
+            url: undefined
         },
         {
             title: 'The Future of Sustainable Flight: Biofuel and Beyond',
             category: 'Innovation Watch',
             image: 'https://images.unsplash.com/photo-1540962351504-03099e0a75c3?q=80&w=1200',
-            content: 'Exploring how next-generation propulsion systems are paving the way for a carbon-neutral sky within the next decade...'
+            content: 'Exploring how next-generation propulsion systems are paving the way for a carbon-neutral sky within the next decade...',
+            url: undefined
         }
     ];
+
 
     // Hero auto-scroll logic
     useEffect(() => {
@@ -319,7 +323,26 @@ export default function PortalLanding({
     const trendingStories = publishedArticles.slice(3, 8);
     const recentNews = publishedArticles.slice(0, 10);
 
+    const landingTravelArticles = publishedArticles.filter(a =>
+        a.category?.toLowerCase() === 'travel' ||
+        a.category?.toLowerCase() === 'trip reviews' ||
+        a.category?.toLowerCase() === 'loyalty' ||
+        a.category?.toLowerCase() === 'airports'
+    );
+
+    const displayTravelArticles = landingTravelArticles.length > 0
+        ? landingTravelArticles.slice(0, 6)
+        : [
+            { id: 'tr-mock1', title: 'Testing the New Dreamliner Suites: Is it worth the upgrade?', category: 'Flight Review', rating: '8.5', date: 'May 21, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
+            { id: 'tr-mock2', title: 'Exploring Singapore Changi: The Worlds Best Transit Hub?', category: 'Airport Review', rating: '8.6', date: 'May 22, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
+            { id: 'tr-mock3', title: 'Economy Class Showdown: Best Value trans-atlantic flights ranked', category: 'Flight Review', rating: '8.7', date: 'May 23, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
+            { id: 'tr-mock4', title: 'Inside the New Ultra-Long-Haul First Class Cabins', category: 'Flight Review', rating: '8.8', date: 'May 24, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
+            { id: 'tr-mock5', title: 'Luxury in the Sky: Emirates First Class Experience', category: 'Flight Review', rating: '8.9', date: 'May 25, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true },
+            { id: 'tr-mock6', title: 'The Future of Sustainable Travel: A Journey on Biofuel', category: 'Flight Review', rating: '9.0', date: 'May 26, 2026', excerpt: 'Dive into our comprehensive review of the latest aviation experiences...', isMock: true }
+        ];
+
     const categories = ['Breaking News', 'Radar', 'Aviation', 'Travel', 'Newsletters', 'Aircraft Sales'];
+
 
     return (
         <div className="bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20">
@@ -367,12 +390,24 @@ export default function PortalLanding({
                                                 {heroContents[heroIndex].content}
                                             </p>
                                             <div className="flex flex-wrap gap-4 shrink-0">
-                                                <button className="bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb] transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const url = heroContents[heroIndex].url;
+                                                        if (url) {
+                                                            onNavigate?.(url);
+                                                        } else {
+                                                            onGetStarted();
+                                                        }
+                                                    }}
+                                                    className="bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb] transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer"
+                                                >
                                                     READ FULL STORY <ArrowRight className="w-4 h-4" />
                                                 </button>
+
                                                 <button
                                                     onClick={onGetStarted}
-                                                    className="bg-[#e86420] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#e86420]/90 transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer"
+                                                    className="bg-[#20a6eb] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb]/90 transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer"
                                                 >
                                                     JOIN INTELLIGENCE NETWORK
                                                 </button>
@@ -413,8 +448,10 @@ export default function PortalLanding({
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.1 * (i + 1) }}
+                                        onClick={() => onNavigate?.('/article/' + art.id)}
                                         className="w-full snap-start flex gap-6 p-4 firebase-card-effect rounded-[2.5rem] cursor-pointer group mb-2 h-[155px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 border border-black/5 bg-white/80 backdrop-blur-md"
                                     >
+
                                         <div className="w-32 md:w-44 shrink-0 aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-black/5">
                                             <img
                                                 src={`https://images.unsplash.com/photo-${1500000000000 + i}?auto=format&fit=crop&w=600&q=80`}
@@ -434,7 +471,7 @@ export default function PortalLanding({
                                             </p>
                                             <div className="mt-auto flex items-center gap-4 text-[8px] font-bold text-black/30 uppercase tracking-[0.15em] border-t border-black/5 pt-2.5">
                                                 <span className="flex items-center gap-1.5"><User className="w-3 h-3 text-[#20a6eb]" /> {art.writerName}</span>
-                                                <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-[#e86420]" /> {new Date(art.createdAt).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-[#20a6eb]" /> {new Date(art.createdAt).toLocaleDateString()}</span>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -454,7 +491,7 @@ export default function PortalLanding({
                                                 />
                                             </div>
                                             <div className="flex flex-col justify-center py-1 flex-1 min-w-0">
-                                                <span className="text-[9px] font-black text-[#e86420] tracking-[0.2em] mb-1.5 block opacity-80">Corporate Analysis</span>
+                                                <span className="text-[9px] font-black text-[#20a6eb] tracking-[0.2em] mb-1.5 block opacity-80">Corporate Analysis</span>
                                                 <h3 className="text-sm md:text-[13px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-1 text-[#1a1a1a] mb-1.5 tracking-tight">
                                                     {i === 0 ? 'Airline Revenue Systems Saw 12% Growth in Q1' :
                                                         i === 1 ? 'Why Fuel Efficiency is the #1 Priority for Emerging Carriers' :
@@ -468,7 +505,7 @@ export default function PortalLanding({
                                                 </p>
                                                 <div className="mt-auto flex items-center gap-4 text-[8px] font-bold text-black/30 uppercase tracking-[0.15em] border-t border-black/5 pt-2.5">
                                                     <span className="flex items-center gap-1.5"><User className="w-3 h-3 text-[#20a6eb]" /> Analysis Team</span>
-                                                    <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-[#e86420]" /> May 2026</span>
+                                                    <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-[#20a6eb]" /> May 2026</span>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -482,7 +519,7 @@ export default function PortalLanding({
                     <aside className="lg:col-span-1 space-y-10">
                         <div className="firebase-card-effect p-8 rounded-[2.5rem] relative overflow-hidden shadow-2xl border-black/5 bg-white/80 backdrop-blur-xl">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#20a6eb] opacity-10 blur-3xl pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#e86420] opacity-10 blur-3xl pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#20a6eb] opacity-10 blur-3xl pointer-events-none" />
 
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="text-xl font-black tracking-widest flex items-center gap-3 text-[#1a1a1a]">
@@ -527,9 +564,18 @@ export default function PortalLanding({
                                                 const date = typeof art === 'object' ? new Date(art.createdAt).toLocaleDateString() : 'May 22, 2026';
 
                                                 return (
-                                                    <div key={originalIdx} className="flex gap-5 group cursor-pointer border-b border-black/5 pb-6 last:border-0 last:pb-0">
+                                                    <div
+                                                        key={originalIdx}
+                                                        onClick={() => {
+                                                            if (typeof art === 'object') {
+                                                                onNavigate?.('/article/' + art.id);
+                                                            }
+                                                        }}
+                                                        className="flex gap-5 group cursor-pointer border-b border-black/5 pb-6 last:border-0 last:pb-0"
+                                                    >
                                                         <span className="text-4xl font-black text-black/5 group-hover:text-[#20a6eb]/40 transition-colors leading-none italic">{originalIdx + 1}</span>
                                                         <div className="space-y-2">
+
                                                             <h4 className="text-sm font-black leading-snug group-hover:text-[#20a6eb] transition-all line-clamp-2 text-[#1a1a1a]/80 group-hover:text-[#1a1a1a]">
                                                                 {title}
                                                             </h4>
@@ -552,7 +598,7 @@ export default function PortalLanding({
 
                         <div className="bg-white/50 border border-black/5 p-8 rounded-3xl backdrop-blur-sm shadow-sm">
                             <h3 className="text-sm font-black tracking-wider text-[#1a1a1a] mb-6 border-b border-black/5 pb-3 flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-[#e86420]" /> Newsletter
+                                <Mail className="w-4 h-4 text-[#20a6eb]" /> Newsletter
                             </h3>
                             <p className="text-[12px] text-black/40 mb-6 font-medium leading-relaxed italic">Direct aviation intelligence, curated for professionals.</p>
                             <div className="flex flex-col gap-3">
@@ -575,7 +621,7 @@ export default function PortalLanding({
                     <div className="bg-gradient-to-br from-white via-[#f0f9ff] to-white rounded-[3.5rem] p-8 md:p-14 text-[#1a1a1a] relative overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.05)] border border-black/5 glowing-radar-border mb-16">
                         <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none">
                             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#20a6eb]/10 blur-[120px] rounded-full" />
-                            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#e86420]/5 blur-[100px] rounded-full" />
+                            <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-[#20a6eb]/5 blur-[100px] rounded-full" />
                         </div>
 
                         <div className="relative z-10">
@@ -597,7 +643,7 @@ export default function PortalLanding({
                                     </div>
                                     <div className="bg-white border border-black/5 px-6 py-3 rounded-2xl shadow-sm">
                                         <div className="text-[9px] font-black text-black/20 tracking-wider mb-1">Active Airframes</div>
-                                        <div className="text-xl font-black text-[#e86420]">22,109 <span className="text-[10px] text-black/20 font-bold ml-1">LIVE</span></div>
+                                        <div className="text-xl font-black text-[#20a6eb]">22,109 <span className="text-[10px] text-black/20 font-bold ml-1">LIVE</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -633,8 +679,8 @@ export default function PortalLanding({
                                         </div>
                                         <div className="flex items-center justify-between pt-6 border-t border-black/5">
                                             <div className="text-[9px] font-black text-black/10 tracking-wider">Metric: {intel.metricValue}{intel.metricUnit}</div>
-                                            <div className="text-[10px] font-black text-[#e86420] flex items-center gap-2">
-                                                <span className={`w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_#e86420] ${intel.trend === 'up' ? 'bg-emerald-500' : 'bg-[#e86420]'}`} />
+                                            <div className="text-[10px] font-black text-[#20a6eb] flex items-center gap-2">
+                                                <span className={`w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_#20a6eb] ${intel.trend === 'up' ? 'bg-emerald-500' : 'bg-[#20a6eb]'}`} />
                                                 STATUS: {intel.pulseStatus || 'Nominal'}
                                             </div>
                                         </div>
@@ -648,11 +694,11 @@ export default function PortalLanding({
                     <div className="mb-16">
                         <div className="flex items-center justify-between border-b border-black/5 pb-6 mb-8">
                             <h2 className="text-2xl font-black tracking-tighter text-[#1a1a1a] flex items-center gap-4">
-                                <span className="w-1.5 h-8 bg-[#e86420] rounded-full shadow-[0_0_15px_#e86420]" /> Flight Deals Intelligence
+                                <span className="w-1.5 h-8 bg-[#20a6eb] rounded-full shadow-[0_0_15px_#20a6eb]" /> Flight Deals Intelligence
                             </h2>
                             <button
                                 onClick={() => onNavigate?.('travel/deals')}
-                                className="text-xs font-black tracking-[0.2em] text-[#e86420] hover:translate-x-2 transition-all flex items-center gap-2 group border-0 bg-transparent cursor-pointer"
+                                className="text-xs font-black tracking-[0.2em] text-[#20a6eb] hover:translate-x-2 transition-all flex items-center gap-2 group border-0 bg-transparent cursor-pointer"
                             >
                                 View all live deals <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
@@ -674,7 +720,7 @@ export default function PortalLanding({
                                             </span>
                                             <h3 className="text-xl font-black text-[#1a1a1a] italic">{deal.origin} → {deal.destination}</h3>
                                         </div>
-                                        <div className="text-2xl font-black text-[#e86420]">{deal.price}</div>
+                                        <div className="text-2xl font-black text-[#20a6eb]">{deal.price}</div>
                                     </div>
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between text-[10px] font-bold text-[#1a1a1a]/40">
@@ -702,43 +748,46 @@ export default function PortalLanding({
                         subtitle="Exploration Archive"
                         autoScroll={true}
                     >
-                        {[1, 2, 3, 4, 5, 6].map((_, i) => (
+                        {displayTravelArticles.map((art, i) => (
                             <motion.div
-                                key={i}
+                                key={art.id}
                                 whileHover={{ y: -10 }}
+                                onClick={() => {
+                                    if (!(art as any).isMock) {
+                                        onNavigate?.('/article/' + art.id);
+                                    } else {
+                                        onNavigate?.('travel');
+                                    }
+                                }}
                                 className="w-[85vw] md:w-[380px] shrink-0 snap-center group cursor-pointer firebase-card-effect p-4 rounded-[3rem]"
                             >
                                 <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl border border-black/5">
                                     <img
-                                        src={`https://images.unsplash.com/photo-${1500000000500 + i}?auto=format&fit=crop&w=600&q=80`}
+                                        src={art.headerImage || `https://images.unsplash.com/photo-${1500000000500 + i}?auto=format&fit=crop&w=600&q=80`}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 opacity-90 group-hover:opacity-100"
                                         onError={(e) => {
                                             (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1471922694854-ff1b63b20054?q=80&w=640";
                                         }}
                                     />
                                     <div className="absolute top-5 left-5 firebase-gradient px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-white shadow-lg">
-                                        Flight Review
+                                        {art.category || 'Flight Review'}
                                     </div>
                                 </div>
                                 <div className="px-4 pb-6">
                                     <h3 className="text-sm md:text-[15px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-2 italic text-[#1a1a1a]/80 mb-2">
-                                        {i === 0 ? 'Testing the New Dreamliner Suites: Is it worth the upgrade?' :
-                                            i === 1 ? 'Exploring Singapore Changi: The Worlds Best Transit Hub?' :
-                                                i === 2 ? 'Economy Class Showdown: Best Value trans-atlantic flights ranked' :
-                                                    i === 3 ? 'Inside the New Ultra-Long-Haul First Class Cabins' :
-                                                        i === 4 ? 'Luxury in the Sky: Emirates First Class Experience' :
-                                                            'The Future of Sustainable Travel: A Journey on Biofuel'}
+                                        {art.title}
                                     </h3>
                                     <p className="text-[11px] text-[#1a1a1a]/50 line-clamp-2 leading-relaxed font-medium italic mb-4">
-                                        Dive into our comprehensive review of the latest aviation experiences, from long-haul luxury to regional transit gems...
+                                        {art.excerpt || (art.content ? art.content.slice(0, 110) + '...' : 'Dive into our comprehensive review of the latest aviation experiences, from long-haul luxury to regional transit gems...')}
                                     </p>
                                     <div className="flex items-center gap-3 text-[10px] font-black text-black/20 tracking-wider">
-                                        <span className="bg-[#20a6eb]/10 text-[#20a6eb] px-2 py-0.5 rounded-full border border-[#20a6eb]/10">★ {8.5 + (i * 0.1)} Rating</span>
-                                        <span>• May {21 + i}, 2026</span>
+                                        <span className="bg-[#20a6eb]/10 text-[#20a6eb] px-2 py-0.5 rounded-full border border-[#20a6eb]/10">★ {(art as any).rating || (8.5 + (i * 0.1)).toFixed(1)} Rating</span>
+                                        <span>• {(art as any).date || new Date(art.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             </motion.div>
                         ))}
+
                     </ScrollContainer>
 
                     {/* Section: Accidents & Incidents */}
@@ -817,7 +866,7 @@ export default function PortalLanding({
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-[#20a6eb]/80 transition-all duration-700" />
 
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 group-hover:scale-125 group-hover:bg-[#e86420] transition-all duration-500 shadow-2xl">
+                                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 group-hover:scale-125 group-hover:bg-[#20a6eb] transition-all duration-500 shadow-2xl">
                                         <Play className="w-6 h-6 text-white fill-current translate-x-0.5" />
                                     </div>
                                 </div>
@@ -901,6 +950,34 @@ export default function PortalLanding({
                 </section>
 
             </main>
+
+            <footer className="w-full border-t border-black/5 bg-white py-8 px-6 text-center text-xs text-gray-400 mt-12 mb-8 select-none">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
+                        <p>© {new Date().getFullYear()} RadarDesk Systems. Professional Polish Enterprise Theme.</p>
+                        <div className="flex gap-4 text-xs font-semibold">
+                            <button
+                                onClick={() => onNavigate?.('/developer')}
+                                className="text-gray-500 hover:text-[#20a6eb] cursor-pointer bg-transparent border-0 p-0 font-medium transition-colors"
+                            >
+                                Developer Space
+                            </button>
+                            <button
+                                onClick={() => onNavigate?.('/admin-portal')}
+                                className="text-gray-500 hover:text-[#20a6eb] cursor-pointer bg-transparent border-0 p-0 font-medium transition-colors"
+                            >
+                                Admin Control Room
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3.5 text-[10px] font-mono">
+                        <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" /> Gateway OK
+                        </span>
+                        <span>API Time SLA: &lt;112ms</span>
+                    </div>
+                </div>
+            </footer>
 
 
             <style dangerouslySetInnerHTML={{

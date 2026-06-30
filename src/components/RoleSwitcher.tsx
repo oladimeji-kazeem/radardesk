@@ -52,11 +52,10 @@ export default function RoleSwitcher({ currentUser, users, onSwitchUser, onUpdat
               return (
                 <div
                   key={u.id}
-                  className={`flex flex-col p-2.5 rounded-lg border transition-all ${
-                    isActive
+                  className={`flex flex-col p-2.5 rounded-lg border transition-all ${isActive
                       ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-sm'
                       : 'border-slate-100 hover:bg-slate-50 text-slate-700'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <button
@@ -70,14 +69,13 @@ export default function RoleSwitcher({ currentUser, users, onSwitchUser, onUpdat
                       {u.name}
                       {isActive && <span className="ml-1.5 text-[10px] text-blue-600 font-semibold">• Active</span>}
                     </button>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                      u.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
-                      u.role === 'Senior Editor' ? 'bg-orange-100 text-orange-700' :
-                      u.role === 'Editor' ? 'bg-indigo-100 text-indigo-700' :
-                      u.role === 'Quality Checker' ? 'bg-amber-100 text-amber-700' :
-                      u.role === 'Publisher' ? 'bg-emerald-100 text-emerald-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${u.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
+                        u.role === 'Senior Editor' ? 'bg-[#20a6eb]/10 text-[#20a6eb]' :
+                          u.role === 'Editor' ? 'bg-indigo-100 text-indigo-700' :
+                            u.role === 'Quality Checker' ? 'bg-amber-100 text-amber-700' :
+                              u.role === 'Publisher' ? 'bg-emerald-100 text-emerald-700' :
+                                'bg-slate-100 text-slate-700'
+                      }`}>
                       {u.role}
                     </span>
                   </div>

@@ -182,6 +182,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
         {
             category: 'Intelligence Feed',
             items: sectorArticles.slice(0, 4).map(a => ({
+                id: a.id,
                 time: new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 title: a.title,
                 image: a.headerImage,
@@ -192,6 +193,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
         {
             category: 'Strategic Analysis',
             items: sectorArticles.slice(4, 8).map(a => ({
+                id: a.id,
                 time: new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 title: a.title,
                 image: a.headerImage,
@@ -277,12 +279,14 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                 <div className="space-y-4">
                                     {stream.items.map((item, iIdx) => (
                                         <motion.div
-                                            key={item.title}
+                                            key={item.id || item.title}
                                             initial={{ opacity: 0, x: -10 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.2 + (iIdx * 0.1) }}
+                                            onClick={() => onNavigate?.('/article/' + item.id)}
                                             className="group bg-white p-4 rounded-[1.5rem] border border-black/5 hover:border-[#20a6eb]/20 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
                                         >
+
                                             <div className="flex items-start gap-4">
                                                 <div className="flex flex-col items-center gap-2 mt-1">
                                                     <div className="text-[10px] font-black text-black/20 font-mono">{item.time}</div>
@@ -361,7 +365,11 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                             </h3>
                             <div className="space-y-4">
                                 {sectorArticles.slice(0, 3).map((art, idx) => (
-                                    <div key={idx} className="flex gap-4 group cursor-pointer border-b border-black/5 pb-4 last:border-0 last:pb-0">
+                                    <div
+                                        key={idx}
+                                        onClick={() => onNavigate?.('/article/' + art.id)}
+                                        className="flex gap-4 group cursor-pointer border-b border-black/5 pb-4 last:border-0 last:pb-0"
+                                    >
                                         <div className="text-[8px] font-black text-black/20 font-mono mt-0.5">{new Date(art.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                         <div className="space-y-1">
                                             <h5 className="text-[11px] font-bold text-black/60 group-hover:text-[#20a6eb] transition-colors leading-tight italic line-clamp-2">{art.title}</h5>

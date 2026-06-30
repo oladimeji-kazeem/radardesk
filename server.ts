@@ -21,7 +21,7 @@ dotenv.config();
 
 // Lazy load Supabase SDK client in a safe way
 let supabaseClientInstance: ReturnType<typeof createClient> | null = null;
-function getSupabaseClient() {
+function getSupabaseClient(): any {
   if (!supabaseClientInstance) {
     const supabaseUrl = process.env.SUPABASE_URL || "https://qiciaqxucmvwwfvodqzz.supabase.co";
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -32,10 +32,11 @@ function getSupabaseClient() {
       auth: {
         persistSession: false
       }
-    });
+    }) as any;
   }
   return supabaseClientInstance;
 }
+
 
 // Database state is now entirely managed via Supabase PostgreSQL.
 // Local file-based persistence (db.json) is legacy and has been removed.
@@ -250,7 +251,7 @@ async function startServer() {
     const { name, email, password, role } = req.body;
     const emailLower = email.trim().toLowerCase();
 
-    if (!emailLower.endsWith('@travelradar.aero')) {
+    if (role !== 'Visitor' && !emailLower.endsWith('@travelradar.aero')) {
       return res.status(403).json({ error: 'Enrollment Blocked: Registration restricted to official @travelradar.aero domains.' });
     }
 
@@ -336,7 +337,7 @@ async function startServer() {
     const { name, email, role } = req.body;
 
     // Policy check: restricted domains
-    if (!email.trim().toLowerCase().endsWith('@travelradar.aero')) {
+    if (role !== 'Visitor' && !email.trim().toLowerCase().endsWith('@travelradar.aero')) {
       return res.status(403).json({ error: 'Operational Gating Policy: Only @travelradar.aero accounts are permitted.' });
     }
 
@@ -1228,14 +1229,21 @@ async function startServer() {
       const supabase = getSupabaseClient();
 
       // Fetch all needed data
-      const { data: topics } = await supabase.from('topics').select('*');
-      const { data: articles } = await supabase.from('articles').select('*');
-      const { data: analytics } = await supabase.from('web_analytics').select('*').eq('id', 1).single();
-      const { data: users } = await supabase.from('users').select('*');
+      const { data: tData } = await supabase.from('topics').select('*');
+      const { data: aData } = await supabase.from('articles').select('*');
+      const { data: analyticsData } = await supabase.from('web_analytics').select('*').eq('id', 1).single();
+      const { data: uData } = await supabase.from('users').select('*');
 
-      if (!topics || !articles || !analytics || !users) {
+      if (!tData || !aData || !analyticsData || !uData) {
         return res.status(500).json({ error: 'Failed to fetch analytics data' });
       }
+
+      const topics = tData as any[];
+      const articles = aData as any[];
+      const analytics = analyticsData as any;
+      const users = uData as any[];
+
+
 
       // Topic Lifecycle Counts
       const topicLifecycle = {
@@ -1366,13 +1374,110 @@ async function startServer() {
     }
   });
 
+  let viteInstance: any = null;
+
+  app.get('/article/:id', async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      let article: any = null;
+
+      try {
+        const supabase = getSupabaseClient();
+        const { data: articleData, error } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (!error && articleData) {
+          article = articleData;
+        }
+      } catch (dbErr) {
+        console.error('Supabase query failed, attempting local fallback:', dbErr);
+      }
+
+      // Local fallback lookup
+      if (!article) {
+        const dbPath = path.join(process.cwd(), 'db.json');
+        if (fs.existsSync(dbPath)) {
+          try {
+            const db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+            const localArt = db.articles?.find((a: any) => a.id === id);
+            if (localArt) {
+              article = {
+                title: localArt.title,
+                excerpt: localArt.excerpt,
+                content: localArt.content,
+                headerImage: localArt.headerImage || localArt.header_image
+              };
+            }
+          } catch (jsonErr) {
+            console.error('Failed reading fallback db.json:', jsonErr);
+          }
+        }
+      }
+
+      if (!article) {
+        return next();
+      }
+
+
+
+      let templatePath = '';
+      if (process.env.NODE_ENV !== 'production') {
+        templatePath = path.join(process.cwd(), 'index.html');
+      } else {
+        const distPath = __dirname;
+        templatePath = path.join(distPath, 'index.html');
+      }
+
+      if (!fs.existsSync(templatePath)) {
+        return next();
+      }
+
+      let html = fs.readFileSync(templatePath, 'utf-8');
+
+      if (process.env.NODE_ENV !== 'production' && viteInstance) {
+        html = await viteInstance.transformIndexHtml(req.originalUrl || req.url, html);
+      }
+
+      const title = article.title || 'RadarDesk Article';
+      const description = article.excerpt || (article.content ? article.content.substring(0, 150) + '...' : 'Operational intelligence briefing.');
+      const image = article.headerImage || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200';
+      const siteUrl = `${req.protocol}://${req.get('host')}`;
+      const url = `${siteUrl}/article/${id}`;
+
+      const metaTags = `
+  <title>${title} - RadarDesk</title>
+  <meta name="description" content="${description.replace(/"/g, '&quot;')}" />
+  <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
+  <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+  <meta property="og:image" content="${image}" />
+  <meta property="og:url" content="${url}" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+  <meta name="twitter:image" content="${image}" />`;
+
+      // Replace generic title with metadata injection
+      html = html.replace('<title>RadarDesk - Content Platform</title>', metaTags);
+
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    } catch (err) {
+      console.error('Error rendering dynamic meta tags:', err);
+      next();
+    }
+  });
+
   // Integration with Vite
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
+    viteInstance = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
-    app.use(vite.middlewares);
+    app.use(viteInstance.middlewares);
   } else {
     // In production, we serve from the same folder where server.cjs and assets are located
     const distPath = __dirname;
@@ -1381,6 +1486,7 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
 
   const port = process.env.PORT || 3000;
   app.listen(Number(port), '0.0.0.0', () => {

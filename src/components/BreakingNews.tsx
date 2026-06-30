@@ -136,8 +136,10 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.98 }}
                                     animate={{ opacity: 1, scale: 1 }}
+                                    onClick={() => onNavigate?.('/article/' + featuredStory.id)}
                                     className="xl:col-span-8 group cursor-pointer"
                                 >
+
                                     <div className="relative aspect-[16/10] rounded-[3.5rem] overflow-hidden shadow-2xl mb-8">
                                         <img
                                             src={featuredStory.headerImage || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200'}
@@ -191,8 +193,10 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.1 * (i + 1) }}
+                                        onClick={() => onNavigate?.('/article/' + story.id)}
                                         className="group cursor-pointer bg-white p-6 rounded-[2.5rem] border border-black/5 hover:shadow-2xl hover:border-[#20a6eb]/20 transition-all"
                                     >
+
                                         <div className="relative aspect-[16/9] rounded-[1.5rem] overflow-hidden mb-6">
                                             <img
                                                 src={story.headerImage || `https://images.unsplash.com/photo-${1500000000000 + i}?q=80&w=800`}
@@ -231,8 +235,10 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.05 * i }}
+                                    onClick={() => onNavigate?.('/article/' + story.id)}
                                     className="group cursor-pointer space-y-4"
                                 >
+
                                     <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-lg border border-black/5">
                                         <img
                                             src={story.headerImage || `https://images.unsplash.com/photo-${1510000000000 + i}?q=80&w=600`}
@@ -298,8 +304,10 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: 0.1 * i }}
+                                            onClick={() => onNavigate?.('/article/' + story.id)}
                                             className="relative pl-8 group cursor-pointer"
                                         >
+
                                             <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-black/5 group-hover:border-red-500 group-hover:scale-125 transition-all z-10 shadow-sm" />
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">

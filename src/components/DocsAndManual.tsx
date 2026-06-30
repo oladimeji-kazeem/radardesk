@@ -192,7 +192,7 @@ ON CONFLICT (id) DO NOTHING;`;
     <div className="space-y-6" id="documentation-module">
 
       {/* Flight Gradient Header Header */}
-      <div className="bg-gradient-to-r from-[#20a6eb] via-slate-800 to-[#e86420] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#20a6eb] via-slate-800 to-cyan-500 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10 mix-blend-multiply" />
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -378,14 +378,14 @@ ON CONFLICT (id) DO NOTHING;`;
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-                  <h3 className="font-bold text-slate-850 flex items-center gap-2 text-sm text-[#e86420] uppercase font-display">
+                  <h3 className="font-bold text-slate-850 flex items-center gap-2 text-sm text-[#20a6eb] uppercase font-display">
                     <Layers className="w-4 h-4" />
                     <span>Role-Based Operational Guide</span>
                   </h3>
 
                   <div className="space-y-3 font-sans text-xs">
-                    <div className="p-3 bg-orange-50/50 rounded-xl border border-orange-100 flex gap-2">
-                      <div className="font-bold text-orange-700 shrink-0 select-none font-mono">WRITER:</div>
+                    <div className="p-3 bg-sky-50/50 rounded-xl border border-sky-100 flex gap-2">
+                      <div className="font-bold text-sky-700 shrink-0 select-none font-mono">WRITER:</div>
                       <div>
                         Proposes initial concepts. Claims topics from the pool. Saves drafts of claims and submits to editors before system countdown runs out. Returns to revise drafts if rejected.
                       </div>
@@ -479,7 +479,7 @@ ON CONFLICT (id) DO NOTHING;`;
               {/* ERD Blueprint Diagram */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
-                  <Database className="w-5 h-5 text-[#e86420]" />
+                  <Database className="w-5 h-5 text-[#20a6eb]" />
                   <span>Interactive ER Schema Blueprint Model</span>
                 </h3>
 
@@ -487,7 +487,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
                   {/* Users spec */}
                   <div className="border border-slate-100 bg-slate-50/50 p-4 rounded-xl">
-                    <div className="font-bold text-orange-650 mb-2 border-b border-orange-100 pb-1 flex justify-between">
+                    <div className="font-bold text-sky-600 mb-2 border-b border-sky-100 pb-1 flex justify-between">
                       <span>1. radardesk_users</span>
                       <span className="text-slate-450">[PK: id]</span>
                     </div>
@@ -595,7 +595,7 @@ ON CONFLICT (id) DO NOTHING;`;
                     <button
                       onClick={handleSupabaseSync}
                       disabled={isSyncing}
-                      className="px-5 py-2 bg-gradient-to-r from-[#20a6eb] to-[#e86420] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 hover:scale-102 transition-all cursor-pointer disabled:opacity-50 border-0"
+                      className="px-5 py-2 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 hover:scale-102 transition-all cursor-pointer disabled:opacity-50 border-0"
                     >
                       <Terminal className="w-3.5 h-3.5" />
                       <span>{isSyncing ? 'Synchronizing Recs...' : 'Sync Local Payload directly to Supabase'}</span>
@@ -632,7 +632,7 @@ ON CONFLICT (id) DO NOTHING;`;
 
                     <div className="bg-white p-4.5 rounded-xl border border-slate-200/60 shadow-inner">
                       <span className="text-slate-400 block text-[9px] uppercase font-bold font-mono">radardesk_users</span>
-                      <span className="text-xl font-extrabold text-[#e86420] mt-1 block">{rowsCount.users || 0} rows</span>
+                      <span className="text-xl font-extrabold text-[#20a6eb] mt-1 block">{rowsCount.users || 0} rows</span>
                     </div>
 
                     <div className="bg-white p-4.5 rounded-xl border border-slate-200/60 shadow-inner">
@@ -757,7 +757,7 @@ ON CONFLICT (id) DO NOTHING;`;
                 {/* Section B: Production Compilation & Run */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-orange-50 text-[#e86420] border border-orange-100">
+                    <div className="p-1.5 rounded-lg bg-sky-50 text-[#20a6eb] border border-sky-100">
                       <Globe className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-slate-800 text-sm">Production Compilation & Deployment</span>

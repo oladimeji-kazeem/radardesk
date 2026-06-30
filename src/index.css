@@ -13,7 +13,7 @@
 }
 
 .bg-secondary {
-  background-color: #e86420;
+  background-color: #20a6eb;
 }
 
 .text-primary {
@@ -32,9 +32,9 @@
   background-color: #f8fafc;
   background-image:
     radial-gradient(at 10% 20%, rgba(32, 166, 235, 0.08) 0px, transparent 40%),
-    radial-gradient(at 90% 10%, rgba(232, 100, 32, 0.08) 0px, transparent 40%),
+    radial-gradient(at 90% 10%, rgba(32, 166, 235, 0.08) 0px, transparent 40%),
     radial-gradient(at 80% 90%, rgba(32, 166, 235, 0.06) 0px, transparent 40%),
-    radial-gradient(at 20% 80%, rgba(232, 100, 32, 0.08) 0px, transparent 40%);
+    radial-gradient(at 20% 80%, rgba(32, 166, 235, 0.08) 0px, transparent 40%);
 }
 
 .animate-spin-slow {
@@ -52,7 +52,7 @@
 }
 
 .firebase-gradient {
-  background: linear-gradient(135deg, #20a6eb 0%, #e86420 50%, #363636 100%);
+  background: linear-gradient(135deg, #20a6eb 0%, #29b2ff 50%, #363636 100%);
   background-size: 200% 200%;
   animation: gradient-shift 10s ease infinite;
 }
@@ -76,7 +76,7 @@
 }
 
 .firebase-glow-orange {
-  box-shadow: 0 10px 30px rgba(232, 100, 32, 0.2);
+  box-shadow: 0 10px 30px rgba(32, 166, 235, 0.2);
 }
 
 .firebase-card-effect {
@@ -119,7 +119,7 @@
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(135deg, #20a6eb, #e86420, #363636, #20a6eb);
+  background: linear-gradient(135deg, #20a6eb, #29b2ff, #363636, #20a6eb);
   background-size: 300% 300%;
   animation: radar-glow-flow 8s ease infinite;
   z-index: -1;
@@ -187,7 +187,7 @@
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(135deg, #20a6eb, #e86420, #363636, #20a6eb);
+  background: linear-gradient(135deg, #20a6eb, #29b2ff, #363636, #20a6eb);
   background-size: 300% 300%;
   animation: radar-glow-flow 8s ease infinite;
   z-index: -1;

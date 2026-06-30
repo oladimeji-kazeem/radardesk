@@ -21,7 +21,9 @@ import AviationPortal from './components/AviationPortal';
 import TravelPortal from './components/TravelPortal';
 import RadarPortal, { RadarSector } from './components/RadarPortal';
 import AirIntelligencePortal from './components/AirIntelligencePortal';
+import ArticleReader from './components/ArticleReader';
 import { SharedLayout } from './components/SharedLayout';
+
 import { User as UserIcon, BookOpen, LogOut } from 'lucide-react';
 import { supabase, isStandalone } from './lib/supabase';
 import {
@@ -91,14 +93,16 @@ export default function App() {
   const [activeTopicFromPool, setActiveTopicFromPool] = useState<Topic | null>(null);
   const [activeArticleForEditing, setActiveArticleForEditing] = useState<Article | null>(null);
   const [showUATForm, setShowUATForm] = useState(false);
-  const [activePortal, setActivePortal] = useState<'home' | 'breaking-news' | 'aviation' | 'travel' | 'radar' | 'air-intelligence'>('home');
+  const [activePortal, setActivePortal] = useState<'home' | 'breaking-news' | 'aviation' | 'travel' | 'radar' | 'air-intelligence' | 'article'>('home');
   const [activeRadarSector, setActiveRadarSector] = useState<RadarSector>('Commercial Aviation');
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
 
   // Global search and details preview states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
-  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
   const [previewTopic, setPreviewTopic] = useState<Topic | null>(null);
+  const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+
 
   // Handle URL routing for Breaking News and Aviation portals
   const handleUrlChange = () => {
@@ -110,6 +114,10 @@ export default function App() {
 
     if (path === '/breaking-news') {
       setActivePortal('breaking-news');
+    } else if (path.startsWith('/article/')) {
+      setActivePortal('article');
+      const artId = path.split('/')[2];
+      setSelectedArticleId(artId);
     } else if (path.startsWith('/radar')) {
       setActivePortal('radar');
       const sector = path.split('/')[2];
@@ -122,6 +130,34 @@ export default function App() {
       else if (sector === 'live-vectors') setActiveRadarSector('Live Vectors');
       else if (sector === 'the-wire') setActiveRadarSector('The Wire');
       else if (!sector) setActiveRadarSector('Breaking Pulse');
+    } else if (path === '/developer') {
+      if (currentUser) {
+        setViewMode('app');
+        if (currentUser.role === 'Admin') {
+          setActiveTab('admin');
+        } else {
+          setActiveTab('dashboard');
+        }
+      }
+      setActivePortal('developer');
+    } else if (path === '/admin-portal') {
+      if (currentUser) {
+        if (currentUser.role === 'Admin' || currentUser.role === 'Senior Editor') {
+          setViewMode('app');
+          setActiveTab('admin');
+          setActivePortal('admin-portal');
+        } else {
+          addToast('Access Denied: You do not have permissions to access the administrator portal.', 'error');
+          // Redirect to developer desk
+          const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+          window.history.pushState({}, '', `${BASE_URL}/developer`);
+          setActivePortal('developer');
+          setActiveTab('dashboard');
+          setViewMode('app');
+        }
+      } else {
+        setActivePortal('admin-portal');
+      }
     } else if (path === '/aviation' || path.startsWith('/aviation/')) {
       setActivePortal('aviation');
     } else if (path === '/travel' || path.startsWith('/travel/')) {
@@ -407,11 +443,34 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Listen for back/forward buttons and handle sessions shifts
+  useEffect(() => {
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
+  }, [currentUser]);
+
   const handleLoginSuccess = (user: User) => {
     localStorage.setItem('radar_logged_user', JSON.stringify(user));
     setCurrentUser(user);
     setShowAuthScreen(false);
-    setViewMode('app');
+
+    const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    if (user.role === 'Admin') {
+      setViewMode('app');
+      setActiveTab('admin');
+      window.history.pushState({}, '', `${BASE_URL}/admin-portal`);
+      setActivePortal('admin-portal');
+    } else if (user.role === 'Visitor') {
+      // Visitors stay on the public homepage — no internal cockpit access
+      setViewMode('landing');
+      window.history.pushState({}, '', `${BASE_URL}/`);
+      setActivePortal('home');
+    } else {
+      setViewMode('app');
+      setActiveTab('dashboard');
+      window.history.pushState({}, '', `${BASE_URL}/developer`);
+      setActivePortal('developer');
+    }
   };
 
   const handleSignOut = () => {
@@ -419,6 +478,9 @@ export default function App() {
     setCurrentUser(null);
     setShowAuthScreen(false);
     setViewMode('landing');
+    const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    window.history.pushState({}, '', `${BASE_URL}/`);
+    setActivePortal('home');
     addToast('Logged out of RadarDesk Operations successfully.', 'info');
   };
 
@@ -1168,14 +1230,78 @@ export default function App() {
     );
   }
 
+  if (activePortal === 'article' && selectedArticleId) {
+    const article = articles.find(a => a.id === selectedArticleId);
+    if (article) {
+      return (
+        <SharedLayout
+          activeCategory="article"
+          articles={articles}
+          onNavigate={handleNavigate}
+          onSignIn={() => handleAuthTrigger('signin')}
+          onGetStarted={() => handleAuthTrigger('signup')}
+          onSearch={handleGlobalSearch}
+        >
+          <ArticleReader
+            article={article}
+            articles={articles}
+            onBack={() => {
+              const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+              let backPath = '/';
+              if (article.category === 'Aviation') backPath = '/aviation';
+              else if (article.category === 'Travel') backPath = '/travel';
+              else if (article.category === 'Radar') backPath = '/radar';
+              else if (article.category === 'Breaking News') backPath = '/breaking-news';
+              window.history.pushState({}, '', `${BASE_URL}${backPath}`);
+              handleUrlChange();
+            }}
+            onNavigate={handleNavigate}
+            onPostComment={handlePostComment}
+            currentUser={currentUser || undefined}
+          />
+        </SharedLayout>
+      );
+    } else {
+      const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+      window.history.pushState({}, '', `${BASE_URL}/`);
+      setActivePortal('home');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  }
+
   // Gated Authentication view center
   if (!currentUser) {
+    if (activePortal === 'developer') {
+      return (
+        <AuthScreen
+          onLoginSuccess={handleLoginSuccess}
+          onAddToast={addToast}
+          users={users}
+          portalType="developer"
+          onBack={() => handleNavigate('/')}
+        />
+      );
+    }
+
+    if (activePortal === 'admin-portal') {
+      return (
+        <AuthScreen
+          onLoginSuccess={handleLoginSuccess}
+          onAddToast={addToast}
+          users={users}
+          portalType="admin"
+          onBack={() => handleNavigate('/')}
+        />
+      );
+    }
+
     if (showAuthScreen) {
       return (
         <AuthScreen
           onLoginSuccess={handleLoginSuccess}
           onAddToast={addToast}
           users={users}
+          portalType="all"
           onBack={() => setShowAuthScreen(false)}
         />
       );
@@ -1275,8 +1401,8 @@ export default function App() {
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
             onNavigate={handleNavigate}
-            sectorStats={sectorStats}
           />
+
         </SharedLayout>
       );
     }
@@ -1294,8 +1420,8 @@ export default function App() {
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
-            sectorStats={sectorStats}
           />
+
         </SharedLayout>
       );
     }
@@ -1338,8 +1464,8 @@ export default function App() {
           <BreakingNews
             articles={articles}
             onNavigate={handleNavigate}
-            sectorStats={sectorStats}
           />
+
         </SharedLayout>
       );
     }
@@ -1498,7 +1624,7 @@ export default function App() {
       {/* LEFT SIDEBAR - Desktop view only */}
       <aside className="hidden lg:flex w-64 sidebar-bg flex-col shrink-0 text-white min-h-screen relative shadow-lg">
         {/* Sky-lighting accent bar inside sidebar header */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-cyan-500" />
 
         <div
           onClick={() => setViewMode('landing')}
@@ -1527,7 +1653,7 @@ export default function App() {
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium text-xs text-white/70 hover:bg-white/5 hover:text-white"
             title="Return to Welcome Hub Landing Page"
           >
-            <BookOpen className="w-4 h-4 opacity-85 text-[#e86420]" />
+            <BookOpen className="w-4 h-4 opacity-85 text-cyan-550" />
             <span className="flex-1 text-left">Marketing Landing</span>
           </button>
 
@@ -1610,7 +1736,7 @@ export default function App() {
               <ShieldCheck className="w-4 h-4 opacity-80" />
               <span className="flex-1 text-left">Quality Desk</span>
               {articles.filter(a => a.status === 'Approved').length > 0 && (
-                <span className="bg-[#e86420] text-slate-950 font-black px-1.5 py-0.5 rounded text-[8px] animate-pulse">
+                <span className="bg-[#20a6eb] text-white font-black px-1.5 py-0.5 rounded text-[8px] animate-pulse">
                   {articles.filter(a => a.status === 'Approved').length}
                 </span>
               )}
@@ -1798,9 +1924,21 @@ export default function App() {
                                 key={art.id}
                                 type="button"
                                 onClick={() => {
-                                  setPreviewArticle(art);
+                                  if (art.status === 'Published') {
+                                    handleNavigate(`article/${art.id}`);
+                                  } else {
+                                    let tabTarget: any = 'writer';
+                                    if (['Submitted', 'Under Review', 'Minor Revision', 'Rejected', 'Escalated'].includes(art.status)) {
+                                      tabTarget = 'editor';
+                                    } else if (art.status === 'Approved') {
+                                      tabTarget = 'quality-check';
+                                    }
+                                    setActiveTab(tabTarget);
+                                    addToast(`Switched active desk, locating requested draft...`, 'info');
+                                  }
                                   setSearchFocused(false);
                                 }}
+
                                 className="w-full text-left p-2 hover:bg-slate-50 rounded-lg transition-all flex items-start gap-2.5 group cursor-pointer border-0 bg-transparent"
                               >
                                 <div className="p-1 rounded bg-sky-50 text-slate-400 group-hover:bg-sky-100 group-hover:text-[#20a6eb] transition-all">
@@ -2165,7 +2303,7 @@ export default function App() {
               © {new Date().getFullYear()} RadarDesk Systems. Professional Polish Enterprise Theme.
             </p>
             <div className="flex items-center gap-3.5 text-[10px] font-mono text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#e86420] inline-block" /> Ingress Gateway OK</span>
+              <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#20a6eb] inline-block" /> Ingress Gateway OK</span>
               <span>API SLA: &lt;112ms</span>
             </div>
           </div>
@@ -2180,7 +2318,7 @@ export default function App() {
 
             {/* Header */}
             <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-cyan-500" />
               <div className="space-y-1.5 flex-1 pr-6 text-left">
                 <span className="text-[9px] font-mono font-black uppercase text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Universal Records • Article Specs</span>
                 <h3 className="text-sm font-bold text-slate-800 tracking-tight font-display pr-3 leading-snug">{previewArticle.title}</h3>
@@ -2291,7 +2429,7 @@ export default function App() {
 
             {/* Header */}
             <div className="bg-slate-50 p-6 border-b border-indigo-100 flex justify-between items-start relative shrink-0">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-[#e86420]" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] to-cyan-500" />
               <div className="space-y-1.5 flex-1 pr-6 text-left">
                 <span className="text-[9px] font-mono font-black uppercase text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Universal Records • Concept Brief specs</span>
                 <h3 className="text-sm font-bold text-slate-800 tracking-tight font-display pr-3 leading-snug">{previewTopic.title}</h3>
@@ -2300,7 +2438,7 @@ export default function App() {
                   <span>•</span>
                   <span>Category: <strong className="text-slate-650 bg-slate-100 px-1.5 py-0.2 rounded font-semibold text-[10px] border border-slate-200">{previewTopic.category}</strong></span>
                   <span>•</span>
-                  <span>Min Claim: <strong className="text-[#e86420]">{previewTopic.durationMinutes} mins</strong></span>
+                  <span>Min Claim: <strong className="text-[#20a6eb]">{previewTopic.durationMinutes} mins</strong></span>
                 </div>
               </div>
               <button

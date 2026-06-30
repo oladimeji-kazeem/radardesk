@@ -69,7 +69,7 @@ export default function PublisherDesk({
   return (
     <div className="space-y-6" id="publisher-desk-module">
       <div className="bg-[#363636] p-6 rounded-2xl text-white shadow-lg border border-slate-700 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#e86420]/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#20a6eb]/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function PublisherDesk({
           <div className="shrink-0 flex items-center gap-3 bg-white/5 backdrop-blur-md p-3.5 rounded-xl border border-white/10 text-xs font-mono">
             <div className="text-center px-2">
               <span className="text-slate-400 block text-[9px] uppercase font-bold">Approved Ready</span>
-              <span className="text-lg font-bold text-[#e86420]">{approvedList.length}</span>
+              <span className="text-lg font-bold text-[#20a6eb]">{approvedList.length}</span>
             </div>
             <div className="w-px h-8 bg-white/20"></div>
             <div className="text-center px-2">
@@ -107,7 +107,7 @@ export default function PublisherDesk({
           {/* Pending publications */}
           <div className="space-y-3.5">
             <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wide">
-              <Clock className="w-4 h-4 text-[#e86420]" />
+              <Clock className="w-4 h-4 text-[#20a6eb]" />
               <span>Awaiting Final Live Release</span>
             </h3>
 
@@ -125,13 +125,13 @@ export default function PublisherDesk({
                       setPublishedComments('');
                     }}
                     className={`w-full text-left p-3.5 rounded-xl border transition-all relative flex flex-col gap-1 text-xs cursor-pointer ${art.id === activeArticleId
-                        ? 'bg-orange-50/40 border-[#e86420] shadow-md ring-1 ring-orange-200'
-                        : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+                      ? 'bg-sky-50/40 border-[#20a6eb] shadow-md ring-1 ring-sky-200'
+                      : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
                       }`}
                   >
                     <div className="flex justify-between items-center w-full text-[10px] text-zinc-400">
                       <span>By: {art.writerName}</span>
-                      <span className="font-semibold text-orange-600">QA Ready</span>
+                      <span className="font-semibold text-sky-600">QA Ready</span>
                     </div>
                     <h4 className="font-bold text-slate-800 tracking-tight leading-snug line-clamp-2">{art.title}</h4>
                   </button>
@@ -182,7 +182,7 @@ export default function PublisherDesk({
               {/* Device Selector & Live preview heading */}
               <div className="bg-slate-900 text-white p-4.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="p-1 px-2 rounded bg-[#e86420] text-slate-950 text-[10px] font-black uppercase">
+                  <span className="p-1 px-2 rounded bg-[#20a6eb] text-white text-[10px] font-black uppercase">
                     Preview Mode
                   </span>
                   <span className="text-xs font-semibold text-slate-300">Live Device Rendering</span>
@@ -220,7 +220,7 @@ export default function PublisherDesk({
 
                     <div className="p-6 md:p-8 space-y-6">
                       <div className="space-y-3">
-                        <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#e86420]">
+                        <span className="text-[10px] uppercase tracking-widest font-extrabold text-[#20a6eb]">
                           {topics.find(t => t.id === selectedArticle.topicId)?.category || 'Travel Guide'}
                         </span>
                         <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-tight">
@@ -283,11 +283,11 @@ export default function PublisherDesk({
 
               {/* Publisher deploy settings */}
               <div className="p-6 space-y-4">
-                <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-200/40 text-xs text-orange-900 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-[#e86420] shrink-0 mt-0.5" />
+                <div className="bg-sky-50/50 p-4 rounded-xl border border-sky-200/40 text-xs text-sky-900 flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-[#20a6eb] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-extrabold text-orange-950">Confirm Publication Release Payload</p>
-                    <p className="mt-0.5 text-orange-800">Deploying registers this article immediately onto the public web feeds directory. This freezes further edits by creators. Claim ownership of final payload release below.</p>
+                    <p className="font-extrabold text-sky-950">Confirm Publication Release Payload</p>
+                    <p className="mt-0.5 text-sky-850">Deploying registers this article immediately onto the public web feeds directory. This freezes further edits by creators. Claim ownership of final payload release below.</p>
                   </div>
                 </div>
 
@@ -308,7 +308,7 @@ export default function PublisherDesk({
                   <button
                     onClick={handlePublishDeploy}
                     disabled={deploying}
-                    className="w-full md:w-auto px-6 py-3 bg-[#e86420] hover:bg-[#d05315] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full md:w-auto px-6 py-3 bg-[#20a6eb] hover:bg-[#20a6eb]/80 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all disabled:opacity-50 cursor-pointer border-0"
                   >
                     <Send className="w-4 h-4" />
                     <span>Publish live to RadarDesk feed</span>

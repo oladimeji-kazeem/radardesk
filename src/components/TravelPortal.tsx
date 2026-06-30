@@ -586,8 +586,10 @@ export default function TravelPortal({
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95 }}
                                             transition={{ delay: idx * 0.05 }}
+                                            onClick={() => onNavigate?.('/article/' + article.id)}
                                             className="group bg-white hover:bg-gray-50 border border-gray-100 rounded-[2rem] transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-xl flex flex-col h-full"
                                         >
+
                                             <div className="relative h-64 overflow-hidden">
                                                 <img
                                                     src={(article as any).headerImage || 'https://images.unsplash.com/photo-1544016768-982d1554f0b9?q=80&w=800'}

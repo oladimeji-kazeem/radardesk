@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { WebAnalytics } from '../types';
-import { 
-  BarChart, 
-  TrendingUp, 
-  Users, 
-  Activity, 
-  FileCheck2, 
-  AlertTriangle, 
-  Clock, 
-  LineChart, 
+import {
+  BarChart,
+  TrendingUp,
+  Users,
+  Activity,
+  FileCheck2,
+  AlertTriangle,
+  Clock,
+  LineChart,
   Zap,
   Globe,
   PieChart,
@@ -53,7 +53,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
 
   const handleExportCSV = () => {
     const csvRows: string[] = [];
-    
+
     // 1. General Metrics
     csvRows.push('--- GENERAL PERFORMANCE METRICS ---');
     csvRows.push('Metric Name,Value,Description');
@@ -98,7 +98,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
 
   return (
     <div className="space-y-6" id="analytics-dashboard-module">
-      
+
       {/* Top Controls Bar */}
       <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex-wrap gap-2">
         <div>
@@ -126,7 +126,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
 
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
+
         {/* KPI 1 */}
         <div className="glass-card p-5 rounded-xl shadow-sm border-l-4 border-l-[#20a6eb] space-y-3 relative overflow-hidden">
           <div className="flex justify-between items-center">
@@ -145,15 +145,15 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
         </div>
 
         {/* KPI 2 */}
-        <div className="glass-card p-5 rounded-xl shadow-sm border-l-4 border-l-[#e86420] space-y-3 relative overflow-hidden">
+        <div className="glass-card p-5 rounded-xl shadow-sm border-l-4 border-l-cyan-500 space-y-3 relative overflow-hidden">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-extrabold text-[#363636] uppercase tracking-wider font-display">Turnaround SLA</span>
-            <Clock className="w-5 h-5 text-[#e86420]" />
+            <Clock className="w-5 h-5 text-cyan-500" />
           </div>
           <div>
             <h4 className="text-2xl font-black text-[#363636] font-mono tracking-tight">
-              {analyticsData.avgApprovalTimeSeconds > 0 
-                ? `${(analyticsData.avgApprovalTimeSeconds / 60).toFixed(1)} Mins` 
+              {analyticsData.avgApprovalTimeSeconds > 0
+                ? `${(analyticsData.avgApprovalTimeSeconds / 60).toFixed(1)} Mins`
                 : '1.2 Mins (Est)'}
             </h4>
             <p className="text-[10px] text-slate-400 mt-1">Average time from Writer Submit to Editor Publish state.</p>
@@ -178,12 +178,12 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
         <div className="glass-card p-5 rounded-xl shadow-sm border-l-4 border-l-[#20a6eb] space-y-3 relative overflow-hidden">
           <div className="flex justify-between items-center">
             <span className="text-[10px] font-extrabold text-[#363636] uppercase tracking-wider font-display">AI Score Pass Rate</span>
-            <Zap className="w-5 h-5 text-[#e86420] animate-pulse" />
+            <Zap className="w-5 h-5 text-cyan-500 animate-pulse" />
           </div>
           <div>
             <h4 className="text-2xl font-black text-[#363636] font-mono tracking-tight">
-              {analyticsData.webAnalytics?.submissionsCount > 0 
-                ? `${((analyticsData.webAnalytics.approvalsCount / analyticsData.webAnalytics.submissionsCount) * 105).toFixed(0)}%` 
+              {analyticsData.webAnalytics?.submissionsCount > 0
+                ? `${((analyticsData.webAnalytics.approvalsCount / analyticsData.webAnalytics.submissionsCount) * 105).toFixed(0)}%`
                 : '88%'}
             </h4>
             <p className="text-[10px] text-slate-400 mt-1">Submission validation ratios exceeding quality fences.</p>
@@ -194,7 +194,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
 
       {/* Bento-grid of deep analytical visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Topic lifecycle counts */}
         <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="pb-3 border-b border-slate-100 mb-3">
@@ -214,13 +214,12 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
                     <span className="font-mono font-bold text-slate-900">{count}</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden flex">
-                    <div 
-                      className={`h-full rounded-full ${
-                        key === 'Active' ? 'bg-gradient-to-r from-sky-400 to-sky-500' :
-                        key === 'Completed' ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' :
-                        key === 'Proposed' ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
-                        key === 'Released' ? 'bg-gradient-to-r from-orange-400 to-orange-500' : 'bg-slate-300'
-                      }`}
+                    <div
+                      className={`h-full rounded-full ${key === 'Active' ? 'bg-gradient-to-r from-sky-400 to-sky-500' :
+                          key === 'Completed' ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' :
+                            key === 'Proposed' ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                              key === 'Released' ? 'bg-gradient-to-r from-cyan-400 to-cyan-500' : 'bg-slate-300'
+                        }`}
                       style={{ width: `${Math.max(5, perc)}%` }}
                     />
                   </div>
@@ -273,7 +272,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Common Rejections Reasons Bar Chart representations */}
         <div className="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
           <div className="pb-3 border-b border-slate-100">
@@ -295,7 +294,7 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
                     <span className="font-mono font-bold text-slate-850">{count} times flag</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-rose-450 to-rose-500 h-full rounded-full transition-all"
                       style={{ width: `${Math.max(4, perc)}%` }}
                     />
@@ -332,11 +331,10 @@ export default function AnalyticsDashboard({ analyticsData, onRefresh }: Analyti
                         <span className="text-slate-400">Rejects:</span>
                         <span className="font-bold text-slate-850 ml-1">{item.cycles}</span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded font-extrabold text-[9px] uppercase ${
-                        item.status === 'Published' ? 'bg-emerald-100 text-emerald-700' :
-                        item.status === 'Submitted' ? 'bg-indigo-100 text-indigo-700' :
-                        item.status === 'Escalated' ? 'bg-purple-100 text-purple-700' : 'bg-slate-205 text-slate-600'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded font-extrabold text-[9px] uppercase ${item.status === 'Published' ? 'bg-emerald-100 text-emerald-700' :
+                          item.status === 'Submitted' ? 'bg-indigo-100 text-indigo-700' :
+                            item.status === 'Escalated' ? 'bg-purple-100 text-purple-700' : 'bg-slate-205 text-slate-600'
+                        }`}>
                         {item.status}
                       </span>
                     </div>

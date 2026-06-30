@@ -1,4 +1,4 @@
-export type UserRole = 'Writer' | 'Editor' | 'Senior Editor' | 'Quality Checker' | 'Publisher' | 'Admin';
+export type UserRole = 'Writer' | 'Editor' | 'Senior Editor' | 'Quality Checker' | 'Publisher' | 'Admin' | 'Visitor';
 
 export interface User {
   id: string;
@@ -164,6 +164,9 @@ export interface WorkflowConfig {
   authSettings?: AuthSettings;
   rolePrivileges?: RolePrivilege[];
 }
+
+export type SystemConfig = WorkflowConfig;
+
 
 export interface WebAnalytics {
   pageViews: number;

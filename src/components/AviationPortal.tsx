@@ -321,8 +321,10 @@ export default function AviationPortal({
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
+                                    onClick={() => onNavigate?.('/article/' + article.id)}
                                     className="group bg-white border border-black/5 rounded-[2rem] p-4 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500 cursor-pointer border-l-4 border-l-[#20a6eb]"
                                 >
+
                                     <div className="flex gap-6">
                                         <div className="w-40 h-32 shrink-0 rounded-2xl overflow-hidden shadow-sm">
                                             <img

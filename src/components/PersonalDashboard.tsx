@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  Sparkles, 
-  User, 
-  FileText, 
-  Clock, 
-  AlertTriangle, 
-  CheckCircle, 
-  BookOpen, 
-  Send, 
+import {
+  Sparkles,
+  User,
+  FileText,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  BookOpen,
+  Send,
   Layers,
   Award,
   TrendingUp,
@@ -69,7 +69,7 @@ export default function PersonalDashboard({
   // Editor queues
   const pendingEditorialReviews = articles.filter(a => a.status === 'Submitted' || a.status === 'Under Review');
   const articlesClaimedByEditor = articles.filter(a => a.editorId === currentUser.id && a.status === 'Under Review');
-  
+
   // Senior Editor queues
   const escalatedReviews = articles.filter(a => a.status === 'Escalated');
 
@@ -80,13 +80,13 @@ export default function PersonalDashboard({
   // Render separate cockpit based on active user's workspace authorization
   return (
     <div className="space-y-6" id="role-dashboard-cockpit">
-      
+
       {/* Personalized Welcome Header styled with beautiful flight gradients */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#e86420] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#20a6eb]/20 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#20a6eb] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden text-left">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#20a6eb]/25 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 text-left">
           <div className="space-y-1.5 text-left">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 justify-start">
               <span className="text-[10px] bg-sky-500 text-slate-950 font-black uppercase tracking-wider px-2 py-0.5 rounded">
                 Personal Cockpit
               </span>
@@ -94,13 +94,13 @@ export default function PersonalDashboard({
                 SLA: 15-min Guarantee
               </span>
             </div>
-            
-            <h2 className="text-2xl font-black font-display tracking-tight text-white flex items-center gap-2">
+
+            <h2 className="text-2xl font-black font-display tracking-tight text-white flex items-center gap-2 justify-start">
               <span>Greetings, {currentUser.name}</span>
               <span className="text-[#20a6eb] font-light">|</span>
-              <span className="text-orange-400 font-bold uppercase text-xs tracking-wider">{currentUser.role} Dashboard</span>
+              <span className="text-sky-400 font-bold uppercase text-xs tracking-wider">{currentUser.role} Dashboard</span>
             </h2>
-            
+
             <p className="text-xs text-slate-300 max-w-lg leading-relaxed font-sans">
               {currentRole === 'Writer' && "Draft, optimize, and push your hidden gem guides. You have direct access to AI pre-validation gates and available unclaimed topics!"}
               {currentRole === 'Editor' && "Inspect the submitted travel manuscripts assigned to you. Verify references and AP style before proceeding with approvals."}
@@ -127,12 +127,12 @@ export default function PersonalDashboard({
       {/* 1. WRITER DASHBOARD cockpit */}
       {currentRole === 'Writer' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Quick Stats Grid */}
           <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block">My Drafts</span>
-              <span className="text-2xl font-extrabold text-[#e86420] block mt-1">{userDraftsCount}</span>
+              <span className="text-2xl font-extrabold text-[#20a6eb] block mt-1">{userDraftsCount}</span>
               <span className="text-[10px] text-slate-400 mt-2 block">Awaiting submission</span>
             </div>
 
@@ -165,14 +165,14 @@ export default function PersonalDashboard({
           <div className="lg:col-span-4 space-y-4 text-left">
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-slate-800 text-xs uppercase font-mono border-b pb-2 tracking-wider">Quick Actions Cabinet</h3>
-              
+
               <div className="space-y-2">
                 <button
                   onClick={() => onNavigateTab('topics')}
                   className="w-full text-left p-3 rounded-xl hover:bg-slate-50 border border-slate-200/80 transition-all flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <PlusCircle className="w-5 h-5 text-orange-500" />
+                    <PlusCircle className="w-5 h-5 text-sky-500" />
                     <div>
                       <p className="font-bold text-xs text-slate-800">Propose New Concept</p>
                       <p className="text-[10px] text-slate-400">Suggest fresh local secrets</p>
@@ -212,11 +212,11 @@ export default function PersonalDashboard({
             </div>
 
             {/* Custom workflow advice box */}
-            <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-2">
-              <span className="font-extrabold text-[10px] text-orange-850 uppercase font-mono tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-orange-600 animate-bounce" /> Scribe Tip: Keep scores safe
+            <div className="p-4 bg-sky-50 border border-sky-100 rounded-xl space-y-2">
+              <span className="font-extrabold text-[10px] text-sky-900 uppercase font-mono tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-sky-600 animate-bounce" /> Scribe Tip: Keep scores safe
               </span>
-              <p className="text-[11px] text-orange-800 leading-relaxed font-sans">
+              <p className="text-[11px] text-sky-850 leading-relaxed font-sans">
                 Every article is verified prior to submission by Gemini. Make sure to structure with correct <strong>H2/H3 hashtags</strong> and list authority source links to score at least <strong>{config?.aiScoreThreshold || 70}/100</strong> and bypass automatic gate blockages!
               </p>
             </div>
@@ -245,23 +245,22 @@ export default function PersonalDashboard({
                   userArticles.filter(a => ['Draft', 'Minor Revision', 'Rejected'].includes(a.status)).map(art => {
                     const progress = art.content ? Math.min(100, Math.round((art.content.length / 400) * 100)) : 0;
                     return (
-                      <div 
+                      <div
                         key={art.id}
                         className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-sky-300 transition-all group"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <h4 className="font-extrabold text-[#363636] text-xs group-hover:text-sky-600 transition-colors leading-tight">{art.title}</h4>
-                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                              art.status === 'Minor Revision' ? 'bg-amber-100 text-amber-800 border border-amber-250' :
+                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${art.status === 'Minor Revision' ? 'bg-amber-100 text-amber-800 border border-amber-250' :
                               art.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border border-rose-250 animate-pulse' :
-                              'bg-slate-200 text-slate-700'
-                            }`}>
+                                'bg-slate-200 text-slate-700'
+                              }`}>
                               {art.status}
                             </span>
                           </div>
                           <p className="text-[10px] text-slate-400">Created: {new Date(art.createdAt).toLocaleDateString()} | Words: {art.content?.split(/\s+/).filter(Boolean).length || 0}</p>
-                          
+
                           {/* Completion index bar */}
                           <div className="w-32 bg-slate-200 h-1 rounded-full overflow-hidden mt-1 text-[2px]">
                             <div className="bg-sky-400 h-full" style={{ width: `${progress}%` }} />
@@ -289,7 +288,7 @@ export default function PersonalDashboard({
       {/* 2. EDITOR DASHBOARD cockpit */}
       {currentRole === 'Editor' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block">Editorial Pending Reviews</span>
@@ -319,7 +318,7 @@ export default function PersonalDashboard({
           <div className="lg:col-span-4 space-y-4 text-left">
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-slate-800 text-xs uppercase font-mono tracking-wider border-b pb-1.5">Duty Directives</h3>
-              
+
               <div className="space-y-2.5 font-sans text-xs text-slate-650">
                 <div className="flex gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Editors own articles strictly once grabbed.</div>
                 <div className="flex gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Minimum score of {config?.aiScoreThreshold || 70} is mandatory for passing.</div>
@@ -351,7 +350,7 @@ export default function PersonalDashboard({
                     <div key={art.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
                       <div>
                         <h4 className="font-extrabold text-[#363636] text-xs">{art.title}</h4>
-                        <p className="text-[10px] text-slate-400">Writer: {art.writerName} | State: <span className="text-orange-600 font-semibold">{art.status}</span></p>
+                        <p className="text-[10px] text-slate-400">Writer: {art.writerName} | State: <span className="text-[#20a6eb] font-semibold">{art.status}</span></p>
                       </div>
 
                       <button
@@ -373,7 +372,7 @@ export default function PersonalDashboard({
       {/* 3. SENIOR EDITOR DASHBOARD cockpit */}
       {currentRole === 'Senior Editor' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4 border-l-rose-500">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block text-rose-600">Active Escalations</span>
@@ -406,7 +405,7 @@ export default function PersonalDashboard({
                 <AlertTriangle className="w-4 h-4 text-rose-500 animate-pulse" />
                 <span>Senior Directive Panel</span>
               </h3>
-              
+
               <p className="text-xs text-slate-500 leading-relaxed font-sans">
                 You possess advanced override permission codes. You can bypass typical loop limits, review <strong>Escalated</strong> articles, override editor assignments, and execute direct publishes into the Travel Catalog.
               </p>
@@ -460,7 +459,7 @@ export default function PersonalDashboard({
       {/* 4. QUALITY SPECIALIST / CHECKER DASHBOARD cockpit */}
       {currentRole === 'Quality Checker' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4 border-l-amber-500">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block text-amber-500">Audits Waiting QA</span>
@@ -493,7 +492,7 @@ export default function PersonalDashboard({
                 <Award className="w-5 h-5 text-amber-500" />
                 <span>Geographic Precision SLA</span>
               </h3>
-              
+
               <p className="text-xs text-slate-500 leading-relaxed font-sans">
                 As a Quality Specialist, you own Stage 5: factual vetting. Spot check coordinate numbers, look up flight cost charts, and rate the travel guide's clarity index before allowing final release blocks.
               </p>
@@ -545,7 +544,7 @@ export default function PersonalDashboard({
       {/* 5. PUBLISHER DASHBOARD cockpit */}
       {currentRole === 'Publisher' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4 border-l-emerald-500">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block text-emerald-600">Pending Travel Feed Release</span>
@@ -559,9 +558,9 @@ export default function PersonalDashboard({
               <span className="text-[10px] text-slate-400 mt-2 block">Actively active travel catalog</span>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block">External Sync Mode</span>
-              <span className="text-2xl font-black text-orange-650 mt-1 block">CLOUD SYNC ENFORCED</span>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm text-left">
+              <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block text-sky-600">External Sync Mode</span>
+              <span className="text-2xl font-black text-[#20a6eb] mt-1 block">CLOUD SYNC ENFORCED</span>
               <span className="text-[10px] text-slate-400 mt-2 block">Supabase bidirectional pipeline</span>
             </div>
 
@@ -578,7 +577,7 @@ export default function PersonalDashboard({
                 <Globe className="w-5 h-5 text-emerald-500" />
                 <span>Content Distribution Desk</span>
               </h3>
-              
+
               <p className="text-xs text-slate-500 leading-relaxed font-sans">
                 You control the final gateway layer: Stage 6 publishing. Finalize layouts, choose cover illustrations, and activate the traveler feed triggers. Sync datasets live to Supabase.
               </p>
@@ -630,7 +629,7 @@ export default function PersonalDashboard({
       {/* 6. ADMIN DASHBOARD cockpit */}
       {currentUser.role === 'Admin' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm border-l-4 border-l-purple-500 text-left">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block text-purple-600">Admin Control Central</span>
@@ -646,7 +645,7 @@ export default function PersonalDashboard({
 
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm text-left">
               <span className="text-slate-400 font-mono text-[9px] uppercase font-bold block">SLA Timeout (Mins)</span>
-              <span className="text-2xl font-black text-orange-650 mt-1 block">{config?.claimDurationMinutes || 10} minutes</span>
+              <span className="text-2xl font-black text-sky-600 mt-1 block">{config?.claimDurationMinutes || 10} minutes</span>
               <span className="text-[10px] text-slate-400 mt-2 block">Claim lock count expiry</span>
             </div>
 
@@ -663,7 +662,7 @@ export default function PersonalDashboard({
                 <Settings className="w-5 h-5 text-purple-500" />
                 <span>Global Workspace Settings</span>
               </h3>
-              
+
               <p className="text-xs text-slate-500 leading-relaxed font-sans">
                 Tweak parameters dynamically, explore full operational history registries, audit system-wide actions, and elevate test roles directly inside the system sandbox.
               </p>

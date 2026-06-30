@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Article, User, Topic, AIPreValidation, WorkflowConfig } from '../types';
-import { 
-  FileEdit, 
-  HelpCircle, 
-  Sparkles, 
-  BookOpen, 
-  Send, 
-  Clock, 
-  History, 
-  CornerDownRight, 
-  BadgeAlert, 
-  Award, 
-  Check, 
+import {
+  FileEdit,
+  HelpCircle,
+  Sparkles,
+  BookOpen,
+  Send,
+  Clock,
+  History,
+  CornerDownRight,
+  BadgeAlert,
+  Award,
+  Check,
   Eye,
   Settings,
   Flame,
@@ -62,7 +62,7 @@ export default function WriterPortal({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  
+
   // Checking indicators
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,10 +112,10 @@ export default function WriterPortal({
     const selectedText = text.substring(start, end);
     const replacement = before + (selectedText || '') + after;
     const newContent = text.substring(0, start) + replacement + text.substring(end);
-    
+
     setContent(newContent);
     onAddToast("Formatted element inserted", 'info');
-    
+
     // Resume editor focus
     setTimeout(() => {
       textarea.focus();
@@ -140,7 +140,7 @@ export default function WriterPortal({
   // Custom simple yet elegant markdown-to-HTML formatter to render live inline styled previews
   const renderMarkdownToHTML = (mdText: string) => {
     if (!mdText) return <p className="text-slate-400 italic font-sans text-xs">Awaiting content input...</p>;
-    
+
     const lines = mdText.split('\n');
     let insideList = false;
     let listItems: string[] = [];
@@ -173,7 +173,7 @@ export default function WriterPortal({
         const index = txt.indexOf(full);
         const beforeTxt = txt.substring(0, index);
         const afterTxt = txt.substring(index + full.length);
-        
+
         parts = [
           ...parts.slice(0, -1),
           beforeTxt,
@@ -192,12 +192,12 @@ export default function WriterPortal({
           reParts.push(p);
           continue;
         }
-        
+
         let subTxt = p;
         const boldRegex = /\*\*([^*]+)\*\*/;
         let boldMatch;
         let subParts: React.ReactNode[] = [];
-        
+
         while ((boldMatch = boldRegex.exec(subTxt)) !== null) {
           const [full, content] = boldMatch;
           const index = subTxt.indexOf(full);
@@ -217,12 +217,12 @@ export default function WriterPortal({
           finalParts.push(p);
           continue;
         }
-        
+
         let subTxt = p;
         const italicRegex = /\*([^*]+)\*/;
         let italicMatch;
         let subParts: React.ReactNode[] = [];
-        
+
         while ((italicMatch = italicRegex.exec(subTxt)) !== null) {
           const [full, content] = italicMatch;
           const index = subTxt.indexOf(full);
@@ -244,7 +244,7 @@ export default function WriterPortal({
 
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i].trim();
-      
+
       if (line.startsWith('# ')) {
         flushList();
         elements.push(
@@ -266,7 +266,7 @@ export default function WriterPortal({
             {line.substring(4)}
           </h3>
         );
-      } 
+      }
       else if (line.startsWith('> ')) {
         flushList();
         elements.push(
@@ -274,11 +274,11 @@ export default function WriterPortal({
             {line.substring(2)}
           </blockquote>
         );
-      } 
+      }
       else if (line.startsWith('- ') || line.startsWith('* ')) {
         insideList = true;
         listItems.push(line.substring(2));
-      } 
+      }
       else if (line === '---' || line === '***') {
         flushList();
         elements.push(<hr key={`hr-${i}`} className="border-t border-slate-200 my-4" />);
@@ -293,14 +293,14 @@ export default function WriterPortal({
           const url = line.substring(urlStartIdx, urlEndIdx);
           elements.push(
             <div key={`img-${i}`} className="my-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm relative max-w-full">
-              <img 
-                src={url} 
-                alt={caption} 
-                className="w-full max-h-[220px] object-cover" 
+              <img
+                src={url}
+                alt={caption}
+                className="w-full max-h-[220px] object-cover"
                 referrerPolicy="no-referrer"
               />
               <div className="bg-white text-[10px] text-slate-400 font-mono py-1.5 px-3 text-center border-t border-slate-100 flex items-center justify-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#e86420]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#20a6eb]" />
                 <span>Doc Visual: <strong>{caption || "Travel Destination Cover Photo"}</strong></span>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function WriterPortal({
         }
       }
     }
-    
+
     flushList();
     return <div className="space-y-1 text-left select-text p-1">{elements}</div>;
   };
@@ -361,7 +361,7 @@ export default function WriterPortal({
       }
       return;
     }
-    
+
     setIsSaving(true);
     try {
       const saved = await onSaveDraft(activeArticleId, title, content, selectedTopicId);
@@ -392,11 +392,11 @@ export default function WriterPortal({
       onAddToast('Please save your active draft before submitting for review.', 'warning');
       return;
     }
-    
+
     // Quick checklists local validation checks
     const wCount = content.split(/\s+/).filter(Boolean).length;
     const references = content.includes('http://') || content.includes('https://') || content.toLowerCase().includes('source');
-    
+
     if (wCount < 40) {
       onAddToast('Local validation rejected: Draft length is too short to pass editorial threshold guidelines (minimum 40 words).', 'error');
       return;
@@ -430,23 +430,21 @@ export default function WriterPortal({
 
   return (
     <div className="space-y-6" id="writer-portal-module">
-      
+
       {/* Dynamic top tabs switcher */}
       <div className="flex border-b border-slate-200">
         <button
           onClick={() => setActiveTab('editor')}
-          className={`px-5 py-2.5 font-semibold text-sm -mb-px flex items-center gap-2 cursor-pointer transition-colors ${
-            activeTab === 'editor' ? 'border-b-2 border-blue-600 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`px-5 py-2.5 font-semibold text-sm -mb-px flex items-center gap-2 cursor-pointer transition-colors ${activeTab === 'editor' ? 'border-b-2 border-blue-600 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <FileEdit className="w-4 h-4" />
           <span>Composition Draftboard</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`px-5 py-2.5 font-semibold text-sm -mb-px flex items-center gap-2 cursor-pointer transition-colors ${
-            activeTab === 'history' ? 'border-b-2 border-blue-600 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
-          }`}
+          className={`px-5 py-2.5 font-semibold text-sm -mb-px flex items-center gap-2 cursor-pointer transition-colors ${activeTab === 'history' ? 'border-b-2 border-blue-600 text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           <History className="w-4 h-4" />
           <span>My Manuscripts ({articles.filter(a => a.writerId === currentUser.id).length})</span>
@@ -455,19 +453,19 @@ export default function WriterPortal({
 
       {activeTab === 'editor' ? (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          
+
           {/* Main composition board */}
           <div className="xl:col-span-8 space-y-4">
-            
+
             {activeTopic && (
-              <div className="flex items-center justify-between bg-orange-50 border border-orange-200 p-3.5 rounded-xl text-xs text-orange-800 animate-pulse">
+              <div className="flex items-center justify-between bg-sky-50 border border-sky-200 p-3.5 rounded-xl text-xs text-sky-850 animate-pulse">
                 <p className="flex items-center gap-2 font-medium">
-                  <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                  <Flame className="w-4 h-4 text-sky-550 shrink-0" />
                   <span>Drafting claimed topic: <strong>{activeTopic.title}</strong></span>
                 </p>
-                <button 
+                <button
                   onClick={onClearActiveTopic}
-                  className="text-orange-900 font-bold underline hover:text-orange-950 cursor-pointer"
+                  className="text-sky-900 font-bold underline hover:text-sky-950 cursor-pointer"
                 >
                   Deselect topic
                 </button>
@@ -475,7 +473,7 @@ export default function WriterPortal({
             )}
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5 text-left">
-              
+
               {/* Dynamic Editor Mode Header Selector */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs shrink-0 self-start">
@@ -507,7 +505,7 @@ export default function WriterPortal({
                   <span className="text-slate-400 font-medium">Use Style Template:</span>
                   <select
                     onChange={(e) => {
-                      if(e.target.value) {
+                      if (e.target.value) {
                         handleInsertTemplate(e.target.value as any);
                         e.target.value = ''; // Reset selection
                       }
@@ -531,7 +529,7 @@ export default function WriterPortal({
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full text-2xl font-black border-b border-slate-200 pb-2 focus:outline-none focus:border-[#20a6eb] text-slate-800 font-display transition-colors bg-transparent"
                 />
-                
+
                 {claimedTopics.length > 0 && !activeTopic && (
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">Attach claimed travel topic reference code:</span>
@@ -568,7 +566,7 @@ export default function WriterPortal({
                   <Italic className="w-3.5 h-3.5" />
                 </button>
                 <span className="h-5 w-px bg-slate-300 mx-1" />
-                
+
                 <button
                   type="button"
                   onClick={() => insertFormat('# ', '\n')}
@@ -641,7 +639,7 @@ export default function WriterPortal({
                 <button
                   type="button"
                   onClick={() => setShowImagePane(!showImagePane)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer border ${showImagePane ? 'bg-orange-500 text-white border-orange-600' : 'bg-white hover:bg-orange-50 text-orange-600 border-orange-200'}`}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer border ${showImagePane ? 'bg-[#20a6eb] text-white border-[#20a6eb]' : 'bg-white hover:bg-sky-50 text-[#20a6eb] border-sky-250'}`}
                   title="Curated Travel Image Drawer Palette"
                 >
                   <ImageIcon className="w-3.5 h-3.5 animate-bounce" />
@@ -653,8 +651,8 @@ export default function WriterPortal({
 
               {/* 4. Curated Travel Image Drawer Palette Area */}
               {showImagePane && (
-                <div className="bg-orange-50/50 border border-orange-150 p-4 rounded-xl space-y-3 animation-fade text-left">
-                  <div className="flex items-center justify-between border-b border-orange-200 pb-1.5">
+                <div className="bg-sky-50/50 border border-sky-150 p-4 rounded-xl space-y-3 animation-fade text-left">
+                  <div className="flex items-center justify-between border-b border-sky-200 pb-1.5">
                     <div className="space-y-0.5">
                       <h4 className="font-extrabold text-[#363636] text-xs">Stock Travel Photography Catalog</h4>
                       <p className="text-[10px] text-slate-500 font-sans">Click on any visual concept to inject high resolution image into active cursor slot</p>
@@ -662,7 +660,7 @@ export default function WriterPortal({
                     <button
                       type="button"
                       onClick={() => setShowImagePane(false)}
-                      className="text-xs text-orange-900 font-extrabold hover:underline"
+                      className="text-xs text-sky-900 font-extrabold hover:underline"
                     >
                       Close drawer
                     </button>
@@ -677,7 +675,7 @@ export default function WriterPortal({
                           insertFormat(`\n![${img.caption}](${img.url})\n`);
                           onAddToast(`Inserted image: ${img.name}`, 'success');
                         }}
-                        className="group flex flex-col rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm hover:border-orange-400 transition-all text-left cursor-pointer"
+                        className="group flex flex-col rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm hover:border-[#20a6eb] transition-all text-left cursor-pointer"
                       >
                         <div className="w-full h-20 overflow-hidden relative">
                           <img src={img.url} alt={img.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
@@ -693,7 +691,7 @@ export default function WriterPortal({
 
               {/* Editing Grid Pane based on editorMode */}
               <div className="grid grid-cols-1 gap-6">
-                
+
                 {editorMode === 'edit' && (
                   <textarea
                     id="scribe-markdown-textarea"
@@ -730,7 +728,7 @@ export default function WriterPortal({
                 {editorMode === 'preview' && (
                   <div className="p-1 max-w-2xl mx-auto space-y-4">
                     <div className="text-center pb-4 border-b">
-                      <span className="text-[9px] font-mono bg-[#e86420]/10 text-[#e86420] px-2.5 py-1 rounded-full uppercase tracking-widest font-black inline-block mb-2">Live Proofing Screen</span>
+                      <span className="text-[9px] font-mono bg-[#20a6eb]/10 text-[#20a6eb] px-2.5 py-1 rounded-full uppercase tracking-widest font-black inline-block mb-2">Live Proofing Screen</span>
                       <h2 className="text-2xl font-black text-slate-900 tracking-tight font-display">{title || "(Awaiting Headlines)"}</h2>
                       <p className="text-xs text-slate-400 mt-1">Author: {currentUser.name} | Dynamic Live Render Engine v2</p>
                     </div>
@@ -790,10 +788,9 @@ export default function WriterPortal({
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-slate-400">Quality Score:</span>
-                    <span className={`text-base font-black px-2.5 py-0.5 rounded-full font-mono ${
-                      currentArticle.aiValidation.score >= 80 ? 'bg-emerald-500/20 text-emerald-300' :
-                      currentArticle.aiValidation.score >= 70 ? 'bg-sky-500/20 text-sky-300' : 'bg-rose-500/20 text-rose-300'
-                    }`}>
+                    <span className={`text-base font-black px-2.5 py-0.5 rounded-full font-mono ${currentArticle.aiValidation.score >= 80 ? 'bg-emerald-500/20 text-emerald-300' :
+                        currentArticle.aiValidation.score >= 70 ? 'bg-sky-500/20 text-sky-300' : 'bg-rose-500/20 text-rose-300'
+                      }`}>
                       {currentArticle.aiValidation.score}/100
                     </span>
                   </div>
@@ -915,7 +912,7 @@ export default function WriterPortal({
 
           {/* Right sidebar checklists / checklist requirements info */}
           <div className="xl:col-span-4 space-y-4">
-            
+
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4.5 space-y-4">
               <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
                 <FileCheck2 className="w-4 h-4 text-emerald-500" />
@@ -968,7 +965,7 @@ export default function WriterPortal({
             {/* Quick access drafts queue */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-xs space-y-3">
               <h4 className="font-semibold text-slate-800 text-sm">Save & Resume Writing</h4>
-              
+
               <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                 {articles.filter(a => a.writerId === currentUser.id && ['Draft', 'Minor Revision', 'Rejected'].includes(a.status)).length === 0 ? (
                   <p className="text-slate-400 text-center py-4 italic">No active drafts found.</p>
@@ -977,18 +974,16 @@ export default function WriterPortal({
                     <button
                       key={art.id}
                       onClick={() => loadArticleForEditing(art)}
-                      className={`w-full text-left p-2.5 rounded-lg border transition-all flex flex-col gap-1 cursor-pointer ${
-                        art.id === activeArticleId 
-                          ? 'bg-cyan-50 border-cyan-200 text-cyan-900 font-semibold' 
+                      className={`w-full text-left p-2.5 rounded-lg border transition-all flex flex-col gap-1 cursor-pointer ${art.id === activeArticleId
+                          ? 'bg-cyan-50 border-cyan-200 text-cyan-900 font-semibold'
                           : 'bg-slate-50 border-slate-100 hover:bg-slate-100 text-slate-700'
-                      }`}
+                        }`}
                     >
                       <div className="flex justify-between items-center w-full">
                         <span className="font-bold truncate max-w-[120px]">{art.title || '(Untitled Draft)'}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold ${
-                          art.status === 'Minor Revision' ? 'bg-amber-100 text-amber-700' :
-                          art.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-700'
-                        }`}>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold ${art.status === 'Minor Revision' ? 'bg-amber-100 text-amber-700' :
+                            art.status === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-700'
+                          }`}>
                           {art.status}
                         </span>
                       </div>
@@ -1037,12 +1032,11 @@ export default function WriterPortal({
                         </div>
                       </td>
                       <td className="p-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          art.status === 'Published' ? 'bg-emerald-100 text-emerald-800' :
-                          art.status === 'Submitted' ? 'bg-indigo-100 text-indigo-800' :
-                          art.status === 'Escalated' ? 'bg-purple-100 text-purple-800' :
-                          art.status === 'Rejected' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${art.status === 'Published' ? 'bg-emerald-100 text-emerald-800' :
+                            art.status === 'Submitted' ? 'bg-indigo-100 text-indigo-800' :
+                              art.status === 'Escalated' ? 'bg-purple-100 text-purple-800' :
+                                art.status === 'Rejected' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700'
+                          }`}>
                           {art.status}
                         </span>
                       </td>

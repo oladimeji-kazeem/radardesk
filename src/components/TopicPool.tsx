@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Topic, User, WorkflowConfig } from '../types';
-import { 
-  FolderPlus, 
-  MapPin, 
-  Timer, 
-  CheckCircle, 
-  XSquare, 
-  AlertTriangle, 
-  Compass, 
-  PlusCircle, 
+import {
+  FolderPlus,
+  MapPin,
+  Timer,
+  CheckCircle,
+  XSquare,
+  AlertTriangle,
+  Compass,
+  PlusCircle,
   Sparkles,
   RefreshCw,
   Bell,
@@ -117,11 +117,11 @@ export default function TopicPool({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-2xl shadow-xl border border-slate-800 relative overflow-hidden">
         {/* Sky gradient atmospheric background */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-orange-500/10 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-[#20a6eb]/10 rounded-full blur-xl pointer-events-none" />
 
         <div className="space-y-1.5 relative z-10">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded bg-orange-500 text-slate-900 font-bold text-xs">RADAR POOL</span>
+            <span className="p-1 rounded bg-[#20a6eb] text-white font-bold text-xs font-mono">RADAR POOL</span>
             <span className="text-xs text-sky-300 tracking-wider uppercase font-semibold">Content Strategy</span>
           </div>
           <h2 className="text-2xl font-bold font-sans tracking-tight">Active Topic Hub</h2>
@@ -133,7 +133,7 @@ export default function TopicPool({
         {currentUser.role === 'Writer' && (
           <button
             onClick={() => setShowProposeModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-bold px-5 py-3 rounded-xl transition-all shadow-lg active:scale-95 cursor-pointer z-10 self-start md:self-center"
+            className="flex items-center gap-2 bg-gradient-to-r from-[#20a6eb] to-cyan-500 hover:from-[#20a6eb]/80 hover:to-cyan-600 text-white font-bold px-5 py-3 rounded-xl transition-all shadow-lg active:scale-95 cursor-pointer z-10 self-start md:self-center border-0"
             id="btn-propose-topic"
           >
             <FolderPlus className="w-5 h-5 text-slate-950 font-black" />
@@ -148,17 +148,17 @@ export default function TopicPool({
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden">
             <div className="bg-slate-900 p-4 text-white flex items-center justify-between">
               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Compass className="w-5 h-5 text-orange-400" />
+                <Compass className="w-5 h-5 text-[#20a6eb]" />
                 <span>Propose Campaign Concept</span>
               </h3>
-              <button 
+              <button
                 onClick={() => setShowProposeModal(false)}
                 className="text-slate-400 hover:text-white font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handlePropose} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Concept Headline</label>
@@ -231,17 +231,17 @@ export default function TopicPool({
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden">
             <div className="bg-slate-900 p-4 text-white flex items-center justify-between">
               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Compass className="w-5 h-5 text-orange-400" />
+                <Compass className="w-5 h-5 text-[#20a6eb]" />
                 <span>Edit Your Proposed Concept Idea</span>
               </h3>
-              <button 
+              <button
                 onClick={() => setEditingTopic(null)}
                 className="text-slate-400 hover:text-white font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Concept Headline</label>
@@ -298,7 +298,7 @@ export default function TopicPool({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#e86420] hover:bg-[#d05315] text-white rounded-lg text-sm font-semibold shadow-md active:scale-95 cursor-pointer"
+                  className="px-5 py-2 bg-[#20a6eb] hover:bg-[#20a6eb]/80 text-white rounded-lg text-sm font-semibold shadow-md active:scale-95 cursor-pointer border-0"
                 >
                   Save Updates
                 </button>
@@ -316,7 +316,7 @@ export default function TopicPool({
               <h3 className="font-semibold text-base">Moderate Proposed Travel Concept</h3>
               <p className="text-xs text-slate-400 mt-1">Accepting allows writers to claim and write immediate articles on this idea.</p>
             </div>
-            
+
             <form onSubmit={handleModerateSubmit} className="p-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Decision</label>
@@ -324,11 +324,10 @@ export default function TopicPool({
                   <button
                     type="button"
                     onClick={() => setModerationAction('Approved')}
-                    className={`flex-1 p-2.5 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 ${
-                      moderationAction === 'Approved'
+                    className={`flex-1 p-2.5 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 ${moderationAction === 'Approved'
                         ? 'bg-emerald-50 border-emerald-400 text-emerald-800'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     <CheckCircle className="w-4 h-4 text-emerald-600" />
                     Approve & Deploy
@@ -336,11 +335,10 @@ export default function TopicPool({
                   <button
                     type="button"
                     onClick={() => setModerationAction('Rejected')}
-                    className={`flex-1 p-2.5 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 ${
-                      moderationAction === 'Rejected'
+                    className={`flex-1 p-2.5 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 ${moderationAction === 'Rejected'
                         ? 'bg-rose-50 border-rose-400 text-rose-800'
                         : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     <XSquare className="w-4 h-4 text-rose-600" />
                     Reject Concept
@@ -359,9 +357,8 @@ export default function TopicPool({
                           type="button"
                           key={reason}
                           onClick={() => toggleReason(reason)}
-                          className={`w-full text-left p-2 rounded border text-xs transition-colors ${
-                            isSel ? 'bg-rose-50 border-rose-300 text-rose-800 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600'
-                          }`}
+                          className={`w-full text-left p-2 rounded border text-xs transition-colors ${isSel ? 'bg-rose-50 border-rose-300 text-rose-800 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600'
+                            }`}
                         >
                           {reason}
                         </button>
@@ -405,7 +402,7 @@ export default function TopicPool({
 
       {/* Grid of Topics split by status: Proposed Reviews vs Active Pool */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Proposed Queue Column (Moderate for editors, view for writers) */}
         <div className="lg:col-span-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -528,13 +525,12 @@ export default function TopicPool({
                 return (
                   <div
                     key={topic.id}
-                    className={`bg-white p-5 rounded-2xl border transition-all relative flex flex-col justify-between overflow-hidden shadow-sm ${
-                      isClaimedByMe
-                        ? 'border-orange-400 bg-orange-50/10 shadow-[0_5px_22px_rgba(240,93,35,0.08)]'
+                    className={`bg-white p-5 rounded-2xl border transition-all relative flex flex-col justify-between overflow-hidden shadow-sm ${isClaimedByMe
+                        ? 'border-[#20a6eb]/40 bg-[#20a6eb]/5 shadow-[0_5px_22px_rgba(32,166,235,0.08)]'
                         : isClaimedByOther
-                        ? 'border-slate-100 opacity-60 bg-slate-50/50'
-                        : 'border-slate-100 hover:border-slate-200'
-                    }`}
+                          ? 'border-slate-100 opacity-60 bg-slate-50/50'
+                          : 'border-slate-100 hover:border-slate-200'
+                      }`}
                     id={`active-topic-${topic.id}`}
                   >
                     {/* Expiration Glow Overlay/Notice */}
@@ -550,11 +546,10 @@ export default function TopicPool({
                         <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded bg-sky-50 text-sky-600 border border-sky-200/50">
                           {topic.category}
                         </span>
-                        
+
                         {topic.claimedById && (
-                          <div className={`text-xs font-bold font-mono px-2 py-1 rounded flex items-center gap-1.5 ${
-                            warningBanner ? 'bg-rose-100 text-rose-700 animate-pulse border border-rose-300' : 'bg-slate-100 text-slate-700'
-                          }`}>
+                          <div className={`text-xs font-bold font-mono px-2 py-1 rounded flex items-center gap-1.5 ${warningBanner ? 'bg-rose-100 text-rose-700 animate-pulse border border-rose-300' : 'bg-slate-100 text-slate-700'
+                            }`}>
                             <Timer className="w-3.5 h-3.5" />
                             <span>{min}:{sec < 10 ? '0' + sec : sec}</span>
                           </div>
@@ -568,10 +563,10 @@ export default function TopicPool({
                     <div className="pt-4 border-t border-slate-100/60 mt-4 flex items-center justify-between gap-2.5">
                       {isClaimedByMe ? (
                         <div className="w-full space-y-2">
-                          <div className="text-xs text-orange-700 leading-tight">
+                          <div className="text-xs text-sky-700 leading-tight">
                             {warningBanner ? (
                               <p className="flex items-center gap-1 font-bold">
-                                <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+                                <AlertTriangle className="w-4 h-4 text-[#20a6eb] shrink-0" />
                                 <span>RELEASING SOON: Start writing now!</span>
                               </p>
                             ) : (
@@ -580,11 +575,11 @@ export default function TopicPool({
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="flex gap-2">
                             <button
                               onClick={() => onSelectTopicForArticle(topic)}
-                              className="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-bold py-2 rounded-xl transition-all shadow cursor-pointer shadow-orange-500/10"
+                              className="flex-1 text-center bg-[#20a6eb] hover:bg-[#20a6eb]/80 text-white text-xs font-bold py-2 rounded-xl transition-all shadow cursor-pointer shadow-[#20a6eb]/10 border-0"
                             >
                               Initialize Draft
                             </button>
@@ -631,7 +626,7 @@ export default function TopicPool({
         <div className="mt-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4" id="writer-concept-feedback-panel">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <Bell className="w-4 h-4 text-[#e86420]" />
+              <Compass className="w-4 h-4 text-[#20a6eb]" />
               <span>My Concept Submissions & Feedback Logs</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">Track the live approval and critique history of your campaign ideas.</p>
@@ -653,11 +648,10 @@ export default function TopicPool({
                           </span>
                           <h4 className="font-bold text-slate-800 text-sm mt-1">{topic.title}</h4>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          topic.status === 'Active' ? 'bg-emerald-100 text-emerald-800' :
-                          topic.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
-                          'bg-amber-100 text-amber-800'
-                        }`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${topic.status === 'Active' ? 'bg-emerald-100 text-emerald-800' :
+                            topic.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
+                              'bg-amber-100 text-amber-800'
+                          }`}>
                           {topic.status === 'Active' ? 'Approved & Ready' : topic.status}
                         </span>
                       </div>

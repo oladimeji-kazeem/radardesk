@@ -16,9 +16,9 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
   // Compute some dynamic operational values to make the landing page live and reactive!
   const totalSubmissions = articles.filter(a => a.status !== 'Draft').length;
   const approvalsList = articles.filter(a => a.status === 'Approved' || a.status === 'Published');
-  
+
   // Calculate default values or actual averages
-  const avgScore = totalSubmissions > 0 
+  const avgScore = totalSubmissions > 0
     ? Math.round(articles.reduce((acc, a) => acc + (a.score || 0), 0) / articles.length)
     : 84;
 
@@ -26,12 +26,12 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
 
   return (
     <div className="min-h-screen radial-blur-bg text-[#363636] flex flex-col items-center overflow-x-hidden font-sans relative">
-      
-      {/* Dynamic top gradient line to give that premium radar neon glow */}
-      <div className="w-full h-1 bg-gradient-to-r from-[#20a6eb] via-[#e86420] to-[#363636]" />
 
-      {/* Floating decorative elements resembling the soft blurs and orange spheres in the screenshot */}
-      <div className="absolute top-[20%] right-[10%] w-32 h-32 rounded-full bg-[#e86420] opacity-10 blur-2xl pointer-events-none" />
+      {/* Dynamic top gradient line to give that premium radar neon glow */}
+      <div className="w-full h-1 bg-gradient-to-r from-[#20a6eb] via-cyan-400 to-[#363636]" />
+
+      {/* Floating decorative elements resembling the soft blurs and sky blue spheres */}
+      <div className="absolute top-[20%] right-[10%] w-32 h-32 rounded-full bg-[#20a6eb] opacity-10 blur-2xl pointer-events-none" />
       <div className="absolute top-[50%] left-[-5%] w-60 h-60 rounded-full bg-[#20a6eb] opacity-[0.08] blur-3xl pointer-events-none" />
 
       {/* Primary Landing Page Header */}
@@ -44,16 +44,16 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
         </div>
 
         <div className="flex items-center space-x-6">
-          <button 
+          <button
             onClick={onSignIn}
-            className="text-sm font-semibold text-[#363636]/80 hover:text-[#e86420] transition-colors cursor-pointer"
+            className="text-sm font-semibold text-[#363636]/80 hover:text-[#20a6eb] transition-colors cursor-pointer"
           >
             Sign in
           </button>
-          
-          <button 
+
+          <button
             onClick={onGetStarted}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#20a6eb] to-[#e86420] text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 hover:scale-102 active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer border-0"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 hover:scale-102 active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer border-0"
           >
             <span>Get started</span>
             <ArrowRight className="w-4 h-4" />
@@ -63,26 +63,26 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
 
       {/* HERO SECTION */}
       <main className="w-full max-w-7xl px-6 md:px-12 py-10 md:py-16 xl:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center z-10">
-        
+
         {/* Hero Left Content Column */}
         <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6 md:space-y-8 max-w-2xl">
-          
+
           {/* Badge indicator */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#e86420] animate-pulse" />
+            <Sparkles className="w-3.5 h-3.5 text-[#20a6eb] animate-pulse" />
             <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-500">
               Powered by AI editorial pre-validation
             </span>
           </div>
 
-          {/* Typography Pairings Headline */}
+          {"/* Typography Pairings Headline */"}
           <h1 className="text-4xl md:text-5xl xl:text-6xl font-black font-display text-[#363636] leading-[1.1] tracking-tight">
             The editorial <br />
             workflow that <br />
             <span className="text-[#20a6eb]">eliminates </span> <br className="xs:hidden" />
             <span className="text-[#20a6eb]">redu</span>
             <span className="text-slate-400 font-bold">ndant</span>{' '}
-            <span className="text-[#e86420]">reviews</span>.
+            <span className="text-cyan-500">reviews</span>.
           </h1>
 
           {/* Subtitle / pitch */}
@@ -94,7 +94,7 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
           <div className="flex flex-wrap gap-4 pt-2">
             <button
               onClick={onGetStarted}
-              className="px-8 py-3.5 bg-gradient-to-r from-[#20a6eb] to-[#e86420] text-white rounded-xl text-sm font-extrabold shadow-xl hover:shadow-orange-500/20 hover:scale-102 active:scale-98 transition-all cursor-pointer border-0"
+              className="px-8 py-3.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white rounded-xl text-sm font-extrabold shadow-xl hover:shadow-sky-500/20 hover:scale-102 active:scale-98 transition-all cursor-pointer border-0"
             >
               Start writing
             </button>
@@ -122,24 +122,24 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
 
         {/* Hero Right Visual Column - Airplane Window View with Circular overlay */}
         <div className="lg:col-span-5 flex justify-center items-center relative">
-          
-          {/* Circular decorations mimicking the orange balloons behind */}
-          <div className="absolute -top-6 right-4 w-16 h-16 rounded-full bg-[#e86420] opacity-80 shadow-lg pointer-events-none transform translate-x-4 -translate-y-2" />
-          <div className="absolute top-1/4 right-0 w-8 h-8 rounded-full bg-[#e86420]/80 shadow-md pointer-events-none transform translate-x-12" />
+
+          {/* Circular decorations mimicking the sky blue balloons behind */}
+          <div className="absolute -top-6 right-4 w-16 h-16 rounded-full bg-cyan-500 opacity-80 shadow-lg pointer-events-none transform translate-x-4 -translate-y-2" />
+          <div className="absolute top-1/4 right-0 w-8 h-8 rounded-full bg-cyan-400/80 shadow-md pointer-events-none transform translate-x-12" />
 
           {/* Airplane wing image nested in an elegant double circular layer */}
           <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full p-2 bg-white/80 border border-slate-200/50 shadow-2xl relative overflow-hidden flex items-center justify-center">
-            
+
             {/* Inner frame containing high res flight wing from Unsplash */}
             <div className="w-full h-full rounded-full overflow-hidden relative">
-              <img 
-                src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1000" 
-                alt="RadarDesk Flight Wing Window" 
+              <img
+                src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1000"
+                alt="RadarDesk Flight Wing Window"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover scale-110 hover:scale-105 transition-transform duration-1000"
               />
               {/* Soft visual overlay */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#20a6eb]/20 via-transparent to-[#e86420]/10 mix-blend-multiply pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#20a6eb]/20 via-transparent to-cyan-500/10 mix-blend-multiply pointer-events-none" />
             </div>
 
             {/* Abstract clean visual glass overlay badge */}
@@ -180,8 +180,8 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
           </div>
 
           {/* Card 2: One editor, no clashes */}
-          <div className="bg-white/90 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200/85 hover:border-[#e86420]/40 shadow-sm hover:shadow-md transition-all group hover:-translate-y-1 duration-300">
-            <div className="w-11 h-11 rounded-xl bg-[#e86420]/10 flex items-center justify-center text-[#e86420] mb-5 group-hover:bg-[#e86420] group-hover:text-white transition-all">
+          <div className="bg-white/90 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200/85 hover:border-cyan-500/40 shadow-sm hover:shadow-md transition-all group hover:-translate-y-1 duration-300">
+            <div className="w-11 h-11 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-600 mb-5 group-hover:bg-cyan-500 group-hover:text-white transition-all">
               <Users className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-[#363636] font-display mb-3">One editor, no clashes</h3>
@@ -206,15 +206,15 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
 
       {/* METRICS PANEL: "Built for content teams of every size" */}
       <section className="w-full max-w-7xl px-6 md:px-12 pb-16 md:pb-24 z-10">
-        
+
         {/* Rounded Banner Wrapper with nice background gradient from screenshot */}
         <div className="firebase-gradient p-0.5 rounded-3xl shadow-xl overflow-hidden">
           <div className="radial-blur-bg bg-white/95 px-6 py-10 md:p-12 rounded-[22px] flex flex-col space-y-8">
-            
+
             {/* Header portion */}
             <div className="text-center md:text-left">
               <h2 className="text-xl md:text-2xl font-black font-display text-[#363636]">
-                Built for content <span className="text-[#20a6eb]">teams</span> of <span className="text-[#e86420]">every size</span>
+                Built for content <span className="text-[#20a6eb]">teams</span> of <span className="text-cyan-500">every size</span>
               </h2>
               <p className="text-xs text-slate-400 mt-1 max-w-md">Approved articles transition immediately to content flight operations.</p>
             </div>
@@ -224,7 +224,7 @@ export default function OverviewHub({ topics, articles, config, onGetStarted, on
 
               {/* Stat 1 */}
               <div className="bg-white/80 p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center space-x-4">
-                <div className="p-3.5 rounded-xl bg-[#e86420]/15 text-[#e86420]">
+                <div className="p-3.5 rounded-xl bg-cyan-500/15 text-cyan-600">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>

@@ -19,9 +19,10 @@ interface AuthScreenProps {
   onAddToast: (msg: string, type: 'success' | 'warning' | 'info' | 'error') => void;
   users: User[];
   onBack?: () => void;
+  portalType?: 'developer' | 'admin' | 'all';
 }
 
-export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }: AuthScreenProps) {
+export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack, portalType = 'all' }: AuthScreenProps) {
   const [activeTab, setActiveTab] = useState<'signin' | 'register' | 'forgot'>('signin');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,6 +36,12 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
   const [regRole, setRegRole] = useState<UserRole>('Writer');
   const [regPassword, setRegPassword] = useState('');
 
+  // Visitor preference inputs
+  const [visNewsletter, setVisNewsletter] = useState(true);
+  const [visWhatsApp, setVisWhatsApp] = useState(false);
+  const [visGroups, setVisGroups] = useState(false);
+  const [visVisibility, setVisVisibility] = useState<'Public' | 'Private' | 'Anonymous'>('Public');
+
   // Forgot Password inputs
   const [resetEmail, setResetEmail] = useState('');
   const [resetPin, setResetPin] = useState('');
@@ -42,7 +49,9 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
   const [resetStep, setResetStep] = useState<1 | 2>(1);
   const [simulatedPin, setSimulatedPin] = useState<string | null>(null);
 
-  // Email validation helper to enforce organization domain check
+  const isVisitorMode = regRole === 'Visitor';
+
+  // Email validation — allow any domain for Visitor registrations
   const validateEmailDomain = (email: string): boolean => {
     return email.trim().toLowerCase().endsWith('@travelradar.aero');
   };
@@ -56,7 +65,10 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
       return;
     }
 
-    if (!validateEmailDomain(emailLower)) {
+    // Only enforce domain check if this is an operator portal, not a visitor sign-in
+    // We check if the email matches a visitor profile first
+    const matchesVisitor = users.some(u => u.email === emailLower && u.role === 'Visitor');
+    if (!matchesVisitor && !validateEmailDomain(emailLower)) {
       onAddToast('Access Blocked: Only official @travelradar.aero enterprise email accounts are permitted on this gateway.', 'error');
       return;
     }
@@ -78,6 +90,14 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
         if (profileError) throw new Error('Operator profile not found in directory.');
         if (userProfile.approved === false) throw new Error('Review Pending: Your organization access has not been approved.');
 
+        // Enforce role gates based on portalType
+        if (portalType === 'developer' && userProfile.role === 'Admin') {
+          throw new Error('Access Blocked: Administrators must authenticate via the official /admin-portal gateway.');
+        }
+        if (portalType === 'admin' && userProfile.role !== 'Admin') {
+          throw new Error('Access Blocked: Only administrator accounts can access this console.');
+        }
+
         onAddToast(`Access Granted: Welcome back, ${userProfile.name}!`, 'success');
         onLoginSuccess(userProfile as any);
       } else {
@@ -88,6 +108,16 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
         });
         const data = await res.json();
         if (res.ok) {
+          // Enforce role gates based on portalType
+          if (portalType === 'developer' && data.user.role === 'Admin') {
+            onAddToast('Access Blocked: Administrators must authenticate via the official /admin-portal gateway.', 'error');
+            return;
+          }
+          if (portalType === 'admin' && data.user.role !== 'Admin') {
+            onAddToast('Access Blocked: Only administrator accounts can access this console.', 'error');
+            return;
+          }
+
           onAddToast(`Access Granted: Welcome back, ${data.user.name}!`, 'success');
           onLoginSuccess(data.user);
         } else {
@@ -107,14 +137,20 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
     const emailLower = regEmail.trim().toLowerCase();
 
     if (!regName.trim() || !emailLower || !regPassword.trim()) {
-      onAddToast('Please compile all elements of the operator enrollment form.', 'warning');
+      onAddToast('Please compile all elements of the enrollment form.', 'warning');
       return;
     }
 
-    if (!validateEmailDomain(emailLower)) {
-      onAddToast('Enrollment Blocked: Registration is strictly restricted to @travelradar.aero organization email accounts.', 'error');
+    // Visitor registrations allow any email domain
+    if (regRole !== 'Visitor' && !validateEmailDomain(emailLower)) {
+      onAddToast('Enrollment Blocked: Registration for operators is restricted to @travelradar.aero accounts.', 'error');
       return;
     }
+
+    // Serialize visitor prefs into password field as JSON so they persist
+    const storedPassword = regRole === 'Visitor'
+      ? JSON.stringify({ password: regPassword, newsletter: visNewsletter, whatsapp: visWhatsApp, groups: visGroups, visibility: visVisibility })
+      : regPassword;
 
     setIsLoading(true);
     try {
@@ -131,12 +167,15 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
           name: regName.trim(),
           email: emailLower,
           role: regRole,
-          password: regPassword,
+          password: storedPassword,
           approved: true
         }).select().single();
         if (profileError) throw profileError;
 
-        onAddToast('Account verified: Registration successful! You can now sign in immediately.', 'success');
+        const successMsg = regRole === 'Visitor'
+          ? 'Welcome to Travel Radar! Your community profile has been created. You can now sign in.'
+          : 'Account verified: Registration successful! You can now sign in immediately.';
+        onAddToast(successMsg, 'success');
         setActiveTab('signin');
         setLoginEmail(emailLower);
       } else {
@@ -146,13 +185,16 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
           body: JSON.stringify({
             name: regName.trim(),
             email: emailLower,
-            password: regPassword,
+            password: storedPassword,
             role: regRole
           })
         });
         const data = await res.json();
         if (res.ok) {
-          onAddToast('Account verified: Registration successful! You can now sign in immediately.', 'success');
+          const successMsg = regRole === 'Visitor'
+            ? 'Welcome to Travel Radar! Your community profile has been created. You can now sign in.'
+            : 'Account verified: Registration successful! You can now sign in immediately.';
+          onAddToast(successMsg, 'success');
           setActiveTab('signin');
           setLoginEmail(emailLower);
           setRegName('');
@@ -255,10 +297,10 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans select-none text-left" id="auth-canvas-container">
 
       {/* Top micro-premium neon gradient stripe from the home page */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] via-[#e86420] to-[#363636]" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#20a6eb] via-cyan-500 to-[#363636]" />
 
       {/* Floating decorative gradient blurs to match the home/landing atmospheric design */}
-      <div className="absolute top-[15%] right-[10%] w-72 h-72 rounded-full bg-[#e86420]/10 blur-3xl pointer-events-none animate-pulse-slow" />
+      <div className="absolute top-[15%] right-[10%] w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none animate-pulse-slow" />
       <div className="absolute bottom-[20%] left-[5%] w-80 h-80 rounded-full bg-[#20a6eb]/10 blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-lg bg-white border border-slate-200 shadow-2xl rounded-3xl overflow-hidden p-6 md:p-8 space-y-6 relative z-10" id="auth-core-terminal">
@@ -271,7 +313,16 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
               RadarDesk
             </span>
           </div>
-          <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider">Secure Personnel Authentication Desk</p>
+          <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider">
+            {portalType === 'admin' && 'Administrator Control Room Portal'}
+            {portalType === 'developer' && 'Content Developer Space Gate'}
+            {portalType === 'all' && 'Secure Personnel Authentication Desk'}
+          </p>
+          {portalType === 'admin' && (
+            <p className="text-[10px] bg-red-50 text-red-700 border border-red-100 p-2 py-1.5 rounded-xl text-center font-sans tracking-normal leading-normal">
+              ⚠️ Self-registration is disabled at this security gateway. System Admins must be enrolled via directory control.
+            </p>
+          )}
           {onBack && (
             <button
               onClick={onBack}
@@ -292,12 +343,14 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
             >
               Sign In
             </button>
-            <button
-              onClick={() => { setActiveTab('register'); }}
-              className={`flex-1 py-2 text-xs font-black uppercase rounded-xl transition-all cursor-pointer ${activeTab === 'register' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              Request Access
-            </button>
+            {portalType !== 'admin' && (
+              <button
+                onClick={() => { setActiveTab('register'); }}
+                className={`flex-1 py-2 text-xs font-black uppercase rounded-xl transition-all cursor-pointer ${activeTab === 'register' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                {portalType === 'all' ? 'Join Travel Radar' : 'Request Access'}
+              </button>
+            )}
           </div>
         )}
 
@@ -307,34 +360,31 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
             <div className="space-y-1 text-left">
               <label className="text-[10px] text-slate-500 font-extrabold uppercase flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5 text-[#20a6eb]" />
-                <span>Personnel Email Address</span>
+                <span>Email Address</span>
               </label>
               <div className="relative">
                 <input
                   type="email"
                   required
-                  placeholder="e.g. alisha.v@travelradar.aero"
+                  placeholder="e.g. you@example.com"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full bg-white border border-slate-250 rounded-xl p-3 pr-24 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs"
+                  className="w-full bg-white border border-slate-250 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs"
                   id="login-email-input"
                 />
-                <span className="absolute right-3 top-2.5 bg-slate-100 text-slate-500 border border-slate-200 text-[8.5px] font-mono font-extrabold px-2 py-1 rounded-md uppercase">
-                  @travelradar.aero
-                </span>
               </div>
             </div>
 
             <div className="space-y-1 text-left">
               <div className="flex justify-between items-center">
                 <label className="text-[10px] text-slate-500 font-extrabold uppercase flex items-center gap-1">
-                  <Key className="w-3.5 h-3.5 text-[#e86420]" />
+                  <Key className="w-3.5 h-3.5 text-[#20a6eb]" />
                   <span>Security Password</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => { setActiveTab('forgot'); setResetStep(1); }}
-                  className="text-[10px] text-[#e86420] hover:text-[#ff762f] font-mono font-bold hover:underline"
+                  className="text-[10px] text-[#20a6eb] hover:text-cyan-500 font-mono font-bold hover:underline"
                 >
                   Forgot Key?
                 </button>
@@ -353,7 +403,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-[#e86420] hover:scale-102 active:scale-98 text-white font-extrabold tracking-wide text-xs uppercase rounded-xl shadow-lg shadow-orange-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 mt-2 border-0"
+              className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 hover:scale-102 active:scale-98 text-white font-extrabold tracking-wide text-xs uppercase rounded-xl shadow-lg shadow-sky-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 mt-2 border-0"
               id="signin-submit-btn"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <CheckCircle className="w-4 h-4 text-white" />}
@@ -384,28 +434,27 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
             <div className="space-y-1 text-left">
               <label className="text-[10px] text-slate-500 font-extrabold uppercase flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5 text-[#20a6eb]" />
-                <span>Operational Enterprise Email</span>
+                <span>{isVisitorMode ? 'Your Email Address' : 'Operational Enterprise Email'}</span>
               </label>
               <div className="relative">
                 <input
                   type="email"
                   required
-                  placeholder="e.g. name@travelradar.aero"
+                  placeholder={isVisitorMode ? 'e.g. you@gmail.com' : 'e.g. name@travelradar.aero'}
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
-                  className="w-full bg-white border border-slate-250 rounded-xl p-3 pr-24 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs animate-fadeIn"
+                  className="w-full bg-white border border-slate-250 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#20a6eb] focus:ring-2 focus:ring-[#20a6eb]/10 font-bold transition-all shadow-6xs animate-fadeIn"
                   id="reg-email-input"
                 />
-                <span className="absolute right-3 top-2.5 bg-sky-50 text-[#20a6eb] border border-sky-200 text-[8.5px] font-mono font-extrabold px-2 py-1 rounded-md uppercase">
-                  REQUIRED
-                </span>
               </div>
-              <p className="text-[9px] text-slate-450 leading-normal pl-0.5 pt-0.5">Note: Registrations with non-@travelradar.aero email domains will fail gate verification checks.</p>
+              {!isVisitorMode && (
+                <p className="text-[9px] text-slate-450 leading-normal pl-0.5 pt-0.5">Note: Registration requires an official @travelradar.aero email account.</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-left">
               <div className="space-y-1 font-sans">
-                <label className="text-[10px] text-slate-500 font-extrabold uppercase">Desired Role</label>
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase">Account Type</label>
                 <div className="relative">
                   <select
                     value={regRole}
@@ -414,18 +463,20 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
                     style={{ backgroundImage: 'none' }}
                     id="reg-role-select"
                   >
-                    <option value="Writer">Writer</option>
-                    <option value="Editor">Editor</option>
-                    <option value="Senior Editor">Senior Editor</option>
-                    <option value="Quality Checker">Quality Checker</option>
-                    <option value="Publisher">Publisher</option>
-                    <option value="Admin">Admin</option>
+                    <option value="Visitor">Community Visitor</option>
+                    {portalType !== 'developer' && <>
+                      <option value="Writer">Writer</option>
+                      <option value="Editor">Editor</option>
+                      <option value="Senior Editor">Senior Editor</option>
+                      <option value="Quality Checker">Quality Checker</option>
+                      <option value="Publisher">Publisher</option>
+                    </>}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1 text-left">
-                <label className="text-[10px] text-slate-500 font-extrabold uppercase">Setup Code</label>
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase">Password</label>
                 <input
                   type="password"
                   required
@@ -438,18 +489,61 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
               </div>
             </div>
 
-            <p className="text-[9px] text-[#20a6eb] leading-snug bg-sky-50 border border-sky-200/60 p-2.5 rounded-xl text-left">
-              ⚡ <strong>Instant Access Enabled:</strong> Your account will be activated immediately upon registration for all @travelradar.aero enterprise accounts.
-            </p>
+            {/* Visitor preferences */}
+            {isVisitorMode && (
+              <div className="space-y-3 bg-sky-50 border border-sky-200/60 p-3.5 rounded-2xl text-left">
+                <p className="text-[10px] font-black text-[#20a6eb] uppercase tracking-wider">Community Preferences</p>
+                <div className="space-y-2">
+                  {[
+                    { label: '📧 Newsletter & Breaking News Alerts', value: visNewsletter, set: setVisNewsletter },
+                    { label: '💬 WhatsApp Community Updates', value: visWhatsApp, set: setVisWhatsApp },
+                    { label: '👥 Social Media Groups (Facebook, LinkedIn)', value: visGroups, set: setVisGroups },
+                  ].map(({ label, value, set }) => (
+                    <label key={label} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={value}
+                        onChange={(e) => set(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-[#20a6eb] cursor-pointer"
+                      />
+                      <span className="text-[10px] text-slate-700 font-semibold">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 font-extrabold uppercase">Profile Visibility</label>
+                  <select
+                    value={visVisibility}
+                    onChange={(e) => setVisVisibility(e.target.value as 'Public' | 'Private' | 'Anonymous')}
+                    className="w-full bg-white border border-sky-200 text-slate-800 rounded-xl p-2.5 text-xs outline-none focus:border-[#20a6eb] font-mono font-bold appearance-none"
+                    style={{ backgroundImage: 'none' }}
+                  >
+                    <option value="Public">Public — Visible to community</option>
+                    <option value="Private">Private — Admins only</option>
+                    <option value="Anonymous">Anonymous — Fully hidden</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {isVisitorMode ? (
+              <p className="text-[9px] text-[#20a6eb] leading-snug bg-sky-50 border border-sky-200/60 p-2.5 rounded-xl text-left">
+                🌐 <strong>Join the Community:</strong> Create your public reader profile to subscribe to newsletters, join groups, and manage your Travel Radar visibility.
+              </p>
+            ) : (
+              <p className="text-[9px] text-[#20a6eb] leading-snug bg-sky-50 border border-sky-200/60 p-2.5 rounded-xl text-left">
+                ⚡ <strong>Instant Access Enabled:</strong> Your account will be activated immediately upon registration.
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#e86420] to-[#ff762f] text-white font-extrabold tracking-wide text-xs uppercase rounded-xl transition-all cursor-pointer shadow-lg shadow-orange-500/15 flex items-center justify-center gap-1.5 border-0"
+              className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white font-extrabold tracking-wide text-xs uppercase rounded-xl transition-all cursor-pointer shadow-lg shadow-sky-500/15 flex items-center justify-center gap-1.5 border-0"
               id="register-submit-btn"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <UserPlus className="w-4 h-4 text-white" />}
-              <span>Request Dashboard Access</span>
+              <span>{isVisitorMode ? 'Join Travel Radar' : 'Request Dashboard Access'}</span>
             </button>
           </form>
         )}
@@ -483,7 +577,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-[#e86420] text-white font-extrabold text-xs uppercase rounded-xl transition-all shadow-md cursor-pointer border-0"
+                  className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white font-extrabold text-xs uppercase rounded-xl transition-all shadow-md cursor-pointer border-0"
                   id="forgot-submit-btn"
                 >
                   {isLoading ? 'Processing security clearance...' : 'Request Validation Key'}
@@ -492,13 +586,13 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
             ) : (
               <form onSubmit={handleConfirmReset} className="space-y-4 animate-fadeIn">
                 {simulatedPin && (
-                  <div className="bg-orange-50 border border-orange-200/80 p-3.5 rounded-2xl text-left space-y-1 font-mono">
-                    <p className="text-[9px] text-[#e86420] font-black uppercase flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-[#e86420] animate-pulse" />
+                  <div className="bg-sky-50 border border-sky-200/80 p-3.5 rounded-2xl text-left space-y-1 font-mono">
+                    <p className="text-[9px] text-[#20a6eb] font-black uppercase flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#20a6eb] animate-pulse" />
                       <span>Security Router Callback Received</span>
                     </p>
                     <p className="text-slate-600 text-[10px] leading-snug pb-1">Bypassing actual SMTP delivery. Direct Firebase pin sequence callback:</p>
-                    <div className="bg-white border border-orange-200/50 p-2.5 rounded-xl text-center shadow-inner">
+                    <div className="bg-white border border-sky-200/50 p-2.5 rounded-xl text-center shadow-inner">
                       <span className="text-[#363636] font-black tracking-widest text-lg">{simulatedPin}</span>
                     </div>
                   </div>
@@ -534,7 +628,7 @@ export default function AuthScreen({ onLoginSuccess, onAddToast, users, onBack }
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-[#e86420] text-white font-extrabold text-xs uppercase rounded-xl transition-all shadow-md cursor-pointer border-0"
+                  className="w-full py-3.5 bg-gradient-to-r from-[#20a6eb] to-cyan-500 text-white font-extrabold text-xs uppercase rounded-xl transition-all shadow-md cursor-pointer border-0"
                   id="reset-confirm-submit-btn"
                 >
                   {isLoading ? 'Updating safety indexes...' : 'Upgrade Password Credentials'}

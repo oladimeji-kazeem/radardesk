@@ -2,7 +2,6 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Facebook,
-    Twitter,
     Youtube,
     Instagram,
     Search,
@@ -16,38 +15,85 @@ import {
     Activity,
     LogOut,
     User,
-    ArrowRight
+    ArrowRight,
+    Linkedin
 } from 'lucide-react';
 import { Logo } from './Logo';
-import { Article } from '../types';
+import { Article, User as UserType } from '../types';
+
+// Custom brand icons not provided by Lucide
+export function XIcon({ className = "w-4 h-4" }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+    );
+}
+
+export function TikTokIcon({ className = "w-4 h-4" }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+            <path d="M12.525.074a.074.074 0 0 0-.074.074V16.7c0 2.378-1.928 4.311-4.307 4.311A4.282 4.282 0 0 1 5.1 19.75a4.282 4.282 0 0 1-1.265-3.047c0-2.379 1.933-4.312 4.312-4.312a.074.074 0 0 0 .074-.074V9.654a.074.074 0 0 0-.074-.074A7.26 7.26 0 0 0 1 16.797a7.28 7.28 0 0 0 7.283 7.277c4.016 0 7.278-3.262 7.278-7.278V6.8a10.22 10.22 0 0 0 7.369 3.097.074.074 0 0 0 .074-.074V7.126a.074.074 0 0 0-.074-.074 7.23 7.23 0 0 1-4.708-2.355 7.18 7.18 0 0 1-2.327-4.549.074.074 0 0 0-.074-.074h-2.923" />
+        </svg>
+    );
+}
 
 interface TopUtilityBarProps {
     onSignIn: () => void;
     onGetStarted: () => void;
     onSearch?: () => void;
+    currentUser?: UserType | null;
+    onSignOut?: () => void;
 }
 
-export function TopUtilityBar({ onSignIn, onGetStarted, onSearch }: TopUtilityBarProps) {
+export function TopUtilityBar({ onSignIn, onGetStarted, onSearch, currentUser, onSignOut }: TopUtilityBarProps) {
     return (
         <div className="hidden lg:block bg-[#363636] text-white py-2 px-6">
             <div className="max-w-7xl mx-auto flex justify-between items-center text-[10px] font-black tracking-[0.2em]">
                 <div className="flex items-center gap-6">
-                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5"><Facebook className="w-4 h-4" /></a>
-                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5"><Twitter className="w-4 h-4" /></a>
-                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5"><Youtube className="w-4 h-4" /></a>
-                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5"><Instagram className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="Facebook"><Facebook className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="X (Twitter)"><XIcon className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="LinkedIn"><Linkedin className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="Instagram"><Instagram className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="TikTok"><TikTokIcon className="w-4 h-4" /></a>
+                    <a href="#" className="hover:text-[#20a6eb] transition-colors flex items-center gap-1.5" title="YouTube"><Youtube className="w-4 h-4" /></a>
                 </div>
                 <div className="flex items-center gap-6">
-                    <button
-                        onClick={onSearch}
-                        className="flex items-center gap-1.5 bg-white/10 border border-white/0 px-3 py-1 rounded-full cursor-pointer hover:bg-white/20 transition-all text-white/80 hover:text-white text-[10px] font-black tracking-[0.2em]"
-                    >
-                        <Search className="w-3 h-3" /> Search
-                    </button>
-                    <div className="flex gap-4">
-                        <button onClick={onSignIn} className="hover:text-[#20a6eb] transition-colors bg-transparent border-0 cursor-pointer text-[11px] font-bold text-white/80">Sign In</button>
-                        <button onClick={onGetStarted} className="firebase-gradient px-4 py-1.5 rounded-full text-white hover:scale-105 transition-all bg-transparent border-0 cursor-pointer text-[11px] font-bold firebase-glow-blue">Join Radar</button>
+                    <div className="relative flex items-center">
+                        <Search className="absolute left-3 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Search articles, topics..."
+                            onClick={onSearch}
+                            onFocus={onSearch}
+                            readOnly
+                            className="bg-white/10 border border-white/10 rounded-full pl-8 pr-4 py-1.5 text-[10px] text-white/80 placeholder-white/40 font-semibold tracking-wide cursor-pointer hover:bg-white/20 transition-all outline-none w-52 md:w-72"
+                        />
                     </div>
+                    {currentUser ? (
+                        <div className="flex items-center gap-4 text-[11px] font-bold">
+                            <span className="text-white/60">OPERATOR: <strong className="text-[#20a6eb] font-bold">{currentUser.name}</strong></span>
+                            <span className="text-white/25">|</span>
+                            {['Admin', 'Writer', 'Editor', 'Senior Editor', 'Quality Checker', 'Publisher'].includes(currentUser.role) && (
+                                <button
+                                    onClick={() => {
+                                        const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                                        window.history.pushState({ view: 'app' }, '', `${BASE_URL}/`);
+                                        window.dispatchEvent(new PopStateEvent('popstate'));
+                                    }}
+                                    className="hover:text-[#20a6eb] text-white/80 transition-colors bg-transparent border-0 cursor-pointer font-bold uppercase tracking-[0.1em]"
+                                >
+                                    Workspace
+                                </button>
+                            )}
+                            <button onClick={onSignOut} className="text-red-400 hover:text-red-300 transition-colors bg-transparent border-0 cursor-pointer font-bold uppercase tracking-[0.1em]">Sign Out</button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-4">
+                            <button onClick={onSignIn} className="hover:text-[#20a6eb] transition-colors bg-transparent border-0 cursor-pointer text-[11px] font-bold text-white/80">Sign In</button>
+                            <button onClick={onGetStarted} className="firebase-gradient px-4 py-1.5 rounded-full text-white hover:scale-105 transition-all bg-transparent border-0 cursor-pointer text-[11px] font-bold firebase-glow-blue">Join Travel Radar</button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -109,7 +155,7 @@ export function MainHeader({
                                         }`}
                                 >
                                     {cat}
-                                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
+                                    <span className="w-1.5 h-1.5 bg-[#20a6eb] rounded-full animate-pulse shadow-[0_0_8px_#20a6eb]" />
                                     <span className={`absolute -bottom-2 left-0 w-full h-0.5 bg-[#20a6eb] transition-transform duration-300 ${activeCategory === cat ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
                                         }`} />
                                 </a>
@@ -151,7 +197,9 @@ export function MobileMenuDrawer({
     activeCategory,
     onNavigate,
     onSignIn,
-    onGetStarted
+    onGetStarted,
+    currentUser,
+    onSignOut
 }: {
     isOpen: boolean;
     onClose: () => void;
@@ -160,6 +208,8 @@ export function MobileMenuDrawer({
     onNavigate: (cat: string) => void;
     onSignIn: () => void;
     onGetStarted: () => void;
+    currentUser?: UserType | null;
+    onSignOut?: () => void;
 }) {
     return (
         <AnimatePresence>
@@ -205,30 +255,65 @@ export function MobileMenuDrawer({
 
                             <div className="pt-8 mt-8 border-t border-gray-100 space-y-4">
                                 <div className="text-[10px] font-black text-gray-400 tracking-wider px-4">Terminal Access</div>
-                                <button
-                                    onClick={() => { onSignIn(); onClose(); }}
-                                    className="w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-gray-50 transition-all border-0 bg-transparent cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                                        <User className="w-5 h-5" />
+                                {currentUser ? (
+                                    <div className="space-y-2 px-4 shadow-inner-lg">
+                                        <div className="w-full p-4 rounded-2xl flex items-center gap-4 bg-gray-50 border border-gray-100">
+                                            <div className="w-10 h-10 rounded-xl bg-[#20a6eb]/10 text-[#20a6eb] flex items-center justify-center font-bold">
+                                                {currentUser.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-sm font-black text-slate-800">{currentUser.name}</span>
+                                                <span className="text-[10px] text-[#20a6eb] font-mono tracking-wider uppercase font-extrabold">{currentUser.role}</span>
+                                            </div>
+                                        </div>
+                                        {['Admin', 'Writer', 'Editor', 'Senior Editor', 'Quality Checker', 'Publisher'].includes(currentUser.role) && (
+                                            <button
+                                                onClick={() => {
+                                                    onClose();
+                                                    const BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                                                    window.history.pushState({ view: 'app' }, '', `${BASE_URL}/`);
+                                                    window.dispatchEvent(new PopStateEvent('popstate'));
+                                                }}
+                                                className="w-full p-3 rounded-xl bg-[#20a6eb] text-white font-bold text-xs uppercase cursor-pointer hover:bg-sky-650 transition-all border-0 shadow-sm"
+                                            >
+                                                Workspace Desk
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => { onSignOut?.(); onClose(); }}
+                                            className="w-full p-3 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs uppercase cursor-pointer hover:bg-rose-100 transition-all border-0"
+                                        >
+                                            Sign Out
+                                        </button>
                                     </div>
-                                    <div className="flex flex-col text-left">
-                                        <span className="text-sm font-black">Sign In</span>
-                                        <span className="text-[10px] text-gray-400">Access your dashboard</span>
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => { onGetStarted(); onClose(); }}
-                                    className="w-full p-4 rounded-2xl flex items-center gap-4 firebase-gradient text-white shadow-xl hover:scale-[1.02] transition-all border-0 cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                        <Activity className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                        <span className="text-sm font-black">Join Radar Desk</span>
-                                        <span className="text-[10px] text-white/60 font-bold">Standard Operations</span>
-                                    </div>
-                                </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => { onSignIn(); onClose(); }}
+                                            className="w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-gray-50 transition-all border-0 bg-transparent cursor-pointer"
+                                        >
+                                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                                                <User className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-sm font-black">Sign In</span>
+                                                <span className="text-[10px] text-gray-400">Access your dashboard</span>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => { onGetStarted(); onClose(); }}
+                                            className="w-full p-4 rounded-2xl flex items-center gap-4 firebase-gradient text-white shadow-xl hover:scale-[1.02] transition-all border-0 cursor-pointer"
+                                        >
+                                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                                <Activity className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-sm font-black">Join Travel Radar</span>
+                                                <span className="text-[10px] text-white/60 font-bold">Standard Operations</span>
+                                            </div>
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </nav>
 
@@ -236,7 +321,10 @@ export function MobileMenuDrawer({
                             <p className="text-[9px] font-bold text-gray-400 tracking-[0.2em] mb-4">SYSTEM STATUS: <span className="text-emerald-500">NOMINAL</span></p>
                             <div className="flex items-center gap-4 text-gray-400">
                                 <Facebook className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
-                                <Twitter className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <XIcon className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <Linkedin className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <Instagram className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
+                                <TikTokIcon className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
                                 <Youtube className="w-4 h-4 cursor-pointer hover:text-[#20a6eb]" />
                             </div>
                         </div>
@@ -259,8 +347,8 @@ export function NewsTicker({ recentNews, onNavigate }: NewsTickerProps) {
         <div className="bg-white border-y border-black/5 py-2.5 overflow-hidden relative z-30">
             <div className="max-w-7xl mx-auto px-6 flex items-center">
                 <div className="flex items-center gap-2 bg-[#1a1a1a] text-white px-3 py-1 rounded-lg text-[10px] font-black tracking-widest shrink-0 mr-8 shadow-lg border border-white/10">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]" />
-                    Live Terminal
+                    <span className="w-1.5 h-1.5 bg-[#20a6eb] rounded-full animate-pulse shadow-[0_0_8px_#20a6eb]" />
+                    Live News
                 </div>
                 <div className="flex-1 overflow-hidden">
                     <div className="flex animate-marquee whitespace-nowrap gap-16 text-[11px] font-bold text-[#1a1a1a]/60 tracking-tight items-center">
@@ -295,6 +383,8 @@ interface SharedLayoutProps {
     onGetStarted?: () => void;
     onSearch?: () => void;
     showTicker?: boolean;
+    currentUser?: UserType | null;
+    onSignOut?: () => void;
 }
 
 export function SharedLayout({
@@ -305,7 +395,9 @@ export function SharedLayout({
     onSignIn = () => { },
     onGetStarted = () => { },
     onSearch = () => { },
-    showTicker = true
+    showTicker = true,
+    currentUser,
+    onSignOut
 }: SharedLayoutProps) {
     const [scrolled, setScrolled] = React.useState(false);
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -320,7 +412,7 @@ export function SharedLayout({
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-[#1a1a1a] font-sans selection:bg-[#20a6eb]/20 overflow-x-hidden">
-            <TopUtilityBar onSignIn={onSignIn} onGetStarted={onGetStarted} onSearch={onSearch} />
+            <TopUtilityBar onSignIn={onSignIn} onGetStarted={onGetStarted} onSearch={onSearch} currentUser={currentUser} onSignOut={onSignOut} />
             <MainHeader
                 scrolled={scrolled}
                 isMenuOpen={isMenuOpen}
@@ -337,6 +429,8 @@ export function SharedLayout({
                 onNavigate={onNavigate}
                 onSignIn={onSignIn}
                 onGetStarted={onGetStarted}
+                currentUser={currentUser}
+                onSignOut={onSignOut}
             />
             {showTicker && <NewsTicker recentNews={articles} onNavigate={onNavigate} />}
             {children}
