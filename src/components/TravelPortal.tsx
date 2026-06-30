@@ -306,14 +306,13 @@ export default function TravelPortal({
     const allTravelArticles = [...publishedArticles, ...travelMockArticles];
 
     const filteredArticles = activeSubPage === 'overview'
-        ? allTravelArticles.filter(a => ['Airports', 'Points & Loyalty', 'Technology', 'Trip Reviews', 'Travel'].includes(a.category || ''))
+        ? allTravelArticles.filter(a => (a.categories || []).some(c => ['airports', 'points & loyalty', 'technology', 'trip reviews', 'travel'].includes(c.toLowerCase())))
         : allTravelArticles.filter(a => {
-            const cat = a.category?.toLowerCase() || '';
-            const sub = activeSubPage.toLowerCase().replace('-', ' ');
-            if (activeSubPage === 'points-loyalty') return cat.includes('points') || cat.includes('loyalty');
-            if (activeSubPage === 'trip-reviews') return cat.includes('review');
-            if (activeSubPage === 'deals') return cat.includes('deal') || cat.includes('offer');
-            return cat.includes(sub);
+            const cats = (a.categories || []).map(c => c.toLowerCase());
+            if (activeSubPage === 'points-loyalty') return cats.some(c => c.includes('points') || c.includes('loyalty'));
+            if (activeSubPage === 'trip-reviews') return cats.some(c => c.includes('review'));
+            if (activeSubPage === 'deals') return cats.some(c => c.includes('deal') || c.includes('offer'));
+            return cats.some(c => c.includes(activeSubPage.toLowerCase().replace('-', ' ')));
         });
 
     const totalPages = Math.ceil(filteredArticles.length / ITEMS_PER_PAGE);
@@ -598,7 +597,7 @@ export default function TravelPortal({
                                                 />
                                                 <div className="absolute top-4 left-4">
                                                     <span className="text-[8px] font-black px-2 py-0.5 bg-white text-[#1a1a1a] rounded shadow-xl tracking-widest border border-white/20">
-                                                        {article.category || 'Travel'}
+                                                        {article.categories?.[0] || 'Travel'}
                                                     </span>
                                                 </div>
                                             </div>

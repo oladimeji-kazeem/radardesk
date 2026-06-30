@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS articles (
   history JSONB DEFAULT '[]'::jsonb,
   review_count INTEGER DEFAULT 0,
   review_history JSONB DEFAULT '[]'::jsonb,
-  category TEXT,
+  categories JSONB DEFAULT '[]'::jsonb,
+  sections JSONB DEFAULT '[]'::jsonb,
+  pages JSONB DEFAULT '[]'::jsonb,
   header_image TEXT,
   excerpt TEXT
 );
@@ -166,7 +168,9 @@ CREATE TABLE IF NOT EXISTS portal_content (
   resource_url TEXT,
   thumbnail_url TEXT,
   metadata JSONB DEFAULT '{}'::jsonb,
-  sector TEXT, -- Optional filter
+  categories JSONB DEFAULT '[]'::jsonb,
+  sections JSONB DEFAULT '[]'::jsonb,
+  pages JSONB DEFAULT '[]'::jsonb,
   active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

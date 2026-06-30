@@ -45,7 +45,15 @@ export default function ArticleReader({
 
     // Find related articles (same category, excluding current one)
     const relatedArticles = articles
-        .filter((a) => a.status === 'Published' && a.id !== article.id && a.category === article.category)
+        .filter((a) => {
+            if (a.status !== 'Published' || a.id === article.id) return false;
+
+            // Check array overlap or fallback to old category text
+            const aCats = a.categories || ((a as any).category ? [(a as any).category] : []);
+            const artCats = article.categories || ((article as any).category ? [(article as any).category] : []);
+
+            return aCats.some(cat => artCats.includes(cat));
+        })
         .slice(0, 3);
 
     // If not enough related in same category, grab any published ones
@@ -91,7 +99,7 @@ export default function ArticleReader({
         };
     };
 
-    const theme = getCategoryTheme(article.category);
+    const theme = getCategoryTheme(article.categories?.[0] || (article as any).category);
 
     const handleSubmitComment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -162,7 +170,7 @@ export default function ArticleReader({
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <span className={`text-[9px] font-black px-4 py-1.5 rounded-full border tracking-widest uppercase ${theme.text} ${theme.bg}`}>
-                                {article.category || 'MARKET'}
+                                {article.categories?.[0] || (article as any).category || 'MARKET'}
                             </span>
                             <span className="text-[10px] font-black text-black/20 tracking-wider font-mono">
                                 RD-NODE // {article.id.toUpperCase()}
@@ -285,7 +293,7 @@ export default function ArticleReader({
                                     />
 
                                     <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-black text-white tracking-widest uppercase">
-                                        {item.category || 'INTEL'}
+                                        {item.categories?.[0] || (item as any).category || 'INTEL'}
                                     </div>
                                 </div>
                                 <h4 className="text-xs font-black leading-snug text-[#1a1a1a] group-hover:text-[#20a6eb] transition-colors line-clamp-2 italic">

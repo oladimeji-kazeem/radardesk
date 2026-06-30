@@ -359,7 +359,7 @@ export function NewsTicker({ recentNews, onNavigate }: NewsTickerProps) {
                                 className="group cursor-pointer transition-all hover:text-[#20a6eb] flex items-center gap-4"
                             >
                                 <span className="flex items-center gap-2">
-                                    <span className="text-[9px] font-black text-[#20a6eb] tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">[{art.category || 'Radar'}]</span>
+                                    <span className="text-[9px] font-black text-[#20a6eb] tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">[{art.categories?.[0] || (art as any).category || 'Radar'}]</span>
                                     <span className="text-[9px] font-mono text-black/20">{new Date(art.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </span>
                                 <span className="italic">{art.title}</span>

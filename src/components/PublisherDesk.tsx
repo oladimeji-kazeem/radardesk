@@ -24,6 +24,9 @@ interface PublisherDeskProps {
     articleId: string;
     action: string;
     comments: string;
+    categories?: string[];
+    sections?: string[];
+    pages?: string[];
   }) => Promise<void>;
   onAddToast: (msg: string, type: 'success' | 'warning' | 'info' | 'error') => void;
 }
@@ -39,7 +42,14 @@ export default function PublisherDesk({
   const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [publishedComments, setPublishedComments] = useState('');
+  const [pubCategories, setPubCategories] = useState<string[]>([]);
+  const [pubSections, setPubSections] = useState<string[]>([]);
+  const [pubPages, setPubPages] = useState<string[]>([]);
   const [deploying, setDeploying] = useState(false);
+
+  const CATEGORY_OPTIONS = ['Aviation', 'Travel', 'Technology', 'Live News', 'Trending', 'Flight Deals'];
+  const SECTION_OPTIONS = ['Hero', 'Featured', 'Secondary', 'Radar Intel', 'Incident Loop', 'Reviews'];
+  const PAGE_OPTIONS = ['Landing Homepage', 'Aviation Portal', 'Travel Portal', 'Air Intelligence', 'Deals Center'];
 
   const selectedArticle = articles.find(a => a.id === activeArticleId);
 
@@ -50,11 +60,17 @@ export default function PublisherDesk({
       await onSubmitDecision({
         articleId: selectedArticle.id,
         action: 'Publish',
-        comments: publishedComments.trim() || 'Ready for RadarDesk live release.'
+        comments: publishedComments.trim() || 'Ready for RadarDesk live release.',
+        categories: pubCategories,
+        sections: pubSections,
+        pages: pubPages
       });
       onAddToast(`Success! "${selectedArticle.title}" has been deployed live to the Radar desks!`, 'success');
       setActiveArticleId(null);
       setPublishedComments('');
+      setPubCategories([]);
+      setPubSections([]);
+      setPubPages([]);
     } catch (err: any) {
       onAddToast(err.message || 'Error occurred during publishing deploy.', 'error');
     } finally {
@@ -288,6 +304,55 @@ export default function PublisherDesk({
                   <div>
                     <p className="font-extrabold text-sky-950">Confirm Publication Release Payload</p>
                     <p className="mt-0.5 text-sky-850">Deploying registers this article immediately onto the public web feeds directory. This freezes further edits by creators. Claim ownership of final payload release below.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white border text-left border-slate-200 p-4 rounded-xl space-y-4">
+                  <h4 className="font-bold text-slate-800 text-xs border-b border-slate-100 pb-2">Privileged Taxonomy Routing Settings</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px]">
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-700 uppercase">Categories / Tags</span>
+                      <div className="space-y-1">
+                        {CATEGORY_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 p-0.5 rounded">
+                            <input type="checkbox" checked={pubCategories.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setPubCategories([...pubCategories, opt]);
+                              else setPubCategories(pubCategories.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-700 uppercase">Page Destinations</span>
+                      <div className="space-y-1">
+                        {PAGE_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 p-0.5 rounded">
+                            <input type="checkbox" checked={pubPages.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setPubPages([...pubPages, opt]);
+                              else setPubPages(pubPages.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-700 uppercase">Portal Sections</span>
+                      <div className="space-y-1">
+                        {SECTION_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 p-0.5 rounded">
+                            <input type="checkbox" checked={pubSections.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setPubSections([...pubSections, opt]);
+                              else setPubSections(pubSections.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

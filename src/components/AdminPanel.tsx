@@ -100,6 +100,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [contentArticleUrl, setContentArticleUrl] = useState('');
   const [contentDescription, setContentDescription] = useState('');
   const [contentActive, setContentActive] = useState(true);
+  const [contentCategories, setContentCategories] = useState<string[]>([]);
+  const [contentSections, setContentSections] = useState<string[]>([]);
+  const [contentPages, setContentPages] = useState<string[]>([]);
+
+  const CATEGORY_OPTIONS = ['Aviation', 'Travel', 'Technology', 'Live News', 'Trending', 'Flight Deals'];
+  const SECTION_OPTIONS = ['Hero', 'Featured', 'Secondary', 'Radar Intel', 'Incident Loop', 'Reviews'];
+  const PAGE_OPTIONS = ['Landing Homepage', 'Aviation Portal', 'Travel Portal', 'Air Intelligence', 'Deals Center'];
 
   const [statSector, setStatSector] = useState('Travel');
   const [statMetric, setStatMetric] = useState('');
@@ -651,6 +658,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       resource_url: contentArticleUrl,
                       description: contentDescription,
                       is_active: contentActive,
+                      categories: contentCategories,
+                      sections: contentSections,
+                      pages: contentPages,
                       updated_at: new Date().toISOString()
                     };
                     await onUpdatePortalContent(editingItemId, payload);
@@ -658,6 +668,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     setContentHeadline(''); setContentSubhead('');
                     setContentHeroUrl(''); setContentThumbUrl('');
                     setContentArticleUrl(''); setContentDescription('');
+                    setContentCategories([]); setContentSections([]); setContentPages([]);
                   } finally {
                     setIsCmsSubmitting(false);
                   }
@@ -694,6 +705,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <label className="text-[10px] text-slate-500 font-black uppercase">Short Description / Excerpt</label>
                   <textarea value={contentDescription} onChange={(e) => setContentDescription(e.target.value)} rows={2} placeholder="Brief description shown on the hero card..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none resize-none" />
                 </div>
+
+                <div className="bg-white border text-left border-slate-200 p-4 rounded-xl space-y-4">
+                  <h4 className="font-bold text-slate-800 text-[10px] border-b border-slate-100 pb-2 uppercase tracking-wider">CMS Taxonomy Bindings</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px]">
+                    <div className="space-y-1.5">
+                      <span className="font-bold text-slate-700">Categories</span>
+                      <div className="space-y-1">
+                        {CATEGORY_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" checked={contentCategories.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setContentCategories([...contentCategories, opt]);
+                              else setContentCategories(contentCategories.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="font-bold text-slate-700">Pages</span>
+                      <div className="space-y-1">
+                        {PAGE_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" checked={contentPages.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setContentPages([...contentPages, opt]);
+                              else setContentPages(contentPages.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="font-bold text-slate-700">Sections</span>
+                      <div className="space-y-1">
+                        {SECTION_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" checked={contentSections.includes(opt)} onChange={(e) => {
+                              if (e.target.checked) setContentSections([...contentSections, opt]);
+                              else setContentSections(contentSections.filter(x => x !== opt));
+                            }} />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-end shadow-xs">
                   <button type="submit" disabled={isCmsSubmitting} className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-black rounded-xl">Save Hero Content</button>
                 </div>

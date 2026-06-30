@@ -90,14 +90,11 @@ export default function AviationPortal({
 
     // Filter articles based on sub-page
     const filteredArticles = activeSubPage === 'overview'
-        ? allAviationArticles.filter(a => ['Aircrafts', 'Airlines', 'Airshow & Events', 'Career', 'Manufacturing', 'Aviation'].includes(a.category || ''))
+        ? allAviationArticles.filter(a => a.pages?.includes('Aviation Portal') || a.categories?.some((c: string) => ['aircrafts', 'airlines', 'airshow & events', 'career', 'manufacturing', 'aviation'].includes(c.toLowerCase())))
         : allAviationArticles.filter(a => {
-            const cat = a.category?.toLowerCase() || '';
-            const sub = activeSubPage.toLowerCase().replace('-', ' ');
-            if (activeSubPage === 'aircrafts') return cat.includes('aircraft') || cat.includes('fleet');
-            if (activeSubPage === 'airlines') return cat.includes('airline') || cat.includes('carrier');
-            if (activeSubPage === 'manufacturing') return cat.includes('manufacturing') || cat.includes('oem');
-            return cat.includes(sub) || (sub === 'airshow events' && (cat.includes('airshow') || cat.includes('event')));
+            const hasPage = a.pages?.includes('Aviation Portal');
+            const hasCat = a.categories?.some((c: string) => c.toLowerCase() === activeSubPage.toLowerCase());
+            return hasPage || hasCat;
         });
 
     const totalPages = Math.ceil(filteredArticles.length / ITEMS_PER_PAGE);
@@ -328,14 +325,14 @@ export default function AviationPortal({
                                     <div className="flex gap-6">
                                         <div className="w-40 h-32 shrink-0 rounded-2xl overflow-hidden shadow-sm">
                                             <img
-                                                src={`https://images.unsplash.com/photo-${1500000000000 + i + (currentPage * 10)}?auto=format&fit=crop&w=400&q=80`}
+                                                src={(article as any).headerImage || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=800'}
                                                 className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
                                                 alt="Aviation News"
                                             />
                                         </div>
                                         <div className="flex-1 space-y-2 py-1">
                                             <div className="flex items-center gap-4 text-[8px] font-black text-[#20a6eb] tracking-[0.2em]">
-                                                <span className="bg-[#20a6eb]/5 px-2 py-0.5 rounded border border-[#20a6eb]/10">{article.category}</span>
+                                                <span className="bg-[#20a6eb]/5 px-2 py-0.5 rounded border border-[#20a6eb]/10">{article.categories?.[0] || (article as any).category}</span>
                                                 <span className="text-black/20 italic"><Clock className="w-3 h-3 inline mr-1" /> {new Date(article.createdAt).toLocaleDateString()}</span>
                                             </div>
                                             <h3 className="text-base font-black tracking-tight leading-tight text-[#1a1a1a] group-hover:text-[#20a6eb] transition-colors line-clamp-1">

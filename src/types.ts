@@ -73,7 +73,9 @@ export interface Article {
   aiValidation: AIPreValidation | null;
   comments: Comment[];
   history: AuditLog[];
-  category?: string; // Standardize category for portal filtering
+  categories?: string[];
+  sections?: string[];
+  pages?: string[];
   headerImage?: string;
   excerpt?: string;
 }
@@ -207,10 +209,12 @@ export interface PortalContent {
   contentType: string; // 'video', 'newsletter', 'cta', 'hero'
   title: string;
   description: string;
-  resourceUrl: string;
-  thumbnailUrl: string;
-  metadata: Record<string, any>;
-  sector?: string;
+  resourceUrl?: string;
+  thumbnailUrl?: string;
+  metadata?: any;
+  categories: string[];
+  sections: string[];
+  pages: string[];
   active: boolean;
   createdAt: string;
 }

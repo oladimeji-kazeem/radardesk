@@ -67,7 +67,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
 
     const filteredArticles = activeFilter === 'All'
         ? articles.filter(a => a.status === 'Published')
-        : articles.filter(a => a.status === 'Published' && a.category === activeFilter);
+        : articles.filter(a => a.status === 'Published' && (a.categories?.includes(activeFilter) || (a as any).category === activeFilter));
 
     // Sort by Date (newest first)
     const sortedArticles = [...filteredArticles].sort((a, b) =>
@@ -154,7 +154,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                                 Flash intel
                                             </span>
                                             <span className="bg-white/10 backdrop-blur-md text-white px-5 py-2 rounded-full text-[10px] font-black border border-white/20">
-                                                {featuredStory.category}
+                                                {featuredStory.categories?.[0] || 'Breaking News'}
                                             </span>
                                         </div>
 
@@ -206,7 +206,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                         </div>
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-black text-[#20a6eb] tracking-widest">{story.category}</span>
+                                                <span className="text-[10px] font-black text-[#20a6eb] tracking-widest">{story.categories?.[0] || 'Breaking News'}</span>
                                                 <span className="text-[9px] font-bold text-black/20 italic">{new Date(story.createdAt).toLocaleTimeString()}</span>
                                             </div>
                                             <h3 className="text-lg font-black leading-tight text-[#1a1a1a] group-hover:text-[#20a6eb] transition-colors italic">
@@ -249,7 +249,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                         <div className="absolute top-4 right-4 h-3 w-3 bg-[#20a6eb] rounded-full shadow-[0_0_10px_#20a6eb]" />
                                     </div>
                                     <div className="px-2">
-                                        <div className="text-[9px] font-black text-black/30 tracking-widest mb-1">{story.category}</div>
+                                        <div className="text-[9px] font-black text-black/30 tracking-widest mb-1">{story.categories?.[0] || 'Updates'}</div>
                                         <h4 className="text-sm font-black leading-snug text-[#1a1a1a] group-hover:text-[#20a6eb] transition-colors line-clamp-2 italic">
                                             {story.title}
                                         </h4>
@@ -318,7 +318,7 @@ export default function BreakingNews({ articles, onNavigate }: BreakingNewsProps
                                                     {story.title}
                                                 </h4>
                                                 <div className="flex items-center flex-wrap gap-2 pt-1">
-                                                    <span className="text-[8px] font-black text-black/40 bg-black/5 px-2 py-0.5 rounded">#{story.category}</span>
+                                                    <span className="text-[8px] font-black text-black/40 bg-black/5 px-2 py-0.5 rounded">#{story.categories?.[0] || 'Updates'}</span>
                                                     {i === 0 && <span className="text-[8px] font-black text-amber-500 animate-pulse">Priority</span>}
                                                 </div>
                                             </div>

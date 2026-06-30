@@ -174,7 +174,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
     // Filter articles for the active sector
     const sectorArticles = articles.filter(a =>
         (a.status === 'Published' || a.status === 'Approved') &&
-        a.category === activeSector
+        (a.categories?.includes(activeSector) || (a as any).category === activeSector)
     ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Group into categories (using category field or just split)
@@ -187,7 +187,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                 title: a.title,
                 image: a.headerImage,
                 excerpt: a.excerpt,
-                meta: a.category
+                meta: (a as any).category
             }))
         },
         {
@@ -198,7 +198,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                 title: a.title,
                 image: a.headerImage,
                 excerpt: a.excerpt,
-                meta: a.category
+                meta: (a as any).category
             }))
         }
     ];
@@ -373,7 +373,7 @@ export default function RadarPortal({ articles, onNavigate, initialSector = 'Rou
                                         <div className="text-[8px] font-black text-black/20 font-mono mt-0.5">{new Date(art.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                         <div className="space-y-1">
                                             <h5 className="text-[11px] font-bold text-black/60 group-hover:text-[#20a6eb] transition-colors leading-tight italic line-clamp-2">{art.title}</h5>
-                                            <div className="text-[8px] font-black tracking-wider text-black/20">Sec: {art.category}</div>
+                                            <div className="text-[8px] font-black tracking-wider text-black/20">Sec: {art.categories?.[0] || 'Intelligence Feed'}</div>
                                         </div>
                                     </div>
                                 ))}

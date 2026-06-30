@@ -306,7 +306,7 @@ export default function PortalLanding({
     ];
 
     const publishedArticles = articles
-        .filter(a => a.status === 'Published' || a.status === 'Approved')
+        .filter(a => a.status?.toLowerCase() === 'published' || a.status?.toLowerCase() === 'approved')
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Mock data for missing sections if articles are few
@@ -315,19 +315,16 @@ export default function PortalLanding({
         title: 'Breaking: New Aviation Standards Set for 2026 Flight Operations',
         writerName: 'Editorial Team',
         createdAt: new Date().toISOString(),
-        content: 'The aviation industry is bracing for standard changes...',
-        category: 'Aviation News'
+        categories: ['Aviation News']
     };
 
-    const secondaryArticles = publishedArticles.slice(1, 3);
-    const trendingStories = publishedArticles.slice(3, 8);
-    const recentNews = publishedArticles.slice(0, 10);
+    const secondaryArticles = publishedArticles.filter(a => a.sections?.includes('Secondary') || a.pages?.includes('Landing Homepage')).slice(0, 10);
+    const trendingStories = publishedArticles.filter(a => a.categories?.includes('Trending') || a.sections?.includes('Featured')).slice(0, 5);
+    const recentNews = publishedArticles.filter(a => a.categories?.includes('Live News') || a.sections?.includes('Radar Intel')).slice(0, 10);
 
     const landingTravelArticles = publishedArticles.filter(a =>
-        a.category?.toLowerCase() === 'travel' ||
-        a.category?.toLowerCase() === 'trip reviews' ||
-        a.category?.toLowerCase() === 'loyalty' ||
-        a.category?.toLowerCase() === 'airports'
+        a.pages?.includes('Travel Portal') ||
+        a.categories?.some(c => ['travel', 'trip reviews', 'loyalty', 'airports'].includes(c.toLowerCase()))
     );
 
     const displayTravelArticles = landingTravelArticles;
@@ -468,10 +465,10 @@ export default function PortalLanding({
                                         </div>
                                         <div className="flex flex-col justify-center py-1 flex-1 min-w-0">
                                             <span className="text-[9px] font-black text-[#20a6eb] tracking-[0.2em] mb-1.5 block opacity-80">Aviation Intelligence</span>
-                                            <h3 className="text-sm md:text-[13px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-2 text-[#1a1a1a] mb-1.5 tracking-tight">
+                                            <h3 className="text-base md:text-[15px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-2 text-[#1a1a1a] mb-1.5 tracking-tight">
                                                 {art.title}
                                             </h3>
-                                            <p className="text-[10px] text-[#1a1a1a]/60 line-clamp-2 mb-3 font-medium leading-relaxed italic">
+                                            <p className="text-[11.5px] md:text-[13px] text-[#1a1a1a]/60 line-clamp-2 mb-3 font-medium leading-relaxed italic">
                                                 {art.excerpt || art.content.substring(0, 110)}...
                                             </p>
                                             <div className="mt-auto flex items-center gap-4 text-[8px] font-bold text-black/30 uppercase tracking-[0.15em] border-t border-black/5 pt-2.5">
@@ -540,10 +537,10 @@ export default function PortalLanding({
                                                         <span className="text-4xl font-black text-black/5 group-hover:text-[#20a6eb]/40 transition-colors leading-none italic">{originalIdx + 1}</span>
                                                         <div className="space-y-2">
 
-                                                            <h4 className="text-sm font-black leading-snug group-hover:text-[#20a6eb] transition-all line-clamp-2 text-[#1a1a1a]/80 group-hover:text-[#1a1a1a]">
+                                                            <h4 className="text-[15px] font-black leading-snug group-hover:text-[#20a6eb] transition-all line-clamp-2 text-[#1a1a1a]/80 group-hover:text-[#1a1a1a]">
                                                                 {title}
                                                             </h4>
-                                                            <p className="text-[10px] text-black/30 font-black tracking-widest">{date} • {art.category || 'Aviation'}</p>
+                                                            <p className="text-[11px] text-black/40 font-black tracking-widest">{date} • {art.categories?.[0] || 'Aviation'}</p>
                                                         </div>
                                                     </div>
                                                 );
@@ -732,14 +729,14 @@ export default function PortalLanding({
                                         }}
                                     />
                                     <div className="absolute top-5 left-5 firebase-gradient px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-white shadow-lg">
-                                        {art.category || 'Flight Review'}
+                                        {art.categories?.[0] || 'Flight Review'}
                                     </div>
                                 </div>
                                 <div className="px-4 pb-6">
-                                    <h3 className="text-sm md:text-[15px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-2 italic text-[#1a1a1a]/80 mb-2">
+                                    <h3 className="text-base md:text-[17px] font-extrabold leading-tight group-hover:text-[#20a6eb] transition-colors line-clamp-2 italic text-[#1a1a1a]/80 mb-2">
                                         {art.title}
                                     </h3>
-                                    <p className="text-[11px] text-[#1a1a1a]/50 line-clamp-2 leading-relaxed font-medium italic mb-4">
+                                    <p className="text-xs md:text-[13px] text-[#1a1a1a]/50 line-clamp-2 leading-relaxed font-medium italic mb-4">
                                         {art.excerpt || (art.content ? art.content.slice(0, 110) + '...' : 'Dive into our comprehensive review of the latest aviation experiences, from long-haul luxury to regional transit gems...')}
                                     </p>
                                     <div className="flex items-center gap-3 text-[10px] font-black text-black/20 tracking-wider">
@@ -788,10 +785,10 @@ export default function PortalLanding({
                                         </div>
                                         <div className="space-y-3 flex-1 min-w-0">
                                             <span className="text-[9px] font-black text-rose-500 tracking-wider bg-rose-500/5 px-2.5 py-1 rounded-full border border-rose-500/10">Incident Report</span>
-                                            <h3 className="text-sm md:text-[15px] font-extrabold leading-tight group-hover:text-rose-500 transition-colors text-[#1a1a1a]/80 line-clamp-2">
+                                            <h3 className="text-base md:text-[17px] font-extrabold leading-tight group-hover:text-rose-500 transition-colors text-[#1a1a1a]/80 line-clamp-2">
                                                 {item.title}
                                             </h3>
-                                            <p className="text-[10px] text-[#1a1a1a]/40 line-clamp-2 leading-relaxed font-medium italic">
+                                            <p className="text-xs text-[#1a1a1a]/40 line-clamp-2 leading-relaxed font-medium italic">
                                                 Investigation underway following standard protocol to ensure passenger safety and operational integrity...
                                             </p>
                                             <div className="pt-3 flex items-center gap-5 text-[8px] font-black text-[#1a1a1a]/20 tracking-wider border-t border-black/5">
