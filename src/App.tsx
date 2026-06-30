@@ -1231,7 +1231,51 @@ export default function App() {
   }
 
   if (activePortal === 'article' && selectedArticleId) {
-    const article = articles.find(a => a.id === selectedArticleId);
+    let article = articles.find(a => a.id === selectedArticleId);
+
+    // Provide mock articles so that placeholder cards can be clicked in the demo environment
+    if (!article && selectedArticleId.startsWith('mock-')) {
+      const isTrending = selectedArticleId.startsWith('mock-trending-');
+      const idx = parseInt(selectedArticleId.replace(/mock-(secondary|trending)-/, ''), 10) || 0;
+
+      let title = "Intelligence Report: Overview";
+      if (isTrending) {
+        title = idx === 0 ? 'The Most Luxurious First Class Cabins of 2026' :
+          idx === 1 ? 'Top 10 Safe Havens for Long Haul Layovers' :
+            idx === 2 ? 'Boeing vs Airbus: The Strategic Rivalry intensifies' :
+              idx === 3 ? 'Budget Travel is Changing: New Low-Cost Entrants Explained' :
+                'Aviation Sustainability: Beyond Carbon Offsetting';
+      } else {
+        title = idx === 0 ? 'Airline Revenue Systems Saw 12% Growth in Q1' :
+          idx === 1 ? 'Why Fuel Efficiency is the #1 Priority for Emerging Carriers' :
+            idx === 2 ? 'Global Logistics: The Role of Sustainable SAF' :
+              idx === 3 ? 'Future Flight: The Rise of eVTOL in Urban Mobility' :
+                idx === 4 ? 'Strategic Alliances: Reshaping the Transatlantic Market' :
+                  'Next-Gen Propulsion Engine Design';
+      }
+
+      article = {
+        id: selectedArticleId,
+        title: title,
+        writerName: 'Editorial Desk',
+        createdAt: new Date().toISOString(),
+        content: `**This is a mock intelligence briefing.**\n\nReal data and intelligence reports must be drafted by editors and approved by publishers via the developer desk. In the live production state, this data will be retrieved directly from the globally replicated database.\n\nEnjoy the layout!`,
+        category: 'Aviation',
+        status: 'Published' as any,
+        writerId: 'sys',
+        editorId: null,
+        editorName: null,
+        topicId: null,
+        score: 98,
+        reviewCycles: 0,
+        submittedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        revisions: [],
+        aiValidation: null,
+        comments: [],
+        history: [],
+      };
+    }
     if (article) {
       return (
         <SharedLayout

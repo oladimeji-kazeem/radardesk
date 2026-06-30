@@ -242,13 +242,13 @@ export default function PortalLanding({
     const [trendingOffset, setTrendingOffset] = useState(0);
     const [heroIndex, setHeroIndex] = useState(0);
 
-    const dynamicHeroContent = portalContent.filter(c => c.contentType === 'hero' && c.active);
+    const dynamicHeroContent = portalContent.filter(c => (c.contentType === 'hero' || c.content_type === 'hero') && (c.active || c.is_active));
     const heroContents = dynamicHeroContent.length > 0 ? dynamicHeroContent.map(c => ({
-        title: c.title,
+        title: c.headline || c.title,
         category: c.sector || 'Editorial Spotlight',
-        image: c.thumbUrl || c.resourceUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
-        content: c.description,
-        url: c.resourceUrl
+        image: c.thumbUrl || c.thumbnail_url || c.resourceUrl || c.resource_url || c.hero_image_url || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1200',
+        content: c.description || c.subheadline,
+        url: c.resourceUrl || c.resource_url
     })) : [
         {
             title: 'RadarDesk Operational Intelligence: Live Global Terminals',
@@ -365,7 +365,16 @@ export default function PortalLanding({
                                     exit={{ opacity: 0, x: -100 }}
                                     transition={{ duration: 0.8, ease: "circOut" }}
                                     className="absolute inset-0 cursor-pointer"
-                                    onClick={onGetStarted}
+                                    onClick={() => {
+                                        const url = heroContents[heroIndex].url;
+                                        if (url) {
+                                            if (url.startsWith('http')) {
+                                                window.open(url, '_blank');
+                                            } else {
+                                                onNavigate?.(url);
+                                            }
+                                        }
+                                    }}
                                 >
                                     <img
                                         src={heroContents[heroIndex].image}
@@ -395,9 +404,11 @@ export default function PortalLanding({
                                                         e.stopPropagation();
                                                         const url = heroContents[heroIndex].url;
                                                         if (url) {
-                                                            onNavigate?.(url);
-                                                        } else {
-                                                            onGetStarted();
+                                                            if (url.startsWith('http')) {
+                                                                window.open(url, '_blank');
+                                                            } else {
+                                                                onNavigate?.(url);
+                                                            }
                                                         }
                                                     }}
                                                     className="bg-[#1a1a1a] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb] transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer"
@@ -406,7 +417,10 @@ export default function PortalLanding({
                                                 </button>
 
                                                 <button
-                                                    onClick={onGetStarted}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onGetStarted();
+                                                    }}
                                                     className="bg-[#20a6eb] text-white px-8 py-4 rounded-2xl text-xs font-black tracking-[0.2em] flex items-center gap-3 hover:bg-[#20a6eb]/90 transition-all hover:scale-105 shadow-2xl border-0 cursor-pointer"
                                                 >
                                                     JOIN INTELLIGENCE NETWORK
@@ -481,6 +495,7 @@ export default function PortalLanding({
                                             key={i}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
+                                            onClick={() => onNavigate?.('/article/mock-secondary-' + i)}
                                             className="w-full snap-start flex gap-8 p-4 firebase-card-effect rounded-[2.5rem] cursor-pointer group mb-2 h-[155px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 border border-black/5 bg-white/80 backdrop-blur-md"
                                         >
                                             <div className="w-36 md:w-48 shrink-0 aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-black/5">
@@ -569,6 +584,8 @@ export default function PortalLanding({
                                                         onClick={() => {
                                                             if (typeof art === 'object') {
                                                                 onNavigate?.('/article/' + art.id);
+                                                            } else {
+                                                                onNavigate?.('/article/mock-trending-' + originalIdx);
                                                             }
                                                         }}
                                                         className="flex gap-5 group cursor-pointer border-b border-black/5 pb-6 last:border-0 last:pb-0"

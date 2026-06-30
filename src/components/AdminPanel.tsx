@@ -97,6 +97,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [contentSubhead, setContentSubhead] = useState('');
   const [contentHeroUrl, setContentHeroUrl] = useState('');
   const [contentThumbUrl, setContentThumbUrl] = useState('');
+  const [contentArticleUrl, setContentArticleUrl] = useState('');
+  const [contentDescription, setContentDescription] = useState('');
   const [contentActive, setContentActive] = useState(true);
 
   const [statSector, setStatSector] = useState('Travel');
@@ -646,12 +648,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       subheadline: contentSubhead,
                       hero_image_url: contentHeroUrl,
                       thumbnail_url: contentThumbUrl,
+                      resource_url: contentArticleUrl,
+                      description: contentDescription,
                       is_active: contentActive,
                       updated_at: new Date().toISOString()
                     };
                     await onUpdatePortalContent(editingItemId, payload);
                     setEditingItemId(null);
-                    setContentHeadline(''); setContentSubhead(''); setContentHeroUrl(''); setContentThumbUrl('');
+                    setContentHeadline(''); setContentSubhead('');
+                    setContentHeroUrl(''); setContentThumbUrl('');
+                    setContentArticleUrl(''); setContentDescription('');
                   } finally {
                     setIsCmsSubmitting(false);
                   }
@@ -673,20 +679,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <input type="text" value={contentHeadline} onChange={(e) => setContentHeadline(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none" />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">Hero Image URL</label>
+                    <input type="url" value={contentHeroUrl} onChange={(e) => setContentHeroUrl(e.target.value)} placeholder="https://..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-mono" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-black uppercase flex items-center gap-1"><BookOpen className="w-3 h-3 text-[#20a6eb]" /> Article URL (for Read Full Story)</label>
+                    <input type="text" value={contentArticleUrl} onChange={(e) => setContentArticleUrl(e.target.value)} placeholder="/article/article-id or /travel etc." className="w-full bg-white border border-sky-200 rounded-xl p-2.5 text-xs outline-none focus:border-[#20a6eb] font-mono" />
+                    <p className="text-[9px] text-slate-400">When set, clicking the hero image or 'Read Full Story' navigates here.</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 font-black uppercase">Short Description / Excerpt</label>
+                  <textarea value={contentDescription} onChange={(e) => setContentDescription(e.target.value)} rows={2} placeholder="Brief description shown on the hero card..." className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none resize-none" />
+                </div>
                 <div className="flex justify-end shadow-xs">
-                  <button type="submit" disabled={isCmsSubmitting} className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-black rounded-xl">Save Content Fragment</button>
+                  <button type="submit" disabled={isCmsSubmitting} className="px-5 py-2.5 bg-emerald-600 text-white text-xs font-black rounded-xl">Save Hero Content</button>
                 </div>
               </form>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {portalContent.map(item => (
                   <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-4 flex gap-4">
-                    <div className="w-24 h-16 bg-slate-100 rounded-xl overflow-hidden border border-slate-100">
-                      <img src={item.thumbnail_url || item.hero_image_url} alt="Fragment" className="w-full h-full object-cover" />
+                    <div className="w-24 h-16 bg-slate-100 rounded-xl overflow-hidden border border-slate-100 shrink-0">
+                      <img src={item.thumbnail_url || item.hero_image_url || item.thumbnailUrl || item.resourceUrl} alt="Fragment" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="text-xs font-black text-slate-800 truncate">{item.headline}</h5>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">{item.slug}</p>
+                      <h5 className="text-xs font-black text-slate-800 truncate">{item.headline || item.title}</h5>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase">{item.slug || item.contentType}</p>
+                      {(item.resource_url || item.resourceUrl) && (
+                        <a href={item.resource_url || item.resourceUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] text-[#20a6eb] font-mono truncate block hover:underline mt-0.5">
+                          🔗 {item.resource_url || item.resourceUrl}
+                        </a>
+                      )}
                     </div>
+                    <button
+                      onClick={() => onUpdatePortalContent(item.id, null, true)}
+                      className="p-1.5 hover:bg-rose-50 text-rose-400 rounded-lg cursor-pointer transition-all shrink-0 self-start"
+                      title="Delete hero item"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
